@@ -1,0 +1,104 @@
+
+import { useEffect, useRef } from 'react';
+import styles from './Sidebar.module.css';
+import { BookOpen, Clock, LogOut, User, Trash2 } from 'lucide-react';
+
+export default function Sidebar({ isOpen, onClose, user, studies, onSelect, onLogout, onDelete }) {
+    const sidebarRef = useRef(null);
+
+    // Close on click outside (already handled by overlay in CSS structure generally, but here checking explicitly if needed)
+    // Actually the parent handles overlay click usually, but here I'm putting overlay inside component?
+    // In CSS I had .overlay and .sidebar.
+    // I'll structure it so the overlay is part of this component.
+
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
+    };
+
+    return (
+        <>
+            <div
+                className={`${styles.overlay} ${isOpen ? styles.open : ''}`}
+                onClick={onClose}
+            />
+            <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
+                <div className={styles.header}>
+                    <h2 className={styles.title}>Library</h2>
+                    <button onClick={onClose} className={styles.closeBtn}>×</button>
+                </div>
+
+                <ul className={styles.list}>
+                    {studies && studies.length > 0 ? (
+                        studies.map((study) => (
+                            <li key={study.id} className={styles.listItem}>
+                                <button
+                                    className={styles.itemBtn}
+                                    onClick={() => {
+                                        onSelect(study);
+                                        onClose();
+                                    }}
+                                >
+                                    <span className={styles.topicName}>
+                                        <BookOpen size={16} className={styles.itemIcon} style={{ display: 'inline', verticalAlign: 'text-bottom' }} />
+                                        {study.topic}
+                                    </span>
+                                    <span className={styles.topicDate}>
+                                        <Clock size={12} style={{ marginRight: 4, display: 'inline', verticalAlign: 'middle' }} />
+                                        {formatDate(study.updated_at)}
+                                    </span>
+                                    {onDelete && (
+                                        <div
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm('Delete this study?')) onDelete(study.id);
+                                            }}
+                                            style={{
+                                                position: 'absolute',
+                                                right: 10,
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                padding: 8,
+                                                color: '#ef4444',
+                                                opacity: 0.6
+                                            }}
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={16} />
+                                        </div>
+                                    )}
+                                </button>
+                            </li>
+                        ))
+                    ) : (
+                        <li style={{ textAlign: 'center', color: '#94a3b8', marginTop: '2rem' }}>
+                            {user ? 'No studies yet. Start learning!' : 'Log in to save your progress.'}
+                        </li>
+                    )}
+                </ul>
+
+                <div className={styles.footer}>
+                    {user ? (
+                        <>
+                            <div className={styles.userInfo}>
+                                <div className={styles.avatar}>
+                                    {user.email[0].toUpperCase()}
+                                </div>
+                                <span className={styles.userEmail} title={user.email}>{user.email}</span>
+                            </div>
+                            <div className={styles.actions}>
+                                <button onClick={onLogout} className={`${styles.actionBtn} ${styles.logoutBtn}`}>
+                                    <LogOut size={16} /> Log Out
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <button onClick={onLogout} className={`${styles.actionBtn} ${styles.loginBtn}`}>
+                            <User size={16} /> Log In / Sign Up
+                        </button>
+                    )}
+                </div>
+            </div>
+        </>
+    );
+}
