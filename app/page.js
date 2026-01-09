@@ -151,6 +151,7 @@ export default function Home() {
                 setPhase(data.phase || 'study');
                 setStudyTime(data.studyTime || 0);
                 if (data.notesWidth) setNotesWidth(data.notesWidth);
+                setIsPlanMode(data.isPlanMode || false);
                 setMindMapData(data.mindMapData || { nodes: [], edges: [], currentNodeId: null });
                 setMindMapColor(data.mindMapColor || 'blue');
                 setIsInverseGradient(data.isInverseGradient || false);
@@ -180,6 +181,7 @@ export default function Home() {
                     setPhase(data.phase || 'study');
                     setStudyTime(data.studyTime || 0);
                     if (data.notesWidth) setNotesWidth(data.notesWidth);
+                    setIsPlanMode(data.isPlanMode || false);
                     setMindMapData(data.mindMapData || { nodes: [], edges: [], currentNodeId: null });
                     setMindMapColor(data.mindMapColor || 'blue');
                     setIsInverseGradient(data.isInverseGradient || false);
@@ -218,8 +220,8 @@ export default function Home() {
             };
             localStorage.setItem('learningAppSession', JSON.stringify(sessionData));
 
-            // Save to Supabase if logged in
-            if (user) {
+            // Save to Supabase if logged in and not in initial selection phase
+            if (user && phase !== 'topic-selection' && !isLoading) {
                 if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
                 saveTimeoutRef.current = setTimeout(async () => {
                     try {
@@ -227,7 +229,7 @@ export default function Home() {
                         let studyId = existingStudy?.id;
 
                         if (!studyId) {
-                            // Double check DB to avoid duplicates if study list is stale
+                            // Double check DB to avoid duplicates
                             const { data } = await supabase
                                 .from('studies')
                                 .select('id')
@@ -256,9 +258,7 @@ export default function Home() {
                                 .select()
                                 .single();
 
-                            // Optimistic or real update of study list
                             if (newStudy) {
-                                // Re-fetch to keep easy sync
                                 fetchStudies(user.id);
                             }
                         }
@@ -268,7 +268,7 @@ export default function Home() {
                 }, 2000); // Debounce 2s
             }
         }
-    }, [currentTopic, currentArticle, currentArticleTitle, articleHistory, notesText, sourceTextForSubArticle, floatingQA, phase, studyTime, notesWidth, isPlanMode, mindMapData, mindMapColor, isInverseGradient, user, studies]);
+    }, [currentTopic, currentArticle, currentArticleTitle, articleHistory, notesText, sourceTextForSubArticle, floatingQA, phase, studyTime, notesWidth, isPlanMode, mindMapData, mindMapColor, isInverseGradient, user, studies, isLoading]);
 
     // Save dark mode preference
     useEffect(() => {
@@ -584,6 +584,7 @@ export default function Home() {
         setQuestionHistory([]);
         setIdentifiedGaps('');
         setStudyTime(0);
+        setIsPlanMode(false);
         localStorage.removeItem('learningAppSession');
     };
 
@@ -873,8 +874,8 @@ export default function Home() {
                     <span className={styles.toggleLabel}>{showGuidance ? 'Tips On' : 'Tips Off'}</span>
                 </button>
                 <button onClick={() => setDarkMode(!darkMode)} className={styles.darkModeToggle}>{darkMode ? '☀️' : '🌙'}</button>
-                {phase === 'study' && isPlanMode && <button onClick={handleBackToPlan} className="btn-secondary">🗺️ Mind Map</button>}
-                {phase === 'study' && <button onClick={() => setNotesOpen(!notesOpen)} className="btn-secondary">{notesOpen ? 'Close Notes' : 'Open Notes'}</button>}
+                {isPlanMode && (phase === 'study' || phase === 'ingrain-essay' || phase === 'ingrain-teach' || phase === 'study-plan') && <button onClick={handleBackToPlan} className="btn-secondary">🗺️ Mind Map</button>}
+                {(phase === 'study' || phase === 'account') && <button onClick={() => setNotesOpen(!notesOpen)} className="btn-secondary">{notesOpen ? 'Close Notes' : 'Open Notes'}</button>}
                 {(phase === 'study' || phase === 'study-plan') && <button onClick={() => setPhase('ingrain-essay')} className="btn-primary" disabled={studyTime < 10}>Ingrain & Validate Knowledge</button>}
 
                 {user ? (
