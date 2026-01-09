@@ -87,6 +87,30 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                     <button type="submit" className={styles.submitBtn} disabled={loading}>
                         {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Log In')}
                     </button>
+
+                    <div className={styles.divider}>
+                        <span>or</span>
+                    </div>
+
+                    <button
+                        type="button"
+                        className={styles.googleBtn}
+                        onClick={async () => {
+                            setLoading(true);
+                            const { error } = await supabase.auth.signInWithOAuth({
+                                provider: 'google',
+                                options: {
+                                    redirectTo: window.location.origin
+                                }
+                            });
+                            if (error) setError(error.message);
+                            setLoading(false);
+                        }}
+                        disabled={loading}
+                    >
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+                        Continue with Google
+                    </button>
                 </form>
 
                 <div className={styles.switchText}>

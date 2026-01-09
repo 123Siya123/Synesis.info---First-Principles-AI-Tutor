@@ -8,7 +8,8 @@ import mammoth from 'mammoth';
 import { supabase } from './lib/supabaseClient';
 import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
-import { Menu } from 'lucide-react';
+import AccountView from './components/AccountView';
+import { Menu, User as UserIcon } from 'lucide-react';
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -120,6 +121,20 @@ export default function Home() {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         setIsSidebarOpen(false);
+        setPhase('topic-selection');
+    };
+
+    const handleDeleteStudy = async (studyId) => {
+        try {
+            const { error } = await supabase
+                .from('studies')
+                .delete()
+                .eq('id', studyId);
+            if (error) throw error;
+            setStudies(prev => prev.filter(s => s.id !== studyId));
+        } catch (err) {
+            console.error('Failed to delete study:', err);
+        }
     };
 
     const handleSelectStudy = (study) => {
@@ -861,6 +876,32 @@ export default function Home() {
                 {phase === 'study' && isPlanMode && <button onClick={handleBackToPlan} className="btn-secondary">🗺️ Mind Map</button>}
                 {phase === 'study' && <button onClick={() => setNotesOpen(!notesOpen)} className="btn-secondary">{notesOpen ? 'Close Notes' : 'Open Notes'}</button>}
                 {(phase === 'study' || phase === 'study-plan') && <button onClick={() => setPhase('ingrain-essay')} className="btn-primary" disabled={studyTime < 10}>Ingrain & Validate Knowledge</button>}
+
+                {user ? (
+                    <button
+                        className={styles.accountHeaderBtn}
+                        onClick={() => setPhase('account')}
+                        title="Account Settings"
+                    >
+                        {user.user_metadata?.avatar_url ? (
+                            <img src={user.user_metadata.avatar_url} alt="Profile" className={styles.headerAvatar} />
+                        ) : (
+                            <div className={styles.headerAvatarPlaceholder}>
+                                {user.email[0].toUpperCase()}
+                            </div>
+                        )}
+                    </button>
+                ) : (
+                    <button
+                        className={styles.accountHeaderBtn}
+                        onClick={() => setIsAuthModalOpen(true)}
+                        title="Log In"
+                    >
+                        <div className={styles.headerAvatarPlaceholder}>
+                            <UserIcon size={18} />
+                        </div>
+                    </button>
+                )}
             </div>
         </header>
     );
@@ -1362,6 +1403,16 @@ export default function Home() {
                         </div>
                     </div>
                 );
+            case 'account':
+                return (
+                    <AccountView
+                        user={user}
+                        studies={studies}
+                        onBack={() => currentTopic ? setPhase('study') : setPhase('topic-selection')}
+                        onDeleteStudy={handleDeleteStudy}
+                        onLogout={handleLogout}
+                    />
+                );
             default: return null;
         }
     };
@@ -1376,6 +1427,7 @@ export default function Home() {
                 studies={studies}
                 onSelect={handleSelectStudy}
                 onLogout={() => user ? handleLogout() : setIsAuthModalOpen(true)}
+                onDelete={handleDeleteStudy}
             />
             <AuthModal
                 isOpen={isAuthModalOpen}
