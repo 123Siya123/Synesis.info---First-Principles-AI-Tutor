@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import styles from './page.module.css';
 import MindMap from './components/MindMap';
 import * as pdfjs from 'pdfjs-dist';
@@ -339,7 +339,7 @@ export default function Home() {
     }, [notesText]);
 
     // Generate article
-    const generateArticle = async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT) => {
+    const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT) => {
         setIsLoading(true);
         try {
             const response = await fetch(GROQ_API_URL, {
@@ -452,7 +452,7 @@ export default function Home() {
             setCurrentArticle('Failed to generate article. Please try again.');
             setIsLoading(false);
         }
-    };
+    }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent]); // Added dependencies for generateArticle
 
     const handleTopicSubmit = async (e) => {
         e.preventDefault();
@@ -710,7 +710,7 @@ export default function Home() {
                 })}
             </>
         );
-    }, [currentArticle, currentArticleTitle]);
+    }, [currentArticle, currentArticleTitle, generateArticle]);
 
     const startVoiceRecognition = () => {
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -939,8 +939,8 @@ export default function Home() {
                                 <div className={styles.heroQuoteWithImage}>
                                     <img src="/images/quotes/feynman.jpg" alt="Richard Feynman" className={styles.heroQuoteImage} onError={(e) => e.target.src = 'https://via.placeholder.com/60'} />
                                     <div className={styles.heroQuoteContent}>
-                                        <p className={styles.heroQuoteText}>"I learned very early the difference between knowing the name of something and knowing something."</p>
-                                        <p className={styles.heroQuoteAuthor}>— Richard Feynman</p>
+                                        <p className={styles.heroQuoteText}>&quot;I learned very early the difference between knowing the name of something and knowing something.&quot;</p>
+                                        <p className={styles.heroQuoteAuthor}>&mdash; Richard Feynman</p>
                                     </div>
                                 </div>
                             )}
@@ -956,35 +956,35 @@ export default function Home() {
                                     {/* Step 1 */}
                                     <div className={styles.detailedStep}>
                                         <h3><span className={styles.stepNumberBadge}>1</span> Input a Topic</h3>
-                                        <p>Input a topic you want to study. If it's complex (like "Electrical Engineering"), use <strong>Plan Mode</strong>. If it is less complex or a specific concept (like "Circuit"), use <strong>Normal Mode</strong>.</p>
+                                        <p>Input a topic you want to study. If it&apos;s complex (like &quot;Electrical Engineering&quot;), use <strong>Plan Mode</strong>. If it is less complex or a specific concept (like &quot;Circuit&quot;), use <strong>Normal Mode</strong>.</p>
                                     </div>
 
                                     {/* Step 2 */}
                                     <div className={styles.detailedStep}>
                                         <h3><span className={styles.stepNumberBadge}>2</span> Recursive Questioning Strategy</h3>
-                                        <p>Study the topic by asking recursive questions. Read the article until you don't understand something or encounter an unfamiliar word or concept.</p>
+                                        <p>Study the topic by asking recursive questions. Read the article until you don&apos;t understand something or encounter an unfamiliar word or concept.</p>
                                         <ul>
                                             <li>Select/click or ask about the word/concept to generate a sub-article.</li>
-                                            <li>If you encounter something in the sub-article you don't fully understand, click/ask about it again.</li>
+                                            <li>If you encounter something in the sub-article you don&apos;t fully understand, click/ask about it again.</li>
                                             <li><strong>Do that all the way down the knowledge tree until you fully understand.</strong></li>
                                             <li>When you understand a sub-article, go back to the parent article and continue.</li>
                                         </ul>
                                         <div className={styles.motivationalNote}>
-                                            <p><strong>DONT BE DISCOURAGED WHEN YOU GO DEEP.</strong> This is what actual learning entails! It's the process to deeply understand a topic, separating those who actually understand from those who just know the name of something.</p>
+                                            <p><strong>DONT BE DISCOURAGED WHEN YOU GO DEEP.</strong> This is what actual learning entails! It&apos;s the process to deeply understand a topic, separating those who actually understand from those who just know the name of something.</p>
                                         </div>
                                     </div>
 
                                     {/* Step 3 */}
                                     <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>3</span> Ingrain & Validate (Feynman Method)</h3>
-                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Ingrain & Validate</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
+                                        <h3><span className={styles.stepNumberBadge}>3</span> Ingrain &amp; Validate (Feynman Method)</h3>
+                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Ingrain &amp; Validate</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
 
                                         <h4>It works as follows:</h4>
                                         <div className={styles.feynmanSteps}>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>1</span> <p><strong>Write everything you know:</strong> Don't worry about grammar or gaps. Just dump your brain.</p></div>
+                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>1</span> <p><strong>Write everything you know:</strong> Don&apos;t worry about grammar or gaps. Just dump your brain.</p></div>
                                             <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>2</span> <p><strong>Teach an AI Student:</strong> Explain it simply and logically. Make mental notes of where you struggle.</p></div>
                                             <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>3</span> <p><strong>Identify Gaps:</strong> Once finished teaching, write all gaps, questions, and unsure areas down. These are added to your notes.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>4</span> <p><strong>Test Yourself:</strong> Click "AI Questions" to quiz your knowledge. Unsure answers go to your Notes.</p></div>
+                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>4</span> <p><strong>Test Yourself:</strong> Click &quot;AI Questions&quot; to quiz your knowledge. Unsure answers go to your Notes.</p></div>
                                             <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>5</span> <p><strong>Fill the Gaps:</strong> Continue studying to fill these gaps. <strong>THIS IS WHERE YOU GAIN TRUTH UNDERSTANDING.</strong></p></div>
                                         </div>
                                     </div>
@@ -1042,8 +1042,8 @@ export default function Home() {
                                         <div className={styles.distributedQuote} style={{ maxWidth: '600px', margin: '0 auto', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(5px)' }}>
                                             <img src="/images/quotes/musk.jpg" alt="Elon Musk" onError={(e) => e.target.src = 'https://via.placeholder.com/60'} />
                                             <div>
-                                                <blockquote>"View knowledge as a semantic tree — make sure you understand the fundamental principles, i.e. the trunk and big branches, before you get into the leaves/details."</blockquote>
-                                                <cite>— Elon Musk</cite>
+                                                <blockquote>&quot;View knowledge as a semantic tree &mdash; make sure you understand the fundamental principles, i.e. the trunk and big branches, before you get into the leaves/details.&quot;</blockquote>
+                                                <cite>&mdash; Elon Musk</cite>
                                             </div>
                                         </div>
                                     </div>
@@ -1085,14 +1085,14 @@ export default function Home() {
                                 {showGuidance && articleHistory.length === 0 && (
                                     <div className={styles.guidanceTip}>
                                         <p>
-                                            <strong>💡 How to learn:</strong> Select any text you don't understand and click "Learn More" to explore deeper.
-                                            Click [[bracketed concepts]] to jump to related topics. Ask questions at the bottom—try "explain simpler" or "give me an example."
+                                            <strong>💡 How to learn:</strong> Select any text you don&apos;t understand and click &quot;Learn More&quot; to explore deeper.
+                                            Click [[bracketed concepts]] to jump to related topics. Ask questions at the bottom&mdash;try &quot;explain simpler&quot; or &quot;give me an example.&quot;
                                         </p>
                                     </div>
                                 )}
                                 {articleHistory.length > 0 && sourceTextForSubArticle && (
                                     <div className={styles.selectedTextBanner}>
-                                        <em>Selected: "{sourceTextForSubArticle}"</em>
+                                        <em>Selected: &quot;{sourceTextForSubArticle}&quot;</em>
                                     </div>
                                 )}
                                 {isLoading ? <div className={styles.loadingContainer}><div className="spinner"></div><p>Generating article...</p></div> : (
@@ -1142,7 +1142,7 @@ export default function Home() {
                                         {showGuidance && (
                                             <div className={styles.notesStickyBottom}>
                                                 <div className={styles.noteBubbleBottom}>
-                                                    💡 <strong>Tip:</strong> Write questions ending with "?" to auto-generate an outline. Add answers on the next line!
+                                                    💡 <strong>Tip:</strong> Write questions ending with &quot;?&quot; to auto-generate an outline. Add answers on the next line!
                                                 </div>
                                             </div>
                                         )}
@@ -1175,18 +1175,18 @@ export default function Home() {
                                     <h3>📝 What to do:</h3>
                                     <p>
                                         Dump everything you know about <strong>{currentTopic}</strong> onto the page.
-                                        Don't worry about grammar, structure, or if you have gaps—just get it all out of your head.
+                                        Don&apos;t worry about grammar, structure, or if you have gaps&mdash;just get it all out of your head.
                                     </p>
                                     <div className={styles.distributedQuote} style={{ margin: '1rem 0' }}>
                                         <img src="/images/quotes/franklin.jpg" alt="Benjamin Franklin" onError={(e) => e.target.src = 'https://via.placeholder.com/60'} />
                                         <div>
-                                            <blockquote>"Tell me and I forget, teach me and I may remember, involve me and I learn."</blockquote>
-                                            <cite>— Benjamin Franklin</cite>
+                                            <blockquote>&quot;Tell me and I forget, teach me and I may remember, involve me and I learn.&quot;</blockquote>
+                                            <cite>&mdash; Benjamin Franklin</cite>
                                         </div>
                                     </div>
                                     <p className={styles.phaseBenefit}>
                                         🧠 Why this works: Writing activates retrieval, which strengthens neural pathways.
-                                        You're literally making the knowledge stick better in your brain.
+                                        You&apos;re literally making the knowledge stick better in your brain.
                                     </p>
                                 </div>
                             )}
@@ -1214,18 +1214,18 @@ export default function Home() {
                                             <h3>🎓 What to do:</h3>
                                             <p>
                                                 Explain the topic in simple, logical terms. Use analogies. Avoid jargon.
-                                                While teaching, notice where you hesitate, feel uncertain, or can't explain clearly—these are your knowledge gaps.
+                                                While teaching, notice where you hesitate, feel uncertain, or can&apos;t explain clearly&mdash;these are your knowledge gaps.
                                             </p>
                                             <div className={styles.distributedQuote} style={{ margin: '1rem 0' }}>
                                                 <img src="/images/quotes/einstein.jpg" alt="Albert Einstein" onError={(e) => e.target.src = 'https://via.placeholder.com/60'} />
                                                 <div>
-                                                    <blockquote>"If you can't explain it simply, you don't understand it well enough."</blockquote>
-                                                    <cite>— Albert Einstein</cite>
+                                                    <blockquote>&quot;If you can&apos;t explain it simply, you don&apos;t understand it well enough.&quot;</blockquote>
+                                                    <cite>&mdash; Albert Einstein</cite>
                                                 </div>
                                             </div>
                                             <p className={styles.phaseBenefit}>
                                                 🧠 Why this works: Teaching forces you to organize and simplify. Your brain builds stronger connections when explaining to others.
-                                                Gaps become painfully obvious when you can't put something into simple words.
+                                                Gaps become painfully obvious when you can&apos;t put something into simple words.
                                             </p>
                                         </div>
                                     )}
@@ -1276,12 +1276,12 @@ export default function Home() {
                                     </div>
 
                                     <div className={styles.gapsSection}>
-                                        <h4>📝 Notes & Gaps to Study:</h4>
+                                        <h4>📝 Notes &amp; Gaps to Study:</h4>
                                         {showGuidance && (
                                             <div className={styles.guidanceTip}>
                                                 <p>
                                                     <strong>Why this matters:</strong> The gaps you noticed while teaching are golden!
-                                                    They show exactly where your understanding breaks down. Write them here—they'll be saved to your notes so you can study them next.
+                                                    They show exactly where your understanding breaks down. Write them here&mdash;they&apos;ll be saved to your notes so you can study them next.
                                                 </p>
                                             </div>
                                         )}
@@ -1332,7 +1332,7 @@ export default function Home() {
 
                                     <div className={styles.buttonGroup}>
                                         <button onClick={handleAddToNotesAndContinue} className="btn-secondary" disabled={isLoading}>
-                                            Add to Notes & Continue
+                                            Add to Notes &amp; Continue
                                         </button>
                                         <button onClick={handleAnswerSubmit} className="btn-primary" disabled={isLoading || !currentAnswer.trim()}>
                                             {isLoading ? 'Generating...' : 'Submit Answer'}
@@ -1348,7 +1348,7 @@ export default function Home() {
 
                                     {questionHistory.length > 0 && (
                                         <div className={styles.historySection}>
-                                            <h4>Previous Q&A ({questionHistory.length})</h4>
+                                            <h4>Previous Q&amp;A ({questionHistory.length})</h4>
                                             {questionHistory.slice(-3).map((qa, index) => (
                                                 <div key={index} className={styles.historyItem}>
                                                     <p><strong>Q:</strong> {qa.question}</p>
