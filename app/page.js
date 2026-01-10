@@ -126,6 +126,14 @@ export default function Home() {
 
     const saveCurrentStudy = async (studyId, dataToSave) => {
         if (!user || !studyId) return;
+
+        // Optimistically update local state so the UI reflects current reality immediately
+        setStudies(prevStudies => prevStudies.map(s =>
+            s.id === studyId
+                ? { ...s, session_data: dataToSave, updated_at: new Date().toISOString() }
+                : s
+        ));
+
         try {
             await supabase
                 .from('studies')
@@ -136,6 +144,7 @@ export default function Home() {
                 .eq('id', studyId);
         } catch (err) {
             console.error("Error saving study:", err);
+            // Optionally revert local state here if strict consistency needed, but risk is low
         }
     };
 
@@ -300,7 +309,8 @@ export default function Home() {
                                 .single();
 
                             if (newStudy) {
-                                fetchStudies(user.id); // Refresh list to get ID
+                                // Add new study to local list
+                                setStudies(prev => [newStudy, ...prev]);
                             }
                         } else {
                             await saveCurrentStudy(studyId, sessionData);
