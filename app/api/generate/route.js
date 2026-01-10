@@ -65,117 +65,117 @@ export async function POST(request) {
             console.error('Profile fetch error:', profileError);
             return NextResponse.json({ error: 'User profile not found. Please ensure database migration is run.' }, { status: 404 });
         }
-    }
 
         let { subscription_tier, monthly_article_count, last_reset_date, monthly_mind_map_count } = profile;
 
-    // --- A. Monthly Reset Logic (Lazy Evaluation) ---
-    const now = new Date();
-    const lastReset = last_reset_date ? new Date(last_reset_date) : new Date(0); // Epoch if null
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(now.getMonth() - 1);
+        // --- A. Monthly Reset Logic (Lazy Evaluation) ---
+        const now = new Date();
+        const lastReset = last_reset_date ? new Date(last_reset_date) : new Date(0); // Epoch if null
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(now.getMonth() - 1);
 
-    if (lastReset < oneMonthAgo) {
-        console.log(`Resetting usage for user ${userId}. Last reset: ${lastReset}`);
-        // Perform the reset in DB
-        await supabase
-            .from('profiles')
-            .update({
-                monthly_article_count: 0,
-                monthly_mind_map_count: 0,
-                last_reset_date: now.toISOString()
+        if (lastReset < oneMonthAgo) {
+            console.log(`Resetting usage for user ${userId}. Last reset: ${lastReset}`);
+            // Perform the reset in DB
+            await supabase
+                .from('profiles')
+                .update({
+                    monthly_article_count: 0,
+                    monthly_mind_map_count: 0,
+                    last_reset_date: now.toISOString()
+                })
+                .eq('id', userId);
+
+            // Update local variables for this request
+            monthly_article_count = 0;
+            monthly_mind_map_count = 0;
+        }
+
+        // --- B. Define Limits ---
+        const LIMITS = { free: 20, premium: 100, pro: 1000 };
+        const MIND_MAP_LIMITS = { free: 5, premium: 100, pro: 1000 }; // Premium/Pro essentially unlimited/matched
+
+        const currentTotalLimit = LIMITS[subscription_tier] || 20;
+        const currentMindMapLimit = MIND_MAP_LIMITS[subscription_tier] || 5;
+
+        // --- C. Enforce Limits ---
+
+        // 1. Global Total Limit
+        if (monthly_article_count >= currentTotalLimit) {
+            return NextResponse.json({
+                error: 'Monthly global limit reached',
+                limitType: 'total',
+                current: monthly_article_count,
+                max: currentTotalLimit
+            }, { status: 403 });
+        }
+
+        // 2. Mind Map Specific Limit (Strict Enforcement)
+        if (planMode && monthly_mind_map_count >= currentMindMapLimit) {
+            return NextResponse.json({
+                error: `Mind Map specific limit reached (${currentMindMapLimit} per month)`,
+                limitType: 'mindmap',
+                current: monthly_mind_map_count,
+                max: currentMindMapLimit
+            }, { status: 403 });
+        }
+
+        // 5. Call External API (Groq)
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: model || 'llama-3.3-70b-versatile',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: topic }
+                ],
+                temperature: 0.7,
+                max_tokens: 2000
             })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(`Groq API Error: ${errData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const articleContent = data.choices[0]?.message?.content;
+
+        // 6. Increment Usage Counter
+        // We prepare the update object dynamically
+        const updates = {
+            monthly_article_count: monthly_article_count + 1
+        };
+
+        if (planMode) {
+            updates.monthly_mind_map_count = (monthly_mind_map_count || 0) + 1;
+        }
+
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update(updates)
             .eq('id', userId);
 
-        // Update local variables for this request
-        monthly_article_count = 0;
-        monthly_mind_map_count = 0;
-    }
+        if (updateError) console.error('Failed to update usage count:', updateError);
 
-    // --- B. Define Limits ---
-    const LIMITS = { free: 20, premium: 100, pro: 1000 };
-    const MIND_MAP_LIMITS = { free: 5, premium: 100, pro: 1000 }; // Premium/Pro essentially unlimited/matched
-
-    const currentTotalLimit = LIMITS[subscription_tier] || 20;
-    const currentMindMapLimit = MIND_MAP_LIMITS[subscription_tier] || 5;
-
-    // --- C. Enforce Limits ---
-
-    // 1. Global Total Limit
-    if (monthly_article_count >= currentTotalLimit) {
         return NextResponse.json({
-            error: 'Monthly global limit reached',
-            limitType: 'total',
-            current: monthly_article_count,
-            max: currentTotalLimit
-        }, { status: 403 });
+            content: articleContent,
+            usage: {
+                current: monthly_article_count + 1,
+                max: currentTotalLimit,
+                mindMapCurrent: planMode ? (monthly_mind_map_count || 0) + 1 : monthly_mind_map_count,
+                mindMapMax: currentMindMapLimit
+            }
+        });
+
+    } catch (error) {
+        console.error('Generation failure:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-
-    // 2. Mind Map Specific Limit (Strict Enforcement)
-    if (planMode && monthly_mind_map_count >= currentMindMapLimit) {
-        return NextResponse.json({
-            error: `Mind Map specific limit reached (${currentMindMapLimit} per month)`,
-            limitType: 'mindmap',
-            current: monthly_mind_map_count,
-            max: currentMindMapLimit
-        }, { status: 403 });
-    }
-
-    // 5. Call External API (Groq)
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            model: model || 'llama-3.3-70b-versatile',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: topic }
-            ],
-            temperature: 0.7,
-            max_tokens: 2000
-        })
-    });
-
-    if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(`Groq API Error: ${errData.error?.message || response.statusText}`);
-    }
-
-    const data = await response.json();
-    const articleContent = data.choices[0]?.message?.content;
-
-    // 6. Increment Usage Counter
-    // We prepare the update object dynamically
-    const updates = {
-        monthly_article_count: monthly_article_count + 1
-    };
-
-    if (planMode) {
-        updates.monthly_mind_map_count = (monthly_mind_map_count || 0) + 1;
-    }
-
-    const { error: updateError } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', userId);
-
-    if (updateError) console.error('Failed to update usage count:', updateError);
-
-    return NextResponse.json({
-        content: articleContent,
-        usage: {
-            current: monthly_article_count + 1,
-            max: currentTotalLimit,
-            mindMapCurrent: planMode ? (monthly_mind_map_count || 0) + 1 : monthly_mind_map_count,
-            mindMapMax: currentMindMapLimit
-        }
-    });
-
-} catch (error) {
-    console.error('Generation failure:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
 }
 }
