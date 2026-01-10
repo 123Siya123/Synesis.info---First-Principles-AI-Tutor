@@ -2,44 +2,32 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase Admin client to bypass RLS for incrementing counts securely if needed, 
-// OR just use standard client with user's auth token. 
-// Using standard client with service role key is safer for admin tasks like incrementing counters reliably 
-// without relying on user RLS policies permitting the update.
-// However, simplest is to use the user's session.
-// Let's use the SERVICE_ROLE key for the server-side operations to ensure we can read/write profile data authoritatively.
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // We need this!
-
-if (!supabaseUrl) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
-}
-
-if (!supabaseServiceKey) {
-    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY - required for server-side profile access');
-}
-
-// Debug: Log key info (safe - only shows prefix, not full key)
-console.log('Supabase URL:', supabaseUrl);
-console.log('Service Key loaded:', supabaseServiceKey ? `Yes (${supabaseServiceKey.length} chars, starts with ${supabaseServiceKey.substring(0, 10)}...)` : 'No');
-
-// Service Role keys are typically longer than anon keys
-// Anon keys are ~200 chars, Service Role keys are ~200+ chars but have different payload
-// Both start with 'eyJ' (base64 encoded JWT)
-
-// Use the Service Role Key for server-side operations.
-// This bypasses RLS policies, which is necessary because the API route
-// doesn't have the user's authenticated session context.
-// We rely on the userId being validated and passed from the authenticated client.
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
-
 export async function POST(request) {
+    // Create Supabase client INSIDE the handler to ensure env vars are available at runtime
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    // Debug logging
+    console.log('=== Generate API Called ===');
+    console.log('Supabase URL:', supabaseUrl ? 'Set' : 'MISSING');
+    console.log('Service Key:', supabaseServiceKey ? `Set (${supabaseServiceKey.length} chars)` : 'MISSING');
+
+    if (!supabaseUrl) {
+        return NextResponse.json({ error: 'Server config error: Missing SUPABASE_URL' }, { status: 500 });
+    }
+
+    if (!supabaseServiceKey) {
+        return NextResponse.json({ error: 'Server config error: Missing SERVICE_ROLE_KEY' }, { status: 500 });
+    }
+
+    // Create Supabase admin client with Service Role Key (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    });
+
     const { topic, systemPrompt, userId, model, planMode } = await request.json();
 
     const apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY;
