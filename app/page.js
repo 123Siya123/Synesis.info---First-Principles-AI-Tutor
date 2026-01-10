@@ -783,25 +783,36 @@ export default function Home() {
             }
             Provide 5 - 10 sub - topics.Return ONLY the JSON.`;
 
-            const response = await fetch(GROQ_API_URL, {
+            // Use Backend API to secure keys and enforce limits
+            const response = await fetch('/api/generate-plan', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${GROQ_API_KEY} `, 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: 'llama-3.3-70b-versatile',
-                    messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.7,
-                    response_format: { type: 'json_object' }
+                    userId: user?.id, // Guests blocked by API
+                    messages: [{ role: 'user', content: prompt }]
                 }),
             });
 
-            if (!response.ok) throw new Error('Failed to reach AI');
+            if (!response.ok) {
+                const errData = await response.json();
+                if (response.status === 403) {
+                    setIsSubscriptionModalOpen(true);
+                    throw new Error(errData.error || "Plan limit reached.");
+                }
+                if (response.status === 401) {
+                    setIsAuthModalOpen(true);
+                    throw new Error("Please log in to create a Study Plan.");
+                }
+                throw new Error(errData.error || 'Failed to reach AI');
+            }
+
             const data = await response.json();
             const plan = JSON.parse(data.choices[0]?.message?.content);
             setMindMapData({ ...plan, currentNodeId: "0" });
             setIsLoading(false);
         } catch (error) {
             console.error('Error generating study plan:', error);
-            setPlanError('Failed to generate study plan. Please try again or check your input.');
+            setPlanError(error.message || 'Failed to generate study plan. Please try again.');
             setIsLoading(false);
         }
     };

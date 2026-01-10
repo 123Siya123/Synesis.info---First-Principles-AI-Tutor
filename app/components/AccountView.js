@@ -185,14 +185,14 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                             <div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.3rem', color: '#64748b' }}>
                                     <span>Mind Maps</span>
-                                    <span>{studies ? studies.length : 0} / {subscriptionTier === 'free' ? 1 : subscriptionTier === 'premium' ? 20 : '∞'}</span>
+                                    <span>{studies ? studies.filter(s => s.session_data?.isPlanMode).length : 0} / {subscriptionTier === 'free' ? 1 : subscriptionTier === 'premium' ? 20 : '∞'}</span>
                                 </div>
                                 {subscriptionTier !== 'pro' && (
                                     <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
                                         <div
                                             style={{
                                                 height: '100%',
-                                                width: `${Math.min(100, ((studies ? studies.length : 0) / (subscriptionTier === 'free' ? 1 : 20)) * 100)}%`,
+                                                width: `${Math.min(100, ((studies ? studies.filter(s => s.session_data?.isPlanMode).length : 0) / (subscriptionTier === 'free' ? 1 : 20)) * 100)}%`,
                                                 background: subscriptionTier === 'free' ? '#10b981' : '#3b82f6',
                                                 transition: 'width 0.5s ease'
                                             }}

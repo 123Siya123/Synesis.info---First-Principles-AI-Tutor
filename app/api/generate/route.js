@@ -247,9 +247,8 @@ export async function POST(request) {
             monthly_article_count: monthly_article_count + 1
         };
 
-        if (planMode) {
-            updates.monthly_mind_map_count = (monthly_mind_map_count || 0) + 1;
-        }
+        // We DO NOT increment mind map count here anymore. 
+        // Mind map count is for the creation of the map itself (in /api/generate-plan).
 
         const { error: updateError } = await supabase
             .from('profiles')
