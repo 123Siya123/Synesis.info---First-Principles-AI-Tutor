@@ -49,22 +49,40 @@ export async function POST(request) {
 
     try {
         // 2. Fetch User Profile for Limits
-        // We select the new columns. If they don't exist yet (migration not run), this might fail or return null.
-        // We assume migration is run.
-        // 2. Fetch User Profile for Limits
-        // We attempt to fetch all columns. If new columns (last_reset_date, monthly_mind_map_count) don't exist, this query will fail with 406 or similar.
-        // We will try a robust approach: Fetch basic first, then try extended, or use a wildcard if safe.
-        // BETTER: Just fetch wildcard '*' to avoid column name errors if we are unsure, OR handle the error.
-
         let { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('*') // Safest for now to avoid 'column does not exist' if migration didn't run, though typically Select * is discouraged in prod.
+            .select('*')
             .eq('id', userId)
             .single();
 
-        if (profileError || !profile) {
+        // If profile doesn't exist, create it automatically
+        // This handles users who signed up before the trigger was set up
+        if (profileError?.code === 'PGRST116' || !profile) {
+            console.log('Profile not found for user, creating one:', userId);
+
+            const { data: newProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert({
+                    id: userId,
+                    subscription_tier: 'free',
+                    subscription_status: 'active',
+                    monthly_article_count: 0,
+                    monthly_mind_map_count: 0,
+                    last_reset_date: new Date().toISOString()
+                })
+                .select('*')
+                .single();
+
+            if (createError) {
+                console.error('Failed to create profile:', createError);
+                return NextResponse.json({ error: 'Failed to create user profile. Please contact support.' }, { status: 500 });
+            }
+
+            profile = newProfile;
+            console.log('Successfully created profile for user:', userId);
+        } else if (profileError) {
             console.error('Profile fetch error:', profileError);
-            return NextResponse.json({ error: 'User profile not found. Please ensure database migration is run.' }, { status: 404 });
+            return NextResponse.json({ error: 'Database error fetching profile.' }, { status: 500 });
         }
 
         let { subscription_tier, monthly_article_count, last_reset_date, monthly_mind_map_count } = profile;
