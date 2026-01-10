@@ -7,19 +7,6 @@ export async function POST(request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    // Debug logging
-    console.log('=== Generate API Called ===');
-    console.log('Supabase URL:', supabaseUrl ? 'Set' : 'MISSING');
-    console.log('Service Key:', supabaseServiceKey ? `Set (${supabaseServiceKey.length} chars)` : 'MISSING');
-
-    if (!supabaseUrl) {
-        return NextResponse.json({ error: 'Server config error: Missing SUPABASE_URL' }, { status: 500 });
-    }
-
-    if (!supabaseServiceKey) {
-        return NextResponse.json({ error: 'Server config error: Missing SERVICE_ROLE_KEY' }, { status: 500 });
-    }
-
     // Create Supabase admin client with Service Role Key (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
@@ -28,26 +15,12 @@ export async function POST(request) {
         }
     });
 
-    // Helper to return debug info with error
-    const returnError = (msg, status = 500, details = null) => {
-        return NextResponse.json({
-            error: msg,
-            details: details,
-            debug: {
-                message: "CHECK THIS AGAINST YOUR SUPABASE DASHBOARD",
-                keyUsedStart: supabaseServiceKey ? supabaseServiceKey.substring(0, 10) + "..." : "NONE",
-                // Check if it matches anon key pattern (usually same prefix, but good to inspect)
-                keyLength: supabaseServiceKey ? supabaseServiceKey.length : 0
-            }
-        }, { status });
-    };
-
     const { topic, systemPrompt, userId, model, planMode } = await request.json();
 
     const apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY;
 
     if (!apiKey) {
-        return returnError('Server misconfiguration: Missing API Key');
+        return NextResponse.json({ error: 'Server misconfiguration: Missing API Key' }, { status: 500 });
     }
 
     // 1. Verify User
@@ -90,14 +63,17 @@ export async function POST(request) {
 
             if (createError) {
                 console.error('Failed to create profile:', createError);
-                return returnError(`Failed to create user profile: ${createError.message || createError.code}`, 500, createError);
+                return NextResponse.json({
+                    error: `Failed to create user profile: ${createError.message || createError.code}`,
+                    details: createError
+                }, { status: 500 });
             }
 
             profile = newProfile;
             console.log('Successfully created profile for user:', userId);
         } else if (profileError) {
             console.error('Profile fetch error:', profileError);
-            return returnError('Database error fetching profile.', 500, profileError);
+            return NextResponse.json({ error: 'Database error fetching profile.', details: profileError }, { status: 500 });
         }
 
         let { subscription_tier, monthly_article_count, last_reset_date, monthly_mind_map_count } = profile;
