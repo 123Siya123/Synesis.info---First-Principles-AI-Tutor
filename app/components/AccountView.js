@@ -40,35 +40,46 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
         return `${m}m`;
     };
 
+    const handleManageSubscription = async () => {
+        try {
+            const response = await fetch('/api/create-portal-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, returnUrl: window.location.href })
+            });
+            const data = await response.json();
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('Failed to redirect to billing portal.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Error accessing billing settings.');
+        }
+    };
+
     const handleDeleteAccount = async () => {
         if (confirm('ARE YOU ABSOLUTELY SURE? This will delete your account and all your progress permanently. This cannot be undone.')) {
             setIsDeletingAccount(true);
             try {
-                // In Supabase, deleting a user from the client side is not directly possible 
-                // for the user themselves without a service role or a specific function.
-                // Usually we call a database function or an edge function.
-                // For now, we will sign out and maybe clear data if possible, 
-                // but a real "delete account" needs a backend trigger.
-                // We'll simulate it or use a RPC if available.
+                // Call our protected API route
+                const response = await fetch('/api/user/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id })
+                });
 
-                // Let's assume we have a 'delete_user_data' function
-                const { error } = await supabase.rpc('delete_own_account');
-
-                if (error) {
-                    console.error('Error deleting account:', error);
-                    alert('Due to security restrictions, please contact support to fully delete your account, or we can just wipe your data.');
-
-                    // Fallback: Delete all studies
-                    for (const study of studies) {
-                        await onDeleteStudy(study.id);
-                    }
-                    await onLogout();
-                } else {
-                    await onLogout();
-                    alert('Account deleted successfully.');
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Failed to delete account');
                 }
+
+                await onLogout();
+                alert('Account deleted successfully.');
             } catch (err) {
-                console.error(err);
+                console.error('Error deleting account:', err);
+                alert(`Error: ${err.message}`);
             } finally {
                 setIsDeletingAccount(false);
             }
@@ -157,6 +168,23 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                                     }}
                                 >
                                     Upgrade
+                                </button>
+                            )}
+                            {subscriptionTier !== 'free' && (
+                                <button
+                                    onClick={handleManageSubscription}
+                                    style={{
+                                        background: '#fff',
+                                        color: '#64748b',
+                                        border: '1px solid #cbd5e1',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '8px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        marginLeft: '0.5rem'
+                                    }}
+                                >
+                                    Manage
                                 </button>
                             )}
                         </div>

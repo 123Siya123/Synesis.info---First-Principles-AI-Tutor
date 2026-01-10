@@ -1,0 +1,54 @@
+
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+export async function POST(request) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { userId } = await request.json();
+
+    if (!userId) {
+        return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+    }
+
+    try {
+        // 1. Get user profile to find Stripe Customer ID
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('stripe_customer_id')
+            .eq('id', userId)
+            .single();
+
+        if (profile?.stripe_customer_id) {
+            // 2. Cancel Subscription in Stripe
+            const subscriptions = await stripe.subscriptions.list({
+                customer: profile.stripe_customer_id,
+                status: 'active'
+            });
+
+            for (const sub of subscriptions.data) {
+                await stripe.subscriptions.cancel(sub.id);
+            }
+
+            // Optionally delete customer object in Stripe:
+            // await stripe.customers.del(profile.stripe_customer_id);
+        }
+
+        // 3. Delete User from Supabase Auth (This is the "Delete Account" action)
+        // This usually cascades to public tables if foreign keys are set up with ON DELETE CASCADE
+        const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
+
+        if (deleteError) throw deleteError;
+
+        return NextResponse.json({ success: true });
+
+    } catch (error) {
+        console.error('Delete account error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
