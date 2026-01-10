@@ -133,9 +133,10 @@ export default function Home() {
     };
 
     const fetchProfile = async (userId) => {
+        // Fetch all fields to be safe against schema mismatches causing 406
         const { data, error } = await supabase
             .from('profiles')
-            .select('subscription_tier, monthly_article_count')
+            .select('*')
             .eq('id', userId)
             .single();
 
