@@ -1,12 +1,11 @@
-
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 import Link from 'next/link';
 
-export default function PaymentSuccess() {
+function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const sessionId = searchParams.get('session_id');
@@ -50,6 +49,55 @@ export default function PaymentSuccess() {
 
     return (
         <div style={{
+            background: 'white',
+            padding: '3rem',
+            borderRadius: '24px',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
+            textAlign: 'center',
+            maxWidth: '500px'
+        }}>
+            {status === 'processing' && (
+                <>
+                    <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Confirming...</h2>
+                    <div className="spinner"></div>
+                </>
+            )}
+
+            {status === 'success' && (
+                <>
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
+                    <h2 style={{ color: '#16a34a', marginBottom: '1rem' }}>Upgrade Successful!</h2>
+                    <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '2rem' }}>
+                        You are now on the <strong>{plan.toUpperCase()}</strong> plan.
+                        Redirecting you back to learning...
+                    </p>
+                    <Link href="/" style={{
+                        background: '#16a34a',
+                        color: 'white',
+                        padding: '1rem 2rem',
+                        borderRadius: '12px',
+                        textDecoration: 'none',
+                        fontWeight: 'bold'
+                    }}>
+                        Go Home Now
+                    </Link>
+                </>
+            )}
+
+            {status === 'error' && (
+                <>
+                    <h2 style={{ color: '#dc2626' }}>Something went wrong.</h2>
+                    <p>Please contact support or try again.</p>
+                    <Link href="/">Back to Home</Link>
+                </>
+            )}
+        </div>
+    );
+}
+
+export default function PaymentSuccess() {
+    return (
+        <div style={{
             height: '100vh',
             display: 'flex',
             flexDirection: 'column',
@@ -58,50 +106,9 @@ export default function PaymentSuccess() {
             background: '#f8f9fa',
             fontFamily: 'system-ui, sans-serif'
         }}>
-            <div style={{
-                background: 'white',
-                padding: '3rem',
-                borderRadius: '24px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
-                textAlign: 'center',
-                maxWidth: '500px'
-            }}>
-                {status === 'processing' && (
-                    <>
-                        <h2 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Confirming...</h2>
-                        <div className="spinner"></div>
-                    </>
-                )}
-
-                {status === 'success' && (
-                    <>
-                        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🎉</div>
-                        <h2 style={{ color: '#16a34a', marginBottom: '1rem' }}>Upgrade Successful!</h2>
-                        <p style={{ color: '#64748b', fontSize: '1.1rem', marginBottom: '2rem' }}>
-                            You are now on the <strong>{plan.toUpperCase()}</strong> plan.
-                            Redirecting you back to learning...
-                        </p>
-                        <Link href="/" style={{
-                            background: '#16a34a',
-                            color: 'white',
-                            padding: '1rem 2rem',
-                            borderRadius: '12px',
-                            textDecoration: 'none',
-                            fontWeight: 'bold'
-                        }}>
-                            Go Home Now
-                        </Link>
-                    </>
-                )}
-
-                {status === 'error' && (
-                    <>
-                        <h2 style={{ color: '#dc2626' }}>Something went wrong.</h2>
-                        <p>Please contact support or try again.</p>
-                        <Link href="/">Back to Home</Link>
-                    </>
-                )}
-            </div>
+            <Suspense fallback={<div>Loading payment details...</div>}>
+                <PaymentSuccessContent />
+            </Suspense>
             <style jsx global>{`
                 .spinner {
                     border: 4px solid #f3f3f3;
