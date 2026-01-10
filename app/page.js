@@ -1654,17 +1654,35 @@ export default function Home() {
     };
 
     // --- Subscription Handlers ---
-    const handleUpgrade = async (tier) => {
-        // Mocking the upgrade for demo purposes
-        setSubscriptionTier(tier);
-        if (user) {
-            await supabase
-                .from('profiles')
-                .update({ subscription_tier: tier })
-                .eq('id', user.id);
+    const handleUpgrade = async (tier, productId) => {
+        if (!user) {
+            alert("Please log in to upgrade.");
+            return;
         }
-        setIsSubscriptionModalOpen(false);
-        alert(`Successfully upgraded to ${tier.charAt(0).toUpperCase() + tier.slice(1)}! Enjoy your new features.`);
+
+        try {
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plan: tier,
+                    userId: user.id,
+                    productId: productId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.url) {
+                window.location.href = data.url;
+            } else {
+                console.error('Stripe error:', data.error);
+                alert('Could not initiate payment: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Network error. Please try again.');
+        }
     };
 
     return (
@@ -1678,6 +1696,11 @@ export default function Home() {
                 onSelect={handleSelectStudy}
                 onLogout={() => user ? handleLogout() : setIsAuthModalOpen(true)}
                 onDelete={handleDeleteStudy}
+                subscriptionTier={subscriptionTier}
+                onOpenSubscription={() => {
+                    setIsSidebarOpen(false);
+                    setIsSubscriptionModalOpen(true);
+                }}
             />
             <AuthModal
                 isOpen={isAuthModalOpen}

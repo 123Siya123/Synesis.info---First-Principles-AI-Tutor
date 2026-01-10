@@ -10,11 +10,36 @@ export default function SubscriptionModal({ isOpen, onClose, currentTier = 'free
 
     const handleSubscribe = async (tier) => {
         setLoadingTier(tier);
-        if (onUpgrade) {
-            await onUpgrade(tier);
+        try {
+            // Get user ID (assuming parent passes it or we have context, wait parent passes 'user' object? No.
+            // We usually need the user ID. Let's assume onUpgrade can handle it OR we assume global user context is not here.
+            // Actually, we should probably fetch the session on the API side or pass user ID as prop.
+            // Let's use the onUpgrade prop as a proxy if it was setup, BUT we want Real Payment now.
+            // We will fetch OUR API. We need the current user ID. 
+            // Since we are in a client component, success depends on Auth.
+
+            // Simpler: Trigger the API route directly here.
+            // Mapping Plans to Product IDs (provided by user)
+            const PRODUCTS = {
+                'free': 'prod_TlY4CXlbc8Y17Z',
+                'premium': 'prod_TlY6cXhNYaQUes',
+                'pro': 'prod_TlY8yT0bZWyK7x'
+            };
+
+            const productId = PRODUCTS[tier];
+            // We need the User ID. The component doesn't have it explicitly in props unless we add it.
+            // However, Supabase auth is client side too.
+            // BETTER: pass handleUpgrade from parent page.js which has 'user'.
+
+            if (onUpgrade) {
+                await onUpgrade(tier, productId);
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert("Payment initialization failed.");
+            setLoadingTier(null);
         }
-        // Simulation ending handled by parent or simple timeout
-        setTimeout(() => setLoadingTier(null), 2000);
     };
 
     return (
@@ -60,7 +85,7 @@ export default function SubscriptionModal({ isOpen, onClose, currentTier = 'free
                     <div className={`${styles.planCard} ${styles.featured}`}>
                         <div className={styles.badge}>Most Popular</div>
                         <h3 className={styles.planName}>Premium</h3>
-                        <div className={styles.planPrice}>$9<span className={styles.period}>/mo</span></div>
+                        <div className={styles.planPrice}>$7.99<span className={styles.period}>/mo</span></div>
                         <ul className={styles.featuresList}>
                             <li className={styles.featureItem}>
                                 <span className={styles.check}>✓</span> <strong>20 Mind Maps</strong>
@@ -87,7 +112,7 @@ export default function SubscriptionModal({ isOpen, onClose, currentTier = 'free
                     {/* Pro Plan */}
                     <div className={styles.planCard}>
                         <h3 className={styles.planName}>Pro</h3>
-                        <div className={styles.planPrice}>$29<span className={styles.period}>/mo</span></div>
+                        <div className={styles.planPrice}>$19.99<span className={styles.period}>/mo</span></div>
                         <ul className={styles.featuresList}>
                             <li className={styles.featureItem}>
                                 <span className={styles.check}>✓</span> <strong>Unlimited Mind Maps</strong>

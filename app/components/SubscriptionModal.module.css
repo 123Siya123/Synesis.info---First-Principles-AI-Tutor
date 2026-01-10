@@ -86,9 +86,18 @@
 
 .plansContainer {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: grid;
+    /* Display 3 columns on large screens, auto-fit on smaller */
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
     margin-bottom: 1rem;
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .plansContainer {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
 }
 
 .planCard {

@@ -1,9 +1,9 @@
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import styles from './Sidebar.module.css';
-import { BookOpen, Clock, LogOut, User, Trash2 } from 'lucide-react';
+import { BookOpen, Clock, LogOut, User, Trash2, Sparkles } from 'lucide-react';
 
-export default function Sidebar({ isOpen, onClose, user, studies, onSelect, onLogout, onDelete }) {
+export default function Sidebar({ isOpen, onClose, user, studies, onSelect, onLogout, onDelete, subscriptionTier, onOpenSubscription }) {
     const sidebarRef = useRef(null);
 
     // Close on click outside (already handled by overlay in CSS structure generally, but here checking explicitly if needed)
@@ -80,6 +80,29 @@ export default function Sidebar({ isOpen, onClose, user, studies, onSelect, onLo
                 <div className={styles.footer}>
                     {user ? (
                         <>
+                            {subscriptionTier === 'free' && (
+                                <button
+                                    onClick={onOpenSubscription}
+                                    style={{
+                                        width: '100%',
+                                        marginBottom: '1rem',
+                                        padding: '0.75rem',
+                                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '12px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.5rem',
+                                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                                    }}
+                                >
+                                    <Sparkles size={18} /> Upgrade Plan
+                                </button>
+                            )}
                             <div className={styles.userInfo}>
                                 <div className={styles.avatar}>
                                     {user.email[0].toUpperCase()}
