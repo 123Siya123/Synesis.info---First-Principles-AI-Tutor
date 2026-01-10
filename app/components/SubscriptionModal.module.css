@@ -1,0 +1,289 @@
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    background: white;
+    width: 95%;
+    max-width: 900px;
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    position: relative;
+    transform: scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.overlay.open .modal {
+    transform: scale(1);
+}
+
+.closeBtn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #94a3b8;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.closeBtn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+}
+
+.plansContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.planCard {
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+    position: relative;
+}
+
+.planCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
+}
+
+.planCard.featured {
+    border: 2px solid #3b82f6;
+    background: white;
+    transform: scale(1.02);
+    box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.2);
+    z-index: 2;
+}
+
+.planCard.featured:hover {
+    transform: scale(1.02) translateY(-5px);
+}
+
+.badge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #3b82f6;
+    color: white;
+    padding: 0.25rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.planName {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #1e293b;
+}
+
+.planPrice {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: baseline;
+}
+
+.period {
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-left: 0.25rem;
+}
+
+.featuresList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem 0;
+    flex-grow: 1;
+}
+
+.featureItem {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    color: #475569;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.check {
+    color: #10b981;
+    margin-right: 0.75rem;
+    font-weight: bold;
+}
+
+.cross {
+    color: #fca5a5;
+    background: none;
+    margin-right: 0.8rem;
+}
+
+.ctaBtn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.primaryBtn {
+    background: #0f172a;
+    color: white;
+}
+
+.primaryBtn:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.accentBtn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.accentBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+}
+
+.outlineBtn {
+    background: transparent;
+    border: 2px solid #e2e8f0;
+    color: #475569;
+}
+
+.outlineBtn:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+/* Dark Mode Overrides */
+:global(body.dark-mode) .modal {
+    background: #1e293b;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+:global(body.dark-mode) .title {
+    background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+:global(body.dark-mode) .subtitle {
+    color: #94a3b8;
+}
+
+:global(body.dark-mode) .planCard {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+:global(body.dark-mode) .planCard.featured {
+    background: #1e293b;
+    border-color: #3b82f6;
+}
+
+:global(body.dark-mode) .planName {
+    color: #f1f5f9;
+}
+
+:global(body.dark-mode) .planPrice {
+    color: white;
+}
+
+:global(body.dark-mode) .featureItem {
+    color: #cbd5e1;
+}
+
+:global(body.dark-mode) .primaryBtn {
+    background: #334155;
+    color: white;
+}
+
+:global(body.dark-mode) .primaryBtn:hover {
+    background: #475569;
+}
+
+:global(body.dark-mode) .outlineBtn {
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+:global(body.dark-mode) .outlineBtn:hover {
+    background: #334155;
+    border-color: #475569;
+}

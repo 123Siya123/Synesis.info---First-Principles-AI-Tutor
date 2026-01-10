@@ -4,7 +4,7 @@ import styles from './AccountView.module.css';
 import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout }) {
+export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, onOpenSubscription }) {
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState(user?.user_metadata?.full_name || '');
@@ -131,6 +131,34 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                         <div className={styles.statItem}>
                             <span className={styles.statLabel}>Topics Mastered</span>
                             <span className={styles.statValue}><BookOpen size={16} /> {stats.topicCount}</span>
+                        </div>
+                    </div>
+
+                    {/* Subscription Section inside the card for better layout */}
+                    <div className={styles.subscriptionSection} style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <span className={styles.statLabel}>Current Plan</span>
+                                <h3 style={{ textTransform: 'capitalize', color: '#1e293b' }}>
+                                    {subscriptionTier === 'pro' ? 'Pro 🚀' : subscriptionTier === 'premium' ? 'Premium 🌟' : 'Free 🌱'}
+                                </h3>
+                            </div>
+                            {subscriptionTier !== 'pro' && (
+                                <button
+                                    onClick={onOpenSubscription}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '8px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Upgrade
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

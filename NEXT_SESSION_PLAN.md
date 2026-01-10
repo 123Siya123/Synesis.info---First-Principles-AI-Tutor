@@ -3,26 +3,28 @@
 ## 1. Monetization Structure
 
 ### Free Plan
-- **Mind Map Access**: Users can generate and view a Mind Map for their topic.
-- **Restriction**: Clicking a node (circle) to expand/explore deeper triggers an **Upgrade Prompt**.
+- **Mind Map Access**: 1 Mind Map allowed.
+- **Restriction**: Can generate up to 5 articles/nodes within the Mind Map mode.
 - **Standard Study Mode**:
-  - Users can use the standard linear study mode (generating articles without the map).
-  - **Limit**: Free token allowance equivalent to ~10-20 articles. Once exhausted, upgrade required.
+  - **Limit**: Standard article allowance (approx 20).
 
 ### Premium Tier (Tier 1)
 - **Features**:
-  - Unlocks full **Mind Map Interactivity** (clicking nodes to generate sub-articles).
-- **Usage Limit**: Significantly higher capacity (~100 articles/month).
+  - **Mind Maps**: 20 allowed. 
+  - **Articles**: 100 articles/month.
+  - Unlocks full **Mind Map Interactivity**.
 
 ### Pro / Highest Tier (Tier 2)
 - **Features**:
-  - **High Volume**: Large capacity (~1000 articles/month).
-  - **Full Access**: All Mind Map and Study features.
-  - **Future Advanced Features** (see below).
+  - **Mind Maps**: Unlimited.
+  - **Articles**: 1000 articles/month.
+  - **Full Access**: All features + Early Access.
 
 ---
 
 ## 2. Future Roadmap: Active Retrieval & Scheduling (Pro Tier)
+
+User gets Early access when the demo is available
 
 ### Spaced Repetition System (SRS)
 - **Concept**: Automated scheduling of review sessions based on the "Ingrain & Validate" step (Feynman technique).
@@ -35,9 +37,14 @@
   - **High Quality**: Schedule is "looser" (longer gap).
   - **Low Quality**: Schedule is "tighter" (sooner review needed).
 
+User gets early access when the demo is available
+
 ### Calendar Integration
 - **Google Calendar Sync**:
   - Automatically push scheduled study/review sessions to the user's Google Calendar.
 - **Study Plan Scheduling**:
   - Allow users to map out an entire topic's study path.
   - "Learn Topic X intently" -> "Review Topic X (2 days)" -> "Review Topic X (1 week)".
+
+## 3. Implementation Details
+- **Payment Provider**: Stripe will be used for subscription payments.

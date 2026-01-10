@@ -9,6 +9,7 @@ import { supabase } from './lib/supabaseClient';
 import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
+import SubscriptionModal from './components/SubscriptionModal';
 import { Menu, User as UserIcon } from 'lucide-react';
 
 
@@ -86,6 +87,11 @@ export default function Home() {
     const articleContainerRef = useRef(null);
     const isResizingRef = useRef(false);
 
+    // Subscription & Limits
+    const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free', 'premium', 'pro'
+    const [monthlyArticleCount, setMonthlyArticleCount] = useState(0);
+    const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+
     // Auth & Sidebar State
     const [user, setUser] = useState(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -97,13 +103,21 @@ export default function Home() {
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
-            if (session?.user) fetchStudies(session.user.id);
+            if (session?.user) {
+                fetchStudies(session.user.id);
+                fetchProfile(session.user.id);
+            }
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
-            if (session?.user) fetchStudies(session.user.id);
-            else setStudies([]);
+            if (session?.user) {
+                fetchStudies(session.user.id);
+                fetchProfile(session.user.id);
+            } else {
+                setStudies([]);
+                setSubscriptionTier('free');
+            }
         });
 
         return () => subscription.unsubscribe();
@@ -116,6 +130,21 @@ export default function Home() {
             .eq('user_id', userId)
             .order('updated_at', { ascending: false });
         if (data) setStudies(data);
+    };
+
+    const fetchProfile = async (userId) => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('subscription_tier, monthly_article_count')
+            .eq('id', userId)
+            .single();
+
+        if (data) {
+            setSubscriptionTier(data.subscription_tier || 'free');
+            setMonthlyArticleCount(data.monthly_article_count || 0);
+        } else if (error && error.code === 'PGRST116') {
+            // Profile doesn't exist yet, usually handled by trigger but good fallback
+        }
     };
 
     const handleLogout = async () => {
@@ -460,6 +489,26 @@ export default function Home() {
             }
 
             if (!articleContent) {
+                // CHECK LIMIT BEFORE GENERATING
+                // CHECK LIMIT BEFORE GENERATING
+                // Free: 20 Total (but only 5 in Mind Map mode), Premium: 100, Pro: 1000
+                const LIMITS = { free: 20, premium: 100, pro: 1000 };
+                const currentLimit = LIMITS[subscriptionTier] || 20;
+
+                // Specific Check for Free Tier in Mind Map Mode
+                if (subscriptionTier === 'free' && isPlanMode && monthlyArticleCount >= 5) {
+                    alert("Free Plan Limit: You can only generate 5 articles in Mind Map mode. Upgrade for more!");
+                    setIsLoading(false);
+                    setIsSubscriptionModalOpen(true);
+                    return "Limit reached";
+                }
+
+                if (monthlyArticleCount >= currentLimit) {
+                    setIsLoading(false);
+                    setIsSubscriptionModalOpen(true);
+                    return "Limit reached";
+                }
+
                 const response = await fetch(GROQ_API_URL, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
@@ -578,19 +627,42 @@ export default function Home() {
             }
 
             setIsLoading(false);
+
+            // Increment count if we successfully generated a NEW article
+            if (!articleContent && user) {
+                setMonthlyArticleCount(prev => prev + 1);
+                // In real app, sync this counter to DB
+                // supabase.from('profiles').update({ monthly_article_count: monthlyArticleCount + 1 }).eq('id', user.id);
+            }
+
             return articleContent;
         } catch (error) {
             console.error('Error generating article:', error);
             setCurrentArticle('Failed to generate article. Please try again.');
             setIsLoading(false);
         }
-    }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent, notesText, phase, user]);
+    }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent, notesText, phase, user, subscriptionTier, monthlyArticleCount]);
 
     const handleTopicSubmit = async (e) => {
         e.preventDefault();
         if (!currentTopic.trim()) return;
 
         if (isPlanMode) {
+            // Check Mind Map Limits
+            // Free: 1 Map, Premium: 20 Maps, Pro: Unlimited
+            const MAP_LIMITS = { free: 1, premium: 20, pro: 999999 };
+            const currentMapLimit = MAP_LIMITS[subscriptionTier] || 1;
+
+            // Count existing mind maps
+            // We need to check the studies list. `studies` is available in state.
+            const existingMaps = studies.filter(s => s.session_data?.isPlanMode).length;
+
+            if (existingMaps >= currentMapLimit) {
+                alert(`Plan Limit Reached: You can create max ${currentMapLimit} Mind Map(s) on your current plan.`);
+                setIsSubscriptionModalOpen(true);
+                return;
+            }
+
             await generateStudyPlan(currentTopic);
             setPhase('study-plan');
         } else {
@@ -799,6 +871,17 @@ export default function Home() {
                 nodes: prev.nodes.map(n => n.id === prev.currentNodeId ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle } : n)
             }));
         }
+
+        // --- RESTRICTION CHECK: Mind Map Expansion ---
+        // If clicking a node that does NOT have an article yet (meaning it's a new exploration/expansion)
+        // check if user is on FREE tier.
+
+        // OLD RULE: Block all expansion.
+        // NEW RULE: Allow up to 5 articles. (Handled in generateArticle)
+
+        // So we remove the strict block here and rely on the count check in generateArticle.
+        // However, we might want to warn them if they are close?
+        // For now, let generateArticle handle the limit.
 
         setMindMapData(prev => ({ ...prev, currentNodeId: node.id }));
 
@@ -1562,10 +1645,26 @@ export default function Home() {
                         onBack={() => currentTopic ? setPhase('study') : setPhase('topic-selection')}
                         onDeleteStudy={handleDeleteStudy}
                         onLogout={handleLogout}
+                        subscriptionTier={subscriptionTier}
+                        onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
                     />
                 );
             default: return null;
         }
+    };
+
+    // --- Subscription Handlers ---
+    const handleUpgrade = async (tier) => {
+        // Mocking the upgrade for demo purposes
+        setSubscriptionTier(tier);
+        if (user) {
+            await supabase
+                .from('profiles')
+                .update({ subscription_tier: tier })
+                .eq('id', user.id);
+        }
+        setIsSubscriptionModalOpen(false);
+        alert(`Successfully upgraded to ${tier.charAt(0).toUpperCase() + tier.slice(1)}! Enjoy your new features.`);
     };
 
     return (
@@ -1584,6 +1683,12 @@ export default function Home() {
                 isOpen={isAuthModalOpen}
                 onClose={() => setIsAuthModalOpen(false)}
                 onAuthSuccess={() => setIsAuthModalOpen(false)}
+            />
+            <SubscriptionModal
+                isOpen={isSubscriptionModalOpen}
+                onClose={() => setIsSubscriptionModalOpen(false)}
+                currentTier={subscriptionTier}
+                onUpgrade={handleUpgrade}
             />
         </>
     );
