@@ -4,7 +4,7 @@ import styles from './AccountView.module.css';
 import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, onOpenSubscription }) {
+export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription }) {
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [newName, setNewName] = useState(user?.user_metadata?.full_name || '');
@@ -136,7 +136,7 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
 
                     {/* Subscription Section inside the card for better layout */}
                     <div className={styles.subscriptionSection} style={{ marginTop: '1.5rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                             <div>
                                 <span className={styles.statLabel}>Current Plan</span>
                                 <h3 style={{ textTransform: 'capitalize', color: '#1e293b' }}>
@@ -160,6 +160,48 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                                 </button>
                             )}
                         </div>
+
+                        {/* Usage Bars */}
+                        <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {/* Article Usage */}
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.3rem', color: '#64748b' }}>
+                                    <span>Monthly Articles</span>
+                                    <span>{monthlyArticleCount} / {subscriptionTier === 'free' ? 20 : subscriptionTier === 'premium' ? 100 : 1000}</span>
+                                </div>
+                                <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div
+                                        style={{
+                                            height: '100%',
+                                            width: `${Math.min(100, (monthlyArticleCount / (subscriptionTier === 'free' ? 20 : subscriptionTier === 'premium' ? 100 : 1000)) * 100)}%`,
+                                            background: subscriptionTier === 'free' ? '#10b981' : '#3b82f6',
+                                            transition: 'width 0.5s ease'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Mind Map Usage */}
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.3rem', color: '#64748b' }}>
+                                    <span>Mind Maps</span>
+                                    <span>{studies ? studies.length : 0} / {subscriptionTier === 'free' ? 1 : subscriptionTier === 'premium' ? 20 : '∞'}</span>
+                                </div>
+                                {subscriptionTier !== 'pro' && (
+                                    <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <div
+                                            style={{
+                                                height: '100%',
+                                                width: `${Math.min(100, ((studies ? studies.length : 0) / (subscriptionTier === 'free' ? 1 : 20)) * 100)}%`,
+                                                background: subscriptionTier === 'free' ? '#10b981' : '#3b82f6',
+                                                transition: 'width 0.5s ease'
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 

@@ -509,51 +509,64 @@ export default function Home() {
                     return "Limit reached";
                 }
 
-                const response = await fetch(GROQ_API_URL, {
+                // Call Secure Backend API
+                const response = await fetch('/api/generate', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        model: 'llama-3.3-70b-versatile',
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            {
-                                role: 'user',
-                                content: (fileContent && isPlanMode)
-                                    ? (() => {
-                                        // Check if this topic matches an initial node from the Mind Map
-                                        // We assume initial nodes (level 0 or 1) are directly from the file structure
-                                        const isInitialNode = currentMindMap.nodes.some(n =>
-                                            n.label.toLowerCase() === topic.toLowerCase() &&
-                                            n.level <= 1 // Only enforce strict file context for main chapters/topics
-                                        );
+                        topic: (fileContent && isPlanMode)
+                            ? (() => {
+                                // (Keep existing prompt logic logic, it's just passing the 'topic' string to backend)
+                                // Wait, the backend logic expects the FULL prompt in 'topic' if we are doing the "user" role content?
+                                // OR we pass the raw topic and let backend handle?
+                                // My API route expects 'topic' and puts it in 'user' content. 
+                                // So I should generate the rich prompt HERE and pass it as 'topic' to the API.
+                                const isInitialNode = currentMindMap.nodes.some(n =>
+                                    n.label.toLowerCase() === topic.toLowerCase() &&
+                                    n.level <= 1
+                                );
 
-                                        if (isInitialNode) {
-                                            return `Topic to explain: "${topic}"\n\n` +
-                                                `CONTEXT FROM UPLOADED DOCUMENT: ${fileContent.slice(0, 25000)}\n\n` +
-                                                `CRITICAL INSTRUCTION: You represent the specific chapter/section "${topic}" from the uploaded document. ` +
-                                                `Your goal is to teach the concepts EXACTLY as they are presented in this chapter of the file. ` +
-                                                `DO NOT summarize the whole book. DO NOT teach generic information about "${topic}" if it differs from the book's approach. ` +
-                                                `If the book has a specific example or explanation style for this chapter, use it. ` +
-                                                `If the section is short, explain it fully using the document's content.`;
-                                        } else {
-                                            // For deeper exploration/sub-questions, allow more flexibility but still reference context
-                                            return `Topic to explain: "${topic}"\n\n` +
-                                                `CONTEXT FROM UPLOADED DOCUMENT: ${fileContent.slice(0, 15000)}\n\n` + // Less context needed for specific deep dives
-                                                `INSTRUCTIONS: Explain "${topic}". You may use the document context if relevant, but since this is a specific exploration question, ` +
-                                                `you are free to use external factual knowledge to explain the concept clearly.`;
-                                        }
-                                    })()
-                                    : topic
-                            }
-                        ],
-                        temperature: 0.7,
-                        max_tokens: 2000,
+                                if (isInitialNode) {
+                                    return `Topic to explain: "${topic}"\n\n` +
+                                        `CONTEXT FROM UPLOADED DOCUMENT: ${fileContent.slice(0, 25000)}\n\n` +
+                                        `CRITICAL INSTRUCTION: You represent the specific chapter/section "${topic}" from the uploaded document. ` +
+                                        `Your goal is to teach the concepts EXACTLY as they are presented in this chapter of the file. ` +
+                                        `DO NOT summarize the whole book. DO NOT teach generic information about "${topic}" if it differs from the book's approach. ` +
+                                        `If the book has a specific example or explanation style for this chapter, use it. ` +
+                                        `If the section is short, explain it fully using the document's content.`;
+                                } else {
+                                    return `Topic to explain: "${topic}"\n\n` +
+                                        `CONTEXT FROM UPLOADED DOCUMENT: ${fileContent.slice(0, 15000)}\n\n` +
+                                        `INSTRUCTIONS: Explain "${topic}". You may use the document context if relevant, but since this is a specific exploration question, ` +
+                                        `you are free to use external factual knowledge to explain the concept clearly.`;
+                                }
+                            })()
+                            : topic,
+                        systemPrompt: systemPrompt,
+                        userId: user.id,
+                        planMode: isPlanMode,
+                        model: 'llama-3.3-70b-versatile'
                     }),
                 });
 
-                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                if (!response.ok) {
+                    const errData = await response.json();
+                    if (response.status === 403) {
+                        setIsLoading(false);
+                        alert(errData.error || "Usage limit reached.");
+                        setIsSubscriptionModalOpen(true);
+                        return "Limit reached";
+                    }
+                    throw new Error(errData.error || `API error: ${response.status}`);
+                }
+
                 const data = await response.json();
-                articleContent = data.choices[0]?.message?.content || 'Failed to generate article.';
+                articleContent = data.content;
+
+                // Update local Usage Count to match server
+                if (data.usage) {
+                    setMonthlyArticleCount(data.usage.current);
+                }
 
                 // Cache it
                 if (user && !fileContent && articleContent.length > 100) {
@@ -1646,6 +1659,7 @@ export default function Home() {
                         onDeleteStudy={handleDeleteStudy}
                         onLogout={handleLogout}
                         subscriptionTier={subscriptionTier}
+                        monthlyArticleCount={monthlyArticleCount}
                         onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
                     />
                 );
