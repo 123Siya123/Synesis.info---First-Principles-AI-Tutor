@@ -20,11 +20,24 @@ if (!supabaseServiceKey) {
     throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY - required for server-side profile access');
 }
 
+// Debug: Log key info (safe - only shows prefix, not full key)
+console.log('Supabase URL:', supabaseUrl);
+console.log('Service Key loaded:', supabaseServiceKey ? `Yes (${supabaseServiceKey.length} chars, starts with ${supabaseServiceKey.substring(0, 10)}...)` : 'No');
+
+// Service Role keys are typically longer than anon keys
+// Anon keys are ~200 chars, Service Role keys are ~200+ chars but have different payload
+// Both start with 'eyJ' (base64 encoded JWT)
+
 // Use the Service Role Key for server-side operations.
 // This bypasses RLS policies, which is necessary because the API route
 // doesn't have the user's authenticated session context.
 // We rely on the userId being validated and passed from the authenticated client.
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+        autoRefreshToken: false,
+        persistSession: false
+    }
+});
 
 export async function POST(request) {
     const { topic, systemPrompt, userId, model, planMode } = await request.json();
