@@ -445,6 +445,16 @@ export default function Home() {
         setFloatingQA(newFloatingQA);
     }, [notesText]);
 
+    // Helper to get or create guest ID
+    const getGuestId = () => {
+        let guestId = localStorage.getItem('guestId');
+        if (!guestId) {
+            guestId = crypto.randomUUID();
+            localStorage.setItem('guestId', guestId);
+        }
+        return guestId;
+    };
+
     // Generate article
     const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT) => {
         // Sync current state to Mind Map before navigating away
@@ -506,18 +516,20 @@ export default function Home() {
                 const currentLimit = LIMITS[subscriptionTier] || 20;
 
                 // Specific Check for Free Tier in Mind Map Mode
-                if (subscriptionTier === 'free' && isPlanMode && monthlyArticleCount >= 5) {
+                if (user && subscriptionTier === 'free' && isPlanMode && monthlyArticleCount >= 5) {
                     alert("Free Plan Limit: You can only generate 5 articles in Mind Map mode. Upgrade for more!");
                     setIsLoading(false);
                     setIsSubscriptionModalOpen(true);
                     return "Limit reached";
                 }
 
-                if (monthlyArticleCount >= currentLimit) {
+                if (user && monthlyArticleCount >= currentLimit) {
                     setIsLoading(false);
                     setIsSubscriptionModalOpen(true);
                     return "Limit reached";
                 }
+
+                const guestId = !user ? getGuestId() : null;
 
                 // Call Secure Backend API
                 const response = await fetch('/api/generate', {
@@ -553,7 +565,8 @@ export default function Home() {
                             })()
                             : topic,
                         systemPrompt: systemPrompt,
-                        userId: user.id,
+                        userId: user ? user.id : null,
+                        guestId: guestId,
                         planMode: isPlanMode,
                         model: 'llama-3.3-70b-versatile'
                     }),
@@ -563,8 +576,13 @@ export default function Home() {
                     const errData = await response.json();
                     if (response.status === 403) {
                         setIsLoading(false);
-                        alert(errData.error || "Usage limit reached.");
-                        setIsSubscriptionModalOpen(true);
+                        // Handle Guest Restrictions specifically
+                        if (!user && (errData.reason === 'article_limit' || errData.reason === 'mindmap_locked')) {
+                            setIsAuthModalOpen(true);
+                        } else {
+                            alert(errData.error || "Usage limit reached.");
+                            setIsSubscriptionModalOpen(true);
+                        }
                         return "Limit reached";
                     }
                     throw new Error(errData.error || `API error: ${response.status}`);
@@ -661,7 +679,7 @@ export default function Home() {
             return articleContent;
         } catch (error) {
             console.error('Error generating article:', error);
-            setCurrentArticle('Failed to generate article. Please try again.');
+            setCurrentArticle('Failed to generate article. View logs or try again.');
             setIsLoading(false);
         }
     }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent, notesText, phase, user, subscriptionTier, monthlyArticleCount]);
@@ -669,6 +687,13 @@ export default function Home() {
     const handleTopicSubmit = async (e) => {
         e.preventDefault();
         if (!currentTopic.trim()) return;
+
+        // Guest Check for Mind Map
+        if (isPlanMode && !user) {
+            // alert("Sign up required to create Study Plans.");
+            setIsAuthModalOpen(true);
+            return;
+        }
 
         if (isPlanMode) {
             // Check Mind Map Limits
@@ -680,7 +705,7 @@ export default function Home() {
             // We need to check the studies list. `studies` is available in state.
             const existingMaps = studies.filter(s => s.session_data?.isPlanMode).length;
 
-            if (existingMaps >= currentMapLimit) {
+            if (user && existingMaps >= currentMapLimit) {
                 alert(`Plan Limit Reached: You can create max ${currentMapLimit} Mind Map(s) on your current plan.`);
                 setIsSubscriptionModalOpen(true);
                 return;

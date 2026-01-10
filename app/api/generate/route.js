@@ -2,6 +2,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// ... imports
+
 export async function POST(request) {
     // Create Supabase client INSIDE the handler to ensure env vars are available at runtime
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,7 +17,7 @@ export async function POST(request) {
         }
     });
 
-    const { topic, systemPrompt, userId, model, planMode } = await request.json();
+    const { topic, systemPrompt, userId, guestId, model, planMode } = await request.json();
 
     const apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY;
 
@@ -23,17 +25,100 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Server misconfiguration: Missing API Key' }, { status: 500 });
     }
 
-    // 1. Verify User
-    // Ideally we verify the auth token from headers, but for MVP we trust the passed userId if we trust the client? NO.
-    // We must verify the session.
-    // In Next.js App Router, we can get the session cookies.
-    // But for simplicity with the current setup, let's fetch the profile by ID and assume the request is valid 
-    // (Actual production app would verify the Auth Header Bearer token).
-    // Let's stick to checking the database limits for the given userId.
-
+    // --- GUEST HANDLING ---
     if (!userId) {
-        return NextResponse.json({ error: 'User ID required' }, { status: 400 });
+        if (!guestId) {
+            return NextResponse.json({ error: 'User ID or Guest ID required' }, { status: 400 });
+        }
+
+        // 1. Block Mind Maps for Guests
+        if (planMode) {
+            return NextResponse.json({
+                error: 'Guest limit reached',
+                reason: 'mindmap_locked',
+                message: 'Mind Maps are available for registered users only.'
+            }, { status: 403 });
+        }
+
+        // 2. Check Guest Limits (1 article max)
+        const { data: guestData, error: guestError } = await supabase
+            .from('guest_tracking')
+            .select('*')
+            .eq('guest_id', guestId)
+            .single();
+
+        if (guestError && guestError.code !== 'PGRST116') { // PGRST116 = not found
+            console.error('Guest tracking error:', guestError);
+            return NextResponse.json({ error: 'Database error checking guest limits' }, { status: 500 });
+        }
+
+        const guestCount = guestData?.article_count || 0;
+
+        if (guestCount >= 1) {
+            return NextResponse.json({
+                error: 'Guest limit reached',
+                reason: 'article_limit',
+                current: guestCount,
+                max: 1
+            }, { status: 403 });
+        }
+
+        // Proceed to Generate for Guest...
+        try {
+            // Call Groq (Same logic as below)
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: model || 'llama-3.3-70b-versatile',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: topic }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 2000
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(`Groq API Error: ${errData.error?.message || response.statusText}`);
+            }
+
+            const data = await response.json();
+            const articleContent = data.choices[0]?.message?.content;
+
+            // Increment Guest Usage
+            const { error: upsertError } = await supabase
+                .from('guest_tracking')
+                .upsert({
+                    guest_id: guestId,
+                    article_count: guestCount + 1,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (upsertError) console.error('Failed to update guest usage:', upsertError);
+
+            return NextResponse.json({
+                content: articleContent,
+                usage: {
+                    current: guestCount + 1,
+                    max: 1,
+                    isGuest: true
+                }
+            });
+
+        } catch (error) {
+            console.error('Guest Generation failure:', error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
     }
+
+    // --- AUTHENTICATED USER HANDLING ---
+    // (Existing logic below...)
 
     try {
         // 2. Fetch User Profile for Limits
