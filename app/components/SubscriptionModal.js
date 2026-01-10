@@ -21,9 +21,9 @@ export default function SubscriptionModal({ isOpen, onClose, currentTier = 'free
             // Simpler: Trigger the API route directly here.
             // Mapping Plans to Product IDs (provided by user)
             const PRODUCTS = {
-                'free': 'prod_TlY4CXlbc8Y17Z',
-                'premium': 'prod_TlY6cXhNYaQUes',
-                'pro': 'prod_TlY8yT0bZWyK7x'
+                'free': process.env.NEXT_PUBLIC_STRIPE_PRODUCT_ID_FREE || 'prod_TlY4CXlbc8Y17Z',
+                'premium': process.env.NEXT_PUBLIC_STRIPE_PRODUCT_ID_PREMIUM || 'prod_TlY6cXhNYaQUes',
+                'pro': process.env.NEXT_PUBLIC_STRIPE_PRODUCT_ID_PRO || 'prod_TlY8yT0bZWyK7x'
             };
 
             const productId = PRODUCTS[tier];
