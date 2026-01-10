@@ -16,14 +16,15 @@ if (!supabaseUrl) {
     throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
 }
 
-// Fallback to anon key if service key not set (MVP style), but Service Key is recommended for robust restriction
-// If we don't have service key in env, we might be limited. 
-// Let's check if we have it. If not, we use the Anon key but we must trust RLS.
-// Actually, for strict enforcement, we should use a Service Key. 
-// Assuming the user has one or I can add it. 
-// For now, I will use the Anon key but perform checks on the server.
+if (!supabaseServiceKey) {
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY - required for server-side profile access');
+}
 
-const supabase = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+// Use the Service Role Key for server-side operations.
+// This bypasses RLS policies, which is necessary because the API route
+// doesn't have the user's authenticated session context.
+// We rely on the userId being validated and passed from the authenticated client.
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 export async function POST(request) {
     const { topic, systemPrompt, userId, model, planMode } = await request.json();
