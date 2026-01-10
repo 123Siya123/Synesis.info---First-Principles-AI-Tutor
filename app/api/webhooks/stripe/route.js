@@ -39,18 +39,25 @@ export async function POST(req) {
 
                 if (userId && plan) {
                     console.log(`✅ Payment successful for user ${userId}. Upgrading to ${plan}.`);
-                    const { error } = await supabase
+                    // Use upsert to create profile if it doesn't exist (e.g. legacy users)
+                    const { data, error } = await supabase
                         .from('profiles')
-                        .update({
+                        .upsert({
+                            id: userId,
                             subscription_tier: plan,
                             subscription_status: 'active',
                             stripe_customer_id: customerId,
                             monthly_article_count: 0, // Reset usage on new subscription
-                            monthly_mind_map_count: 0
+                            monthly_mind_map_count: 0,
+                            updated_at: new Date().toISOString()
                         })
-                        .eq('id', userId);
+                        .select(); // Select to confirm the update happened
 
-                    if (error) console.error('Failed to update profile:', error);
+                    if (error) {
+                        console.error('Failed to update profile:', error);
+                    } else {
+                        console.log('Profile updated successfully:', data);
+                    }
                 } else {
                     console.warn('⚠️ Webhook received but missing metadata:', session.metadata);
                 }
