@@ -28,12 +28,26 @@ export async function POST(request) {
         }
     });
 
+    // Helper to return debug info with error
+    const returnError = (msg, status = 500, details = null) => {
+        return NextResponse.json({
+            error: msg,
+            details: details,
+            debug: {
+                message: "CHECK THIS AGAINST YOUR SUPABASE DASHBOARD",
+                keyUsedStart: supabaseServiceKey ? supabaseServiceKey.substring(0, 10) + "..." : "NONE",
+                // Check if it matches anon key pattern (usually same prefix, but good to inspect)
+                keyLength: supabaseServiceKey ? supabaseServiceKey.length : 0
+            }
+        }, { status });
+    };
+
     const { topic, systemPrompt, userId, model, planMode } = await request.json();
 
     const apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY;
 
     if (!apiKey) {
-        return NextResponse.json({ error: 'Server misconfiguration: Missing API Key' }, { status: 500 });
+        return returnError('Server misconfiguration: Missing API Key');
     }
 
     // 1. Verify User
@@ -76,17 +90,14 @@ export async function POST(request) {
 
             if (createError) {
                 console.error('Failed to create profile:', createError);
-                return NextResponse.json({
-                    error: `Failed to create user profile: ${createError.message || createError.code || JSON.stringify(createError)}`,
-                    details: createError
-                }, { status: 500 });
+                return returnError(`Failed to create user profile: ${createError.message || createError.code}`, 500, createError);
             }
 
             profile = newProfile;
             console.log('Successfully created profile for user:', userId);
         } else if (profileError) {
             console.error('Profile fetch error:', profileError);
-            return NextResponse.json({ error: 'Database error fetching profile.' }, { status: 500 });
+            return returnError('Database error fetching profile.', 500, profileError);
         }
 
         let { subscription_tier, monthly_article_count, last_reset_date, monthly_mind_map_count } = profile;
