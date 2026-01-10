@@ -18,33 +18,48 @@ function PaymentSuccessContent() {
             return;
         }
 
-        const finalizeSubscription = async () => {
-            // In a real app, strict verification of the session via API is needed here.
-            // But for MVP, we trust the flow and update the profile.
-            // SECURITY WARNING: A user could manually navigate here.
-            // Ideally, use a webhook to handle this securely.
-
+        const checkSubscriptionStatus = async () => {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    await supabase.from('profiles').update({
-                        subscription_tier: plan,
-                        subscription_status: 'active'
-                    }).eq('id', user.id);
-                    setStatus('success');
-
-                    // Auto-redirect after a few seconds
-                    setTimeout(() => router.push('/'), 3000);
-                } else {
-                    setStatus('error'); // User not logged in?
+                if (!user) {
+                    setStatus('error');
+                    return;
                 }
+
+                // Poll for profile update (Webhook processing)
+                let attempts = 0;
+                const maxAttempts = 10; // 20 seconds approx
+
+                const poll = setInterval(async () => {
+                    attempts++;
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('subscription_tier')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (profile?.subscription_tier === plan) {
+                        clearInterval(poll);
+                        setStatus('success');
+                        setTimeout(() => router.push('/'), 3000);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(poll);
+                        // Assume success but maybe slow webhook, or show message
+                        console.warn('Webhook took too long, redirecting anyway');
+                        setStatus('success');
+                        setTimeout(() => router.push('/'), 3000);
+                    }
+                }, 2000);
+
+                return () => clearInterval(poll);
+
             } catch (err) {
                 console.error(err);
                 setStatus('error');
             }
         };
 
-        finalizeSubscription();
+        checkSubscriptionStatus();
     }, [sessionId, plan, router]);
 
     return (

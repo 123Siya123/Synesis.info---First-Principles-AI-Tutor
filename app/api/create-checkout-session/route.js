@@ -1,6 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request) {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -9,6 +10,11 @@ export async function POST(request) {
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+    // Initialize Supabase Admin Client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     try {
         const body = await request.json();
@@ -21,7 +27,6 @@ export async function POST(request) {
         }
 
         // 1. Find the Price ID for the Product
-        // Stripe Checkout requires a Price ID (not Product ID) to create a session
         const prices = await stripe.prices.list({
             product: productId,
             active: true,
@@ -35,8 +40,23 @@ export async function POST(request) {
         const priceId = prices.data[0].id;
         console.log(`Found Price ID: ${priceId}`);
 
-        // 2. Create Checkout Session
-        const session = await stripe.checkout.sessions.create({
+        // 2. Check for existing Stripe Customer ID
+        let customerId = null;
+        if (userId) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('stripe_customer_id')
+                .eq('id', userId)
+                .single();
+
+            if (profile?.stripe_customer_id) {
+                customerId = profile.stripe_customer_id;
+                console.log(`Found existing Stripe Customer ID: ${customerId}`);
+            }
+        }
+
+        // 3. Create Checkout Session
+        const sessionPayload = {
             payment_method_types: ['card'],
             mode: 'subscription',
             line_items: [
@@ -52,7 +72,16 @@ export async function POST(request) {
                 plan: plan
             },
             client_reference_id: userId,
-        });
+        };
+
+        // Add customer if exists
+        if (customerId) {
+            sessionPayload.customer = customerId;
+            // When providing a customer, 'customer_email' should not be set (Stripe rule).
+            // We are not setting customer_email so this is fine.
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionPayload);
 
         return NextResponse.json({ url: session.url });
 

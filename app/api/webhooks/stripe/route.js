@@ -28,25 +28,25 @@ export async function POST(req) {
 
     // Handle the event
     try {
+        console.log(`🔔 Event received: ${event.type}`);
+
         switch (event.type) {
             case 'checkout.session.completed': {
                 const session = event.data.object;
-
-                // Extract metadata set during checkout creation
                 const userId = session.metadata?.userId;
                 const plan = session.metadata?.plan;
+                const customerId = session.customer;
 
                 if (userId && plan) {
                     console.log(`✅ Payment successful for user ${userId}. Upgrading to ${plan}.`);
-
-                    // Update user profile
                     const { error } = await supabase
                         .from('profiles')
                         .update({
                             subscription_tier: plan,
                             subscription_status: 'active',
-                            // Reset usage counters on upgrade? Optional, but good practice.
-                            // monthly_article_count: 0  // Keep usage or reset? Usually keep usage until billing cycle.
+                            stripe_customer_id: customerId,
+                            monthly_article_count: 0, // Reset usage on new subscription
+                            monthly_mind_map_count: 0
                         })
                         .eq('id', userId);
 
@@ -57,17 +57,81 @@ export async function POST(req) {
                 break;
             }
 
+            case 'invoice.payment_succeeded': {
+                const invoice = event.data.object;
+                const customerId = invoice.customer;
+
+                // Only handle subscription invoices
+                if (invoice.subscription) {
+                    console.log(`💸 Payment succeeded for customer ${customerId}. Renewing usage.`);
+                    // Find user by stripe_customer_id and reset usage
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({
+                            subscription_status: 'active',
+                            monthly_article_count: 0,
+                            monthly_mind_map_count: 0,
+                            last_reset_date: new Date().toISOString()
+                        })
+                        .eq('stripe_customer_id', customerId);
+
+                    if (error) console.error('Failed to update profile on renewal:', error);
+                }
+                break;
+            }
+
+            case 'invoice.payment_failed': {
+                const invoice = event.data.object;
+                const customerId = invoice.customer;
+
+                if (invoice.subscription) {
+                    console.warn(`❌ Payment failed for customer ${customerId}.`);
+                    const { error } = await supabase
+                        .from('profiles')
+                        .update({
+                            subscription_status: 'past_due' // or 'unpaid' relying on stripe settings
+                        })
+                        .eq('stripe_customer_id', customerId);
+
+                    if (error) console.error('Failed to update profile on payment failure:', error);
+                }
+                break;
+            }
+
             case 'customer.subscription.updated': {
-                // Handle renewals or downgrades
+                // Check if status changed explicitly (e.g. paused, resumed)
                 const subscription = event.data.object;
-                // Ideally we map stripe_customer_id to user_id in DB to handle this completely detached from metadata
+                const customerId = subscription.customer;
+                const status = subscription.status;
+
+                console.log(`🔄 Subscription updated for customer ${customerId}. Status: ${status}`);
+
+                // Map Stripe status to DB status
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        subscription_status: status
+                    })
+                    .eq('stripe_customer_id', customerId);
+
+                if (error) console.error('Failed to update profile on sub update:', error);
                 break;
             }
 
             case 'customer.subscription.deleted': {
-                // Handle cancellations
                 const subscription = event.data.object;
-                // Find user by customer ID and downgrade to free
+                const customerId = subscription.customer;
+
+                console.log(`🚫 Subscription deleted/canceled for customer ${customerId}.`);
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({
+                        subscription_tier: 'free',
+                        subscription_status: 'canceled'
+                    })
+                    .eq('stripe_customer_id', customerId);
+
+                if (error) console.error('Failed to update profile on cancel:', error);
                 break;
             }
 
