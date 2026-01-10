@@ -157,6 +157,16 @@ export default function Home() {
         if (currentTopic && user) {
             const currentStudyId = studies.find(s => s.topic === currentTopic)?.id;
             if (currentStudyId) {
+                // Sync current notes/state to the active node in mind map before saving
+                let currentMindMap = { ...mindMapData };
+                if (phase === 'study' && currentMindMap.currentNodeId !== null) {
+                    currentMindMap.nodes = currentMindMap.nodes.map(n =>
+                        n.id === currentMindMap.currentNodeId
+                            ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle }
+                            : n
+                    );
+                }
+
                 const sessionData = {
                     currentTopic,
                     currentArticle,
@@ -169,7 +179,7 @@ export default function Home() {
                     studyTime,
                     notesWidth,
                     isPlanMode,
-                    mindMapData,
+                    mindMapData: currentMindMap, // Use the synced mind map
                     mindMapColor,
                     isInverseGradient
                 };
@@ -388,6 +398,38 @@ export default function Home() {
 
     // Generate article
     const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT) => {
+        // Sync current state to Mind Map before navigating away
+        let currentMindMap = { ...mindMapData };
+        if (phase === 'study' && currentMindMap.currentNodeId !== null) {
+            currentMindMap.nodes = currentMindMap.nodes.map(n =>
+                n.id === currentMindMap.currentNodeId
+                    ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle }
+                    : n
+            );
+            setMindMapData(currentMindMap);
+        }
+
+        // Check if Topic Already Exists in Mind Map (Avoid Re-generation)
+        const normalizedTopic = topic.trim().toLowerCase();
+        const existingNode = currentMindMap.nodes.find(n => n.label.toLowerCase() === normalizedTopic);
+
+        if (existingNode && isSubArticle) {
+            const parentId = currentMindMap.currentNodeId;
+            let edges = [...currentMindMap.edges];
+            if (parentId && existingNode.id !== parentId) {
+                const edgeExists = edges.some(e =>
+                    (e.source === parentId && e.target === existingNode.id) ||
+                    (e.source === existingNode.id && e.target === parentId)
+                );
+                if (!edgeExists) {
+                    edges.push({ source: parentId, target: existingNode.id });
+                    setMindMapData(prev => ({ ...prev, edges }));
+                }
+            }
+            handleNodeClick(existingNode);
+            return existingNode.article;
+        }
+
         setIsLoading(true);
         try {
             // 1. Check Cache
@@ -421,7 +463,7 @@ export default function Home() {
                                     ? (() => {
                                         // Check if this topic matches an initial node from the Mind Map
                                         // We assume initial nodes (level 0 or 1) are directly from the file structure
-                                        const isInitialNode = mindMapData.nodes.some(n =>
+                                        const isInitialNode = currentMindMap.nodes.some(n =>
                                             n.label.toLowerCase() === topic.toLowerCase() &&
                                             n.level <= 1 // Only enforce strict file context for main chapters/topics
                                         );
@@ -479,20 +521,23 @@ export default function Home() {
             }
 
             if (isSubArticle && currentArticle) {
-                setArticleHistory(prev => [...prev, { title: currentArticleTitle, content: currentArticle, sourceTextForSubArticle, nodeId: mindMapData.currentNodeId }]);
+                setArticleHistory(prev => [...prev, { title: currentArticleTitle, content: currentArticle, sourceTextForSubArticle, nodeId: currentMindMap.currentNodeId }]);
             }
 
             setCurrentArticle(articleContent);
             setCurrentArticleTitle(extractedTitle);
 
+            // Clear notes for new topic as we act as if we switched
+            if (isSubArticle) setNotesText('');
+
             // Dynamic growth for Mind Map - ONLY IF it's a sub-article (exploration)
-            if (isPlanMode && isSubArticle && mindMapData.currentNodeId !== null) {
-                const parentId = mindMapData.currentNodeId;
-                const existingNode = mindMapData.nodes.find(n => n.label.toLowerCase() === extractedTitle.toLowerCase());
+            if (isPlanMode && isSubArticle && currentMindMap.currentNodeId !== null) {
+                const parentId = currentMindMap.currentNodeId;
+                const existingNode = currentMindMap.nodes.find(n => n.label.toLowerCase() === extractedTitle.toLowerCase());
 
                 if (existingNode) {
                     // Check if edge already exists
-                    const edgeExists = mindMapData.edges.some(e => (e.source === parentId && e.target === existingNode.id) || (e.source === existingNode.id && e.target === parentId));
+                    const edgeExists = currentMindMap.edges.some(e => (e.source === parentId && e.target === existingNode.id) || (e.source === existingNode.id && e.target === parentId));
                     if (!edgeExists && existingNode.id !== parentId) {
                         setMindMapData(prev => ({
                             ...prev,
@@ -501,12 +546,13 @@ export default function Home() {
                     }
                 } else {
                     const newNodeId = `node-${Date.now()}`;
-                    const parentNode = mindMapData.nodes.find(n => n.id === parentId);
+                    const parentNode = currentMindMap.nodes.find(n => n.id === parentId);
                     const newLevel = parentNode ? parentNode.level + 1 : 1;
 
                     setMindMapData(prev => ({
-                        ...prev,
-                        nodes: [...prev.nodes, {
+                        // Use locally updated nodes (with synced notes) as base
+                        ...currentMindMap,
+                        nodes: [...currentMindMap.nodes, {
                             id: newNodeId,
                             label: extractedTitle,
                             level: newLevel,
@@ -515,7 +561,7 @@ export default function Home() {
                             articleTitle: extractedTitle,
                             notes: ''
                         }],
-                        edges: [...prev.edges, { source: parentId, target: newNodeId }],
+                        edges: [...currentMindMap.edges, { source: parentId, target: newNodeId }],
                         currentNodeId: newNodeId // Automatically switch to the new discovered node
                     }));
                 }
@@ -528,7 +574,7 @@ export default function Home() {
             setCurrentArticle('Failed to generate article. Please try again.');
             setIsLoading(false);
         }
-    }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent]); // Added dependencies for generateArticle
+    }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent, notesText, phase, user]);
 
     const handleTopicSubmit = async (e) => {
         e.preventDefault();
@@ -635,6 +681,15 @@ export default function Home() {
         if (currentTopic && user) {
             const currentStudyId = studies.find(s => s.topic === currentTopic)?.id;
             if (currentStudyId) {
+                let currentMindMap = { ...mindMapData };
+                if (phase === 'study' && currentMindMap.currentNodeId !== null) {
+                    currentMindMap.nodes = currentMindMap.nodes.map(n =>
+                        n.id === currentMindMap.currentNodeId
+                            ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle }
+                            : n
+                    );
+                }
+
                 const sessionData = {
                     currentTopic,
                     currentArticle,
@@ -647,7 +702,7 @@ export default function Home() {
                     studyTime,
                     notesWidth,
                     isPlanMode,
-                    mindMapData,
+                    mindMapData: currentMindMap,
                     mindMapColor,
                     isInverseGradient
                 };
