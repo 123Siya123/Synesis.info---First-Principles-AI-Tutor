@@ -4,19 +4,26 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request) {
-    if (!process.env.STRIPE_SECRET_KEY) {
-        console.error('STRIPE_SECRET_KEY is missing');
-        return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 });
-    }
-
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-    // Initialize Supabase Admin Client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
+    // Initialize inside try-catch to handle missing keys gracefully
     try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error('STRIPE_SECRET_KEY is missing');
+            throw new Error('Server misconfiguration: Missing Stripe Key');
+        }
+
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            console.error('Supabase configuration missing', {
+                url: !!supabaseUrl,
+                key: !!supabaseServiceKey
+            });
+            throw new Error('Server misconfiguration: Missing Supabase Admin Keys');
+        }
+
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const body = await request.json();
         const { plan, userId, productId } = body; // 'premium' or 'pro'
 
