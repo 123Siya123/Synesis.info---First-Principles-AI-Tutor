@@ -147,6 +147,15 @@ export default function Home() {
         }
     };
 
+    // Refresh profile on window focus to catch updates from payment success page redirect
+    useEffect(() => {
+        const onFocus = () => {
+            if (user) fetchProfile(user.id);
+        };
+        window.addEventListener('focus', onFocus);
+        return () => window.removeEventListener('focus', onFocus);
+    }, [user]);
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         setIsSidebarOpen(false);
