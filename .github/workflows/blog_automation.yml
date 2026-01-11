@@ -13,5 +13,20 @@ jobs:
       - name: Trigger Blog API endpoint
         run: |
           echo "Triggering blog generation..."
-          curl -L -X GET https://synesis.info/api/cron/blog
-          echo "Trigger sent."
+          # -v: verbose (see headers)
+          # -f: fail on HTTP errors (4xx, 5xx)
+          # --show-error: show error message if it fails
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" https://synesis.info/api/cron/blog)
+          
+          echo "Response Body:"
+          echo "$response"
+          
+          # Extract status code
+          http_status=$(echo "$response" | tail -n1 | cut -d':' -f2)
+          
+          if [ "$http_status" -ne 200 ]; then
+            echo "Error: API returned status $http_status"
+            exit 1
+          fi
+          
+          echo "Success!"
