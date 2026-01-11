@@ -1707,6 +1707,7 @@ export default function Home() {
                         subscriptionTier={subscriptionTier}
                         monthlyArticleCount={monthlyArticleCount}
                         onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
+                        onRefreshProfile={() => user && fetchProfile(user.id)}
                     />
                 );
             default: return null;

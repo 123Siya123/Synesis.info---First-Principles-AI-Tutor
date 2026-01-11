@@ -1,14 +1,28 @@
 
 import { useState, useEffect } from 'react';
 import styles from './AccountView.module.css';
-import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft } from 'lucide-react';
+import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription }) {
+export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription, onRefreshProfile }) {
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [newName, setNewName] = useState(user?.user_metadata?.full_name || '');
     const [stats, setStats] = useState({ totalTime: 0, topicCount: 0 });
+
+    useEffect(() => {
+        // Also refresh on mount to be sure
+        if (onRefreshProfile) onRefreshProfile();
+    }, []);
+
+    const handleRefresh = async () => {
+        setIsRefreshing(true);
+        if (onRefreshProfile) await onRefreshProfile();
+        // Fake delay to show spinner interaction
+        await new Promise(r => setTimeout(r, 500));
+        setIsRefreshing(false);
+    };
 
     useEffect(() => {
         if (studies) {
@@ -152,6 +166,9 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                                 <span className={styles.statLabel}>Current Plan</span>
                                 <h3 style={{ textTransform: 'capitalize', color: '#1e293b' }}>
                                     {subscriptionTier === 'pro' ? 'Pro 🚀' : subscriptionTier === 'premium' ? 'Premium 🌟' : 'Free 🌱'}
+                                    <button onClick={handleRefresh} style={{ background: 'none', border: 'none', cursor: 'pointer', marginLeft: '8px', padding: 0 }} title="Refresh Subscription Status">
+                                        <RefreshCw size={14} className={isRefreshing ? styles.spin : ''} color="#64748b" />
+                                    </button>
                                 </h3>
                             </div>
                             {subscriptionTier !== 'pro' && (

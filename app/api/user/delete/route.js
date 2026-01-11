@@ -26,17 +26,23 @@ export async function POST(request) {
 
         if (profile?.stripe_customer_id) {
             // 2. Cancel Subscription in Stripe
-            const subscriptions = await stripe.subscriptions.list({
-                customer: profile.stripe_customer_id,
-                status: 'active'
-            });
+            try {
+                const subscriptions = await stripe.subscriptions.list({
+                    customer: profile.stripe_customer_id,
+                    status: 'active'
+                });
 
-            for (const sub of subscriptions.data) {
-                await stripe.subscriptions.cancel(sub.id);
+                for (const sub of subscriptions.data) {
+                    await stripe.subscriptions.cancel(sub.id);
+                }
+
+                // Optionally delete customer object in Stripe:
+                // await stripe.customers.del(profile.stripe_customer_id);
+            } catch (stripeError) {
+                // If the customer exists in Test mode but we have Live keys (or vice versa), this will fail.
+                // We should log it but NOT stop the account deletion process.
+                console.warn('Stripe cleanup failed (continuing with DB deletion):', stripeError.message);
             }
-
-            // Optionally delete customer object in Stripe:
-            // await stripe.customers.del(profile.stripe_customer_id);
         }
 
         // 3. Delete User from Supabase Auth (This is the "Delete Account" action)
