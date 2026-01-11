@@ -45,7 +45,31 @@ export async function POST(request) {
             }
         }
 
-        // 3. Delete User from Supabase Auth (This is the "Delete Account" action)
+        // 3. Manually Delete Public Data (Foreign Key References)
+        // Since we don't have ON DELETE CASCADE setup on the DB, we must manually clean up.
+
+        // A. Delete Generated Articles
+        const { error: articlesError } = await supabase
+            .from('generated_articles')
+            .delete()
+            .eq('user_id', userId);
+        if (articlesError) console.warn('Error cleaning articles:', articlesError);
+
+        // B. Delete Studies
+        const { error: studiesError } = await supabase
+            .from('studies')
+            .delete()
+            .eq('user_id', userId);
+        if (studiesError) console.warn('Error cleaning studies:', studiesError);
+
+        // C. Delete Profile
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', userId);
+        if (profileError) console.warn('Error cleaning profile:', profileError);
+
+        // 4. Delete User from Supabase Auth
         // This usually cascades to public tables if foreign keys are set up with ON DELETE CASCADE
         const { error: deleteError } = await supabase.auth.admin.deleteUser(userId);
 
