@@ -1,6 +1,6 @@
-
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getRotatedGroqKey } from '../../lib/getApiKey';
 
 // ... imports
 
@@ -19,7 +19,7 @@ export async function POST(request) {
 
     const { topic, systemPrompt, userId, guestId, model, planMode } = await request.json();
 
-    const apiKey = process.env.GROQ_API_KEY || process.env.NEXT_PUBLIC_GROQ_API_KEY;
+    const apiKey = getRotatedGroqKey();
 
     if (!apiKey) {
         return NextResponse.json({ error: 'Server misconfiguration: Missing API Key' }, { status: 500 });

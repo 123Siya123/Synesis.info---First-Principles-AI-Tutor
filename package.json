@@ -12,6 +12,7 @@
     "@stripe/stripe-js": "^8.6.1",
     "@supabase/supabase-js": "^2.90.1",
     "framer-motion": "^12.24.8",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.562.0",
     "mammoth": "^1.11.0",
     "micro": "^10.0.1",
