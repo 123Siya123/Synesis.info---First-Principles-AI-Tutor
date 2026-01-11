@@ -13,15 +13,16 @@ jobs:
       - name: Trigger Blog API endpoint
         run: |
           echo "Triggering blog generation..."
-          # -v: verbose (see headers)
-          # -f: fail on HTTP errors (4xx, 5xx)
-          # --show-error: show error message if it fails
-          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" https://synesis.info/api/cron/blog)
+          # -L: Follow redirects (Fixes 301 error)
+          # -s: Silent (no progress bar)
+          # -w: Write status code at end
+          # --max-time 300: Wait up to 5 mins for AI generation
+          response=$(curl -L -s -w "\nHTTP_STATUS:%{http_code}" --max-time 300 https://www.synesis.info/api/cron/blog)
           
           echo "Response Body:"
           echo "$response"
           
-          # Extract status code
+          # Extract status code (last line)
           http_status=$(echo "$response" | tail -n1 | cut -d':' -f2)
           
           if [ "$http_status" -ne 200 ]; then
@@ -29,4 +30,4 @@ jobs:
             exit 1
           fi
           
-          echo "Success!"
+          echo "Success! Blog post generated."
