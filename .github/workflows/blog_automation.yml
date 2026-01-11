@@ -1,0 +1,17 @@
+name: Blog Automation
+
+on:
+  schedule:
+    # Runs at 9:00 AM and 9:00 PM UTC every day (2 posts/day)
+    - cron: '0 9,21 * * *'
+  workflow_dispatch: # Allows you to manually trigger it from the "Actions" tab
+
+jobs:
+  trigger-blog-generation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Blog API endpoint
+        run: |
+          echo "Triggering blog generation..."
+          curl -L -X GET https://synesis.info/api/cron/blog
+          echo "Trigger sent."
