@@ -371,12 +371,25 @@ export async function GET(request) {
             throw new Error("Failed to parse generated content as JSON");
         }
 
+        // --- Slug Deduplication Logic ---
+        let finalSlug = generatedPost.slug;
+        const { data: existingSlug } = await supabase
+            .from('blog_posts')
+            .select('slug')
+            .eq('slug', finalSlug)
+            .single();
+
+        if (existingSlug) {
+            // Append random suffix to make it unique
+            finalSlug = `${finalSlug}-${Math.floor(Math.random() * 10000)}`;
+        }
+
         // 3. Save to Database
         const { error: insertError } = await supabase
             .from('blog_posts')
             .insert({
                 title: generatedPost.title,
-                slug: generatedPost.slug, // You might want to ensure uniqueness or append logic
+                slug: finalSlug,
                 content: generatedPost.content,
                 excerpt: generatedPost.excerpt,
                 seo_keywords: generatedPost.keywords,
@@ -384,7 +397,6 @@ export async function GET(request) {
             });
 
         if (insertError) {
-            // Handle duplicate slug error specifically?
             console.error("Error inserting post:", insertError);
             throw insertError;
         }
