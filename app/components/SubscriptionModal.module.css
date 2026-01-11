@@ -296,3 +296,35 @@
     background: #334155;
     border-color: #475569;
 }
+
+.currencySelector {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.currencySelector label {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.currencySelect {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: #334155;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+}
+
+:global(body.dark-mode) .currencySelect {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+}
