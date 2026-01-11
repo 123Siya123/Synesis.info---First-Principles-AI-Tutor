@@ -371,34 +371,47 @@ export async function GET(request) {
             throw new Error("Failed to parse generated content as JSON");
         }
 
-        // --- Slug Deduplication Logic ---
-        let finalSlug = generatedPost.slug;
-        const { data: existingSlug } = await supabase
-            .from('blog_posts')
-            .select('slug')
-            .eq('slug', finalSlug)
-            .single();
+        // 3. Save to Database with loop for collision handling
+        let insertedPost = null;
+        let attempt = 0;
+        let currentSlug = generatedPost.slug;
 
-        if (existingSlug) {
-            // Append random suffix to make it unique
-            finalSlug = `${finalSlug}-${Math.floor(Math.random() * 10000)}`;
+        while (!insertedPost && attempt < 3) {
+            attempt++;
+
+            // Try insert
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .insert({
+                    title: generatedPost.title,
+                    slug: currentSlug,
+                    content: generatedPost.content,
+                    excerpt: generatedPost.excerpt,
+                    seo_keywords: generatedPost.keywords,
+                    published_at: new Date().toISOString()
+                })
+                .select()
+                .maybeSingle(); // Use maybeSingle to get data back if successful
+
+            if (error) {
+                // Check for unique constraint violation (Postgres code 23505)
+                if (error.code === '23505') {
+                    console.warn(`Duplicate slug found: ${currentSlug}. Retrying...`);
+                    // Create a new random slug for next attempt
+                    currentSlug = `${generatedPost.slug}-${Math.floor(Math.random() * 100000)}`;
+                    continue;
+                } else {
+                    // Actual error
+                    console.error("Error inserting post:", error);
+                    throw error;
+                }
+            }
+
+            insertedPost = data;
         }
 
-        // 3. Save to Database
-        const { error: insertError } = await supabase
-            .from('blog_posts')
-            .insert({
-                title: generatedPost.title,
-                slug: finalSlug,
-                content: generatedPost.content,
-                excerpt: generatedPost.excerpt,
-                seo_keywords: generatedPost.keywords,
-                published_at: new Date().toISOString()
-            });
-
-        if (insertError) {
-            console.error("Error inserting post:", insertError);
-            throw insertError;
+        if (!insertedPost) {
+            throw new Error("Failed to insert post after multiple attempts due to slug collisions.");
         }
 
         // 4. Mark Topic as Published
@@ -410,7 +423,7 @@ export async function GET(request) {
         return NextResponse.json({
             success: true,
             topic: topicData.topic,
-            slug: generatedPost.slug
+            slug: insertedPost.slug
         });
 
     } catch (error) {
