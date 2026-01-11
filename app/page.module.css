@@ -1405,3 +1405,32 @@ body.dark-mode .darkModeToggle:hover {
         display: none;
     }
 }
+.legalFooter {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem;
+    margin-top: auto;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.legalFooter a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.legalFooter a:hover {
+    color: var(--link-blue);
+}
+
+.blogLink {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: var(--link-blue) !important;
+}
+

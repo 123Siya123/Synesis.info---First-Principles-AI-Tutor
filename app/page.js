@@ -10,7 +10,7 @@ import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
-import { Menu, User as UserIcon } from 'lucide-react';
+import { Menu, User as UserIcon, PenTool } from 'lucide-react';
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -1329,9 +1329,13 @@ export default function Home() {
 
                         {/* Legal Footer */}
                         <div className={styles.legalFooter}>
-                            <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+                            <a href="/blog" className={styles.blogLink} title="Synesis Blog">
+                                <PenTool size={14} style={{ marginRight: '4px' }} /> Blog
+                            </a>
                             <span className={styles.separator}>•</span>
-                            <a href="/terms" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>
+                            <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy</a>
+                            <span className={styles.separator}>•</span>
+                            <a href="/terms" target="_blank" rel="noopener noreferrer">Terms</a>
                             <span className={styles.separator}>•</span>
                             <a href="/contact" target="_blank" rel="noopener noreferrer">Contact</a>
                         </div>
