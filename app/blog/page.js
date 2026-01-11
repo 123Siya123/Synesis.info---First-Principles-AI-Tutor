@@ -9,7 +9,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export const revalidate = 3600; // Revalidate at most every hour
+export const revalidate = 0; // Disable caching to see new posts immediately
 
 export const metadata = {
     title: 'Synesis Blog - Deep Learning Insights',

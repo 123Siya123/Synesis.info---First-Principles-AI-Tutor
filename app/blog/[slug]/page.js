@@ -10,7 +10,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export const revalidate = 3600;
+export const revalidate = 0;
 
 export async function generateMetadata({ params }) {
     const { data: post } = await supabase
