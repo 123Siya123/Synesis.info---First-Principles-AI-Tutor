@@ -1326,6 +1326,16 @@ export default function Home() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Legal Footer */}
+                        <div className={styles.legalFooter}>
+                            <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+                            <span className={styles.separator}>•</span>
+                            <a href="/terms" target="_blank" rel="noopener noreferrer">Terms & Conditions</a>
+                            <span className={styles.separator}>•</span>
+                            <a href="/contact" target="_blank" rel="noopener noreferrer">Contact</a>
+                        </div>
+
                     </div>
                 );
             case 'study-plan':
