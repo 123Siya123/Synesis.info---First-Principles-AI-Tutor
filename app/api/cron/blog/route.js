@@ -290,12 +290,6 @@ For each post you generate:
 `;
 
 export async function GET(request) {
-    // Basic security check (optional, but recommended for Cron jobs)
-    // const authHeader = request.headers.get('authorization');
-    // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    //     return new Response('Unauthorized', { status: 401 });
-    // }
-
     try {
         // 1. Get the next pending topic
         const { data: topicData, error: topicError } = await supabase
@@ -318,8 +312,7 @@ export async function GET(request) {
         console.log(`Processing topic: ${topicData.topic}`);
 
         // --- CHECK FOR DUPLICATE PENDING TOPICS ---
-        // If this topic is already 'published' in another row, mark this one as 'duplicate' and skip.
-        // This handles dirty queues where seed script was run multiple times.
+        // If this topic is already 'published' in another row, mark ALL occurrences of this topic as 'published' to skip them.
         const { data: alreadyDone } = await supabase
             .from('blog_topics')
             .select('id')
@@ -328,13 +321,17 @@ export async function GET(request) {
             .maybeSingle();
 
         if (alreadyDone) {
-            console.log(`Skipping duplicate topic: ${topicData.topic} (Already published)`);
-            await supabase
-                .from('blog_topics')
-                .update({ status: 'published' }) // Mark as published so we don't pick it again
-                .eq('id', topicData.id);
+            console.log(`Skipping duplicate topic: ${topicData.topic} (Already published). Cleaning up deduplication queue...`);
 
-            return NextResponse.json({ skipped: true, reason: "Duplicate topic found in history" });
+            // Mark ALL pending topics with this name as published
+            const { count } = await supabase
+                .from('blog_topics')
+                .update({ status: 'published' })
+                .eq('topic', topicData.topic)
+                .eq('status', 'pending')
+                .select('*', { count: 'exact', head: true });
+
+            return NextResponse.json({ skipped: true, reason: "Duplicate topic found in history", cleaned_up_count: count });
         }
 
         // --- CHECK AGAINST EXISTING BLOG POSTS ---
@@ -440,11 +437,13 @@ export async function GET(request) {
             throw new Error("Failed to insert post after multiple attempts due to slug collisions.");
         }
 
-        // 4. Mark Topic as Published
+        // 4. Mark Topic(s) as Published
+        // We mark ALL pending topics with this string as published, to prevent future re-generation of the same seeded topic.
         const { error: updateError } = await supabase
             .from('blog_topics')
             .update({ status: 'published', published_at: new Date().toISOString() })
-            .eq('id', topicData.id);
+            .eq('topic', topicData.topic) // Match by string to catch all duplicates
+            .eq('status', 'pending'); // Only pending ones (safety)
 
         if (updateError) {
             console.error("Critical: Post created but failed to update topic status:", updateError);

@@ -23,6 +23,20 @@ export async function GET() {
             .order('created_at', { ascending: true })
             .limit(1);
 
+        const nextTopicTitle = nextTopic && nextTopic[0] ? nextTopic[0].topic : null;
+
+        let analysis = {};
+
+        if (nextTopicTitle) {
+            // Check how many times this topic exists in TOTAL
+            const { data: duplicates } = await supabase
+                .from('blog_topics')
+                .select('id, status, created_at')
+                .eq('topic', nextTopicTitle);
+
+            analysis.next_topic_duplicates = duplicates;
+        }
+
         // 3. Get Recent Posts
         const { data: recentPosts } = await supabase
             .from('blog_posts')
@@ -31,12 +45,13 @@ export async function GET() {
             .limit(5);
 
         return NextResponse.json({
-            status: 'Debug Info',
+            status: 'Debug Info v2',
             queue: {
                 pending: pendingCount,
                 published: publishedCount,
                 next_up: nextTopic ? nextTopic[0] : 'NONE'
             },
+            analysis: analysis,
             recent_posts: recentPosts
         });
     } catch (e) {
