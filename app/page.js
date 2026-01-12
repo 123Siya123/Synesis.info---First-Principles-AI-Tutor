@@ -11,6 +11,10 @@ import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
 import { Menu, User as UserIcon, PenTool } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -987,35 +991,61 @@ export default function Home() {
     const renderedArticleContent = useMemo(() => {
         if (!currentArticle) return null;
 
-        const renderWithLinks = (text) => {
-            let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-            const parts = formatted.split(/(\[\[.*?\]\])/g);
-            return parts.map((part, index) => {
-                if (part.startsWith('[[') && part.endsWith(']]')) {
-                    const content = part.slice(2, -2);
-                    return (
-                        <span key={index} className={styles.subConcept} onClick={() => generateArticle(content, true)}>
-                            {content}
-                        </span>
-                    );
-                }
-                return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
-            });
-        };
+        let contentToRender = currentArticle;
+
+        // 1. Remove Title from start if repeated
+        // (Simple heuristic: if first line looks like the title, remove it)
+        const lines = contentToRender.split('\n');
+        if (lines.length > 0) {
+            const first = lines[0].trim();
+            const cleanTitle = currentArticleTitle?.trim();
+            if (cleanTitle && (
+                first === `# ${cleanTitle}` ||
+                first === `**${cleanTitle}**` ||
+                first === cleanTitle ||
+                first === `# ${cleanTitle} ` ||
+                first === `** ${cleanTitle}**`
+            )) {
+                contentToRender = lines.slice(1).join('\n');
+            }
+        }
+
+        // 2. Normalize LaTeX delimiters for remark-math
+        // Replace \[ \] with $$ $$ and \( \) with $ $
+        contentToRender = contentToRender
+            .replace(/\\\[/g, '$$$$')
+            .replace(/\\\]/g, '$$$$')
+            .replace(/\\\(/g, '$')
+            .replace(/\\\)/g, '$');
+
+        // 3. Convert [[Link]] to [Link](internal-link:Link) for Markdown parser
+        contentToRender = contentToRender.replace(/\[\[(.*?)\]\]/g, '[$1](internal-link:$1)');
 
         return (
             <>
                 {currentArticleTitle && <h1 className={styles.articleTitle}>{currentArticleTitle}</h1>}
-                {currentArticle.split('\n\n').map((paragraph, index) => {
-                    // Skip the title line if it was extracted and rendered as h1
-                    const cleanedParagraph = paragraph.trim();
-                    if (cleanedParagraph === `# ${currentArticleTitle} ` ||
-                        cleanedParagraph === `** ${currentArticleTitle}** ` ||
-                        cleanedParagraph === currentArticleTitle) {
-                        return null;
-                    }
-                    return <p key={index}>{renderWithLinks(paragraph)}</p>;
-                })}
+                <ReactMarkdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={{
+                        a: ({ node, href, children, ...props }) => {
+                            if (href && href.startsWith('internal-link:')) {
+                                const content = href.replace('internal-link:', '');
+                                return (
+                                    <span
+                                        className={styles.subConcept}
+                                        onClick={() => generateArticle(content, true)}
+                                    >
+                                        {children}
+                                    </span>
+                                );
+                            }
+                            return <a href={href} {...props}>{children}</a>;
+                        }
+                    }}
+                >
+                    {contentToRender}
+                </ReactMarkdown>
             </>
         );
     }, [currentArticle, currentArticleTitle, generateArticle]);
