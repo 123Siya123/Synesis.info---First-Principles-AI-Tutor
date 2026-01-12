@@ -11,15 +11,18 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        // 1. Inspect 'Circuits' topic specifically
-        const { data: circuitTopics } = await supabase
+        // RESET 'Circuits' topic from published to pending
+        const { data, error } = await supabase
             .from('blog_topics')
-            .select('*')
-            .ilike('topic', '%Circuits%');
+            .update({ status: 'pending' })
+            .ilike('topic', '%Circuits%')
+            .eq('status', 'published')
+            .select();
 
         return NextResponse.json({
-            status: 'Deep Debug',
-            circuits_topics: circuitTopics
+            status: 'Fix Attempted',
+            reset_topics: data,
+            error: error
         });
     } catch (e) {
         return NextResponse.json({ error: e.message });
