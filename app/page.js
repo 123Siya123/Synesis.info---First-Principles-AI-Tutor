@@ -35,7 +35,9 @@ Since you are a text-only AI, you must create "drawings" and "visualizations" us
 - Use bullet points and lists to visually break down information.
 - Provide vivid examples that create a strong visual mental image.
 - Use emojis or spatial formatting to enhance the visual appeal.
-- If a complex diagram is needed, describe it clearly or use a text-based representation (e.g., A -> B -> C).`;
+- If a complex diagram is needed, describe it clearly or use a text-based representation (e.g., A -> B -> C).
+
+BE CLEAR, CONCRETE, REAL AND DONT USE JARGON. WRITE SO THE USER UNDERSTANDS, SO IF YOU USE A JARGON WORD, EXPLAIN IT IN A CLEAR UNDERSTANDABLE WAY`;
 
 const CHAT_QUESTION_PROMPT = `You are a helpful AI tutor.
 Check if the user's question specifies a particular way of answering (e.g., "explain like I'm 12", "simple english", "break it down").
@@ -630,7 +632,7 @@ export default function Home() {
             }
 
             if (isSubArticle && currentArticle) {
-                setArticleHistory(prev => [...prev, { title: currentArticleTitle, content: currentArticle, sourceTextForSubArticle, nodeId: currentMindMap.currentNodeId }]);
+                setArticleHistory(prev => [...prev, { title: currentArticleTitle, content: currentArticle, sourceTextForSubArticle, nodeId: currentMindMap.currentNodeId, notesText }]);
             }
 
             setCurrentArticle(articleContent);
@@ -883,6 +885,7 @@ export default function Home() {
             const previous = articleHistory[articleHistory.length - 1];
             setCurrentArticle(previous.content);
             setCurrentArticleTitle(previous.title);
+            setNotesText(previous.notesText || '');
             setSourceTextForSubArticle(previous.sourceTextForSubArticle || '');
             if (previous.nodeId && isPlanMode) {
                 setMindMapData(prev => ({ ...prev, currentNodeId: previous.nodeId }));
@@ -1075,8 +1078,8 @@ export default function Home() {
                 body: JSON.stringify({
                     model: 'llama-3.3-70b-versatile',
                     messages: [
-                        { role: 'system', content: 'You are a curious student. Generate ONE simple, natural question from a different angle. Do NOT repeat previous questions. Ask about unclear parts, gaps, logical fallacies. Return ONLY the question.' },
-                        { role: 'user', content: `${context} Topic: ${currentTopic} \n\nTeaching explanation: ${teachingText} \n\nGenerate ONE question from a new angle: ` }
+                        { role: 'system', content: 'You are a curious student. Generate ONE simple, natural question from a different angle. Do NOT repeat previous questions. Ask about unclear parts, gaps, logical fallacies. Return ONLY the question. ASK THE USER QUESTIONS SPECIFICALLY ABOUT THE TOPIC AND WHAT HE TOUGHT TROUGH THE LENSE OF A STUDENT TRYING TO LEARN THE TOPIC THE USER HAS TALKED ABOUT. YOUR QUESTIONS SHOULD ASK FOR CLARIFIACTION, ASK TO EXPOSE A GAP IN THE USERS UNDERSTANDING OF THE ACTUALL SUBJECT MATTER (example, if the topic is mechatronics and the user talks about electrical engeneering and software developement but not about mechanical engeneering, then ask questions about that). DONT ASK UNRELEVANT QUESTIONS ABOUT THE TOPIC (FOR EXAMPLE, IF THE TOPIC IS PYTHON PROGRAMMING, DONT ASK ABOUT THE SOCIATAL ROLE OR PYTHON OR HOW HUMAN BAIS INFLUENCES PYTHON PROGRAMMING, SINCE THAT IS NOT SPECIFIC ABOUT THE SUBJECT MATTER. RATHER ASK QUESTIONS ABOUT PYTHON AND SPECIFICALLY WHAT THE USER TOUGHT, TO EXPOSE GAPS OR AREAS THE USER HAS SHALLOW BUT NOT DEEP KNOWLEDGE) CHALLANGE THE USER BUT DONT DISCOURAGE HIM WITH EXTREAMLY DIFFICULT QUESTIONS' },
+                        { role: 'user', content: `${context} Topic: ${currentArticleTitle || currentTopic} \n\nTeaching explanation: ${teachingText} \n\nGenerate ONE question from a new angle: ` }
                     ],
                     temperature: 0.8,
                     max_tokens: 100,
@@ -1525,13 +1528,13 @@ export default function Home() {
                     <div className={styles.ingrainPhase}>
                         <div className={styles.ingrainCard}>
                             <h2>Step 1: Write Everything You Know</h2>
-                            <p className={styles.topicLabel}>Topic: <strong>{currentTopic}</strong></p>
+                            <p className={styles.topicLabel}>Topic: <strong>{currentArticleTitle || currentTopic}</strong></p>
 
                             {showGuidance && (
                                 <div className={styles.phaseExplanation}>
                                     <h3>📝 What to do:</h3>
                                     <p>
-                                        Dump everything you know about <strong>{currentTopic}</strong> onto the page.
+                                        Dump everything you know about <strong>{currentArticleTitle || currentTopic}</strong> onto the page.
                                         Don&apos;t worry about grammar, structure, or if you have gaps&mdash;just get it all out of your head.
                                     </p>
                                     <div className={styles.distributedQuote} style={{ margin: '1rem 0' }}>
@@ -1561,7 +1564,7 @@ export default function Home() {
                     <div className={styles.ingrainPhase}>
                         <div className={styles.ingrainCard}>
                             <h2>Step 2: Teach It Simply</h2>
-                            <p className={styles.topicLabel}>Explain <strong>{currentTopic}</strong> as if teaching a curious student.</p>
+                            <p className={styles.topicLabel}>Explain <strong>{currentArticleTitle || currentTopic}</strong> as if teaching a curious student.</p>
 
                             {/* STEP 1: Explaining */}
                             {teachingStep === 'explaining' && (
