@@ -317,6 +317,32 @@ export async function GET(request) {
 
         console.log(`Processing topic: ${topicData.topic}`);
 
+        // --- CHECK FOR DUPLICATE PENDING TOPICS ---
+        // If this topic is already 'published' in another row, mark this one as 'duplicate' and skip.
+        // This handles dirty queues where seed script was run multiple times.
+        const { data: alreadyDone } = await supabase
+            .from('blog_topics')
+            .select('id')
+            .eq('topic', topicData.topic)
+            .eq('status', 'published')
+            .maybeSingle();
+
+        if (alreadyDone) {
+            console.log(`Skipping duplicate topic: ${topicData.topic} (Already published)`);
+            await supabase
+                .from('blog_topics')
+                .update({ status: 'published' }) // Mark as published so we don't pick it again
+                .eq('id', topicData.id);
+
+            return NextResponse.json({ skipped: true, reason: "Duplicate topic found in history" });
+        }
+
+        // --- CHECK AGAINST EXISTING BLOG POSTS ---
+        // Safety check: is there a blog post with this title already?
+        // Note: The LLM generates the title, but usually it matches the topic closely. 
+        // We'll check for partial match if needed, but exact topic status is better.
+        // Let's rely on the queue status check above primarily.
+
         // 2. Generate Content via Groq
         const groqApiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY; // OR use rotation logic if needed
 
