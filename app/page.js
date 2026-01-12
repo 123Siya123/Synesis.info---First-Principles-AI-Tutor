@@ -11,10 +11,6 @@ import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
 import { Menu, User as UserIcon, PenTool } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css';
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -30,7 +26,16 @@ IMPORTANT FORMATTING RULES:
 2. IDENTIFY KEY CONCEPTS: Wrap 5-10 key phrases, difficult terms, or sub-topics that are worth studying deeper in double brackets, like [[Quantum Entanglement]] or [[Memoization]]. These will become clickable links for the user. Ensure these are actual distinct topics, not just random words.
 3. TITLE: Start the response with a title that is ONLY 1-3 words long, wrapped in # or **.
 
-(don't create response for any example given in this prompt, it's only for your understanding) At the very end of your answer. DONT SUGGEST A NEW QUESTION OR ASK IF THE USER WANTS TO USE THIS.`;
+(don't create response for any example given in this prompt, it's only for your understanding) At the very end of your answer. DONT SUGGEST A NEW QUESTION OR ASK IF THE USER WANTS TO USE THIS.
+
+VISUALS & DRAWINGS:
+The AI should make visualizations, drawings, and bullet points to show things in a more visual way.
+Since you are a text-only AI, you must create "drawings" and "visualizations" using text-based methods:
+- Use ASCII art or text-based diagrams to illustrate structures, flows, or relationships.
+- Use bullet points and lists to visually break down information.
+- Provide vivid examples that create a strong visual mental image.
+- Use emojis or spatial formatting to enhance the visual appeal.
+- If a complex diagram is needed, describe it clearly or use a text-based representation (e.g., A -> B -> C).`;
 
 const CHAT_QUESTION_PROMPT = `You are a helpful AI tutor.
 Check if the user's question specifies a particular way of answering (e.g., "explain like I'm 12", "simple english", "break it down").
@@ -991,61 +996,35 @@ export default function Home() {
     const renderedArticleContent = useMemo(() => {
         if (!currentArticle) return null;
 
-        let contentToRender = currentArticle;
-
-        // 1. Remove Title from start if repeated
-        // (Simple heuristic: if first line looks like the title, remove it)
-        const lines = contentToRender.split('\n');
-        if (lines.length > 0) {
-            const first = lines[0].trim();
-            const cleanTitle = currentArticleTitle?.trim();
-            if (cleanTitle && (
-                first === `# ${cleanTitle}` ||
-                first === `**${cleanTitle}**` ||
-                first === cleanTitle ||
-                first === `# ${cleanTitle} ` ||
-                first === `** ${cleanTitle}**`
-            )) {
-                contentToRender = lines.slice(1).join('\n');
-            }
-        }
-
-        // 2. Normalize LaTeX delimiters for remark-math
-        // Replace \[ \] with $$ $$ and \( \) with $ $
-        contentToRender = contentToRender
-            .replace(/\\\[/g, '$$$$')
-            .replace(/\\\]/g, '$$$$')
-            .replace(/\\\(/g, '$')
-            .replace(/\\\)/g, '$');
-
-        // 3. Convert [[Link]] to [Link](internal-link:Link) for Markdown parser
-        contentToRender = contentToRender.replace(/\[\[(.*?)\]\]/g, '[$1](internal-link:$1)');
+        const renderWithLinks = (text) => {
+            let formatted = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            const parts = formatted.split(/(\[\[.*?\]\])/g);
+            return parts.map((part, index) => {
+                if (part.startsWith('[[') && part.endsWith(']]')) {
+                    const content = part.slice(2, -2);
+                    return (
+                        <span key={index} className={styles.subConcept} onClick={() => generateArticle(content, true)}>
+                            {content}
+                        </span>
+                    );
+                }
+                return <span key={index} dangerouslySetInnerHTML={{ __html: part }} />;
+            });
+        };
 
         return (
             <>
                 {currentArticleTitle && <h1 className={styles.articleTitle}>{currentArticleTitle}</h1>}
-                <ReactMarkdown
-                    remarkPlugins={[remarkMath]}
-                    rehypePlugins={[rehypeKatex]}
-                    components={{
-                        a: ({ node, href, children, ...props }) => {
-                            if (href && href.startsWith('internal-link:')) {
-                                const content = href.replace('internal-link:', '');
-                                return (
-                                    <span
-                                        className={styles.subConcept}
-                                        onClick={() => generateArticle(content, true)}
-                                    >
-                                        {children}
-                                    </span>
-                                );
-                            }
-                            return <a href={href} {...props}>{children}</a>;
-                        }
-                    }}
-                >
-                    {contentToRender}
-                </ReactMarkdown>
+                {currentArticle.split('\n\n').map((paragraph, index) => {
+                    // Skip the title line if it was extracted and rendered as h1
+                    const cleanedParagraph = paragraph.trim();
+                    if (cleanedParagraph === `# ${currentArticleTitle} ` ||
+                        cleanedParagraph === `** ${currentArticleTitle}** ` ||
+                        cleanedParagraph === currentArticleTitle) {
+                        return null;
+                    }
+                    return <p key={index}>{renderWithLinks(paragraph)}</p>;
+                })}
             </>
         );
     }, [currentArticle, currentArticleTitle, generateArticle]);
