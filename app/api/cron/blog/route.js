@@ -415,10 +415,16 @@ export async function GET(request) {
         }
 
         // 4. Mark Topic as Published
-        await supabase
+        const { error: updateError } = await supabase
             .from('blog_topics')
             .update({ status: 'published', published_at: new Date().toISOString() })
             .eq('id', topicData.id);
+
+        if (updateError) {
+            console.error("Critical: Post created but failed to update topic status:", updateError);
+            // We don't throw here to avoid 500ing the response, since the post WAS created.
+            // But we logging it is crucial.
+        }
 
         return NextResponse.json({
             success: true,
