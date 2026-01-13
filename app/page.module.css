@@ -1434,3 +1434,41 @@ body.dark-mode .darkModeToggle:hover {
     color: var(--link-blue) !important;
 }
 
+
+/* Tabs logic */
+.notesTabs {
+    display: flex;
+    overflow-x: auto;
+    background-color: var(--paper-off-white);
+    border-bottom: 2px solid var(--border-subtle);
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.5rem 0 0.5rem;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.noteTab {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    border-radius: 4px 4px 0 0;
+    transition: all 0.2s ease;
+}
+
+.noteTab:hover {
+    background-color: rgba(0,0,0,0.05); /* Slight dark hover */
+    color: var(--text-primary);
+}
+
+.noteTab.activeTab {
+    background-color: var(--paper-white); /* White background like the panel */
+    color: var(--link-blue);
+    border-bottom: 2px solid var(--link-blue);
+    font-weight: 600;
+}
+

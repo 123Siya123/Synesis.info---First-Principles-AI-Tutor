@@ -116,6 +116,7 @@ export default function Home() {
     const notesPanelRef = useRef(null);
     const articleContainerRef = useRef(null);
     const isResizingRef = useRef(false);
+    const [activeNoteTab, setActiveNoteTab] = useState(null); // node_id of the active tab (only for Level 0 view)
 
     // Subscription & Limits
     const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free', 'premium', 'pro'
@@ -244,7 +245,18 @@ export default function Home() {
                         if (n.id === currentMindMap.currentNodeId) {
                             updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
                         }
-                        if (branchRoot && n.id === branchRoot.id) {
+
+                        // NOTE LOGIC:
+                        // If we are on Level 0 (Root), we might be editing a TAB that belongs to a branch.
+                        // So we save to 'activeNoteTab' if present, otherwise to branchRoot (which is Root).
+                        const activeNodeForNotes = (n.level === 0 && activeNoteTab)
+                            ? currentMindMap.nodes.find(node => node.id === activeNoteTab)
+                            : branchRoot;
+
+                        // If we are on Root, and editing a specific tab, currentMindMap.currentNodeId is Root.
+                        // We want to save notesText to activeNoteTab.
+                        // But we are iterating map 'n'.
+                        if (activeNodeForNotes && n.id === activeNodeForNotes.id) {
                             updates = { ...updates, notes: notesText };
                         }
                         return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
@@ -265,7 +277,8 @@ export default function Home() {
                     isPlanMode,
                     mindMapData: currentMindMap, // Use the synced mind map
                     mindMapColor,
-                    isInverseGradient
+                    isInverseGradient,
+                    activeNoteTab
                 };
                 await saveCurrentStudy(currentStudyId, sessionData);
             }
@@ -288,6 +301,8 @@ export default function Home() {
                 setMindMapData(data.mindMapData || { nodes: [], edges: [], currentNodeId: null });
                 setMindMapColor(data.mindMapColor || 'blue');
                 setIsInverseGradient(data.isInverseGradient || false);
+                setActiveNoteTab(data.activeNoteTab || null);
+                setIsSidebarOpen(false);
                 setIsSidebarOpen(false);
                 // Sync to localStorage
                 localStorage.setItem('learningAppSession', JSON.stringify(data));
@@ -349,7 +364,10 @@ export default function Home() {
                 isPlanMode,
                 mindMapData,
                 mindMapColor,
-                isInverseGradient
+                mindMapData,
+                mindMapColor,
+                isInverseGradient,
+                activeNoteTab
             };
             localStorage.setItem('learningAppSession', JSON.stringify(sessionData));
 
@@ -396,7 +414,7 @@ export default function Home() {
                 }, 2000); // Debounce 2s
             }
         }
-    }, [currentTopic, currentArticle, currentArticleTitle, articleHistory, notesText, sourceTextForSubArticle, floatingQA, phase, studyTime, notesWidth, isPlanMode, mindMapData, mindMapColor, isInverseGradient, user, studies, isLoading]);
+    }, [currentTopic, currentArticle, currentArticleTitle, articleHistory, notesText, sourceTextForSubArticle, floatingQA, phase, studyTime, notesWidth, isPlanMode, mindMapData, mindMapColor, isInverseGradient, activeNoteTab, user, studies, isLoading]);
 
     // Save dark mode preference
     useEffect(() => {
@@ -498,12 +516,20 @@ export default function Home() {
         let currentMindMap = { ...mindMapData };
         if (phase === 'study' && currentMindMap.currentNodeId !== null) {
             const branchRoot = getBranchRootNode(currentMindMap.currentNodeId, currentMindMap.nodes, currentMindMap.edges);
+            const currentNode = currentMindMap.nodes.find(n => n.id === currentMindMap.currentNodeId);
+
             currentMindMap.nodes = currentMindMap.nodes.map(n => {
                 let updates = {};
                 if (n.id === currentMindMap.currentNodeId) {
                     updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
                 }
-                if (branchRoot && n.id === branchRoot.id) {
+
+                // If on Root, save to activeTab. Else save to branchRoot.
+                const targetIdForNotes = (currentNode && currentNode.level === 0 && activeNoteTab)
+                    ? activeNoteTab
+                    : (branchRoot ? branchRoot.id : null);
+
+                if (targetIdForNotes && n.id === targetIdForNotes) {
                     updates = { ...updates, notes: notesText };
                 }
                 return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
@@ -982,6 +1008,7 @@ export default function Home() {
         if (phase === 'study' && mindMapData.currentNodeId !== null) {
             setMindMapData(prev => {
                 const branchRoot = getBranchRootNode(prev.currentNodeId, prev.nodes, prev.edges);
+                const currentNode = prev.nodes.find(n => n.id === prev.currentNodeId);
                 return {
                     ...prev,
                     nodes: prev.nodes.map(n => {
@@ -989,7 +1016,12 @@ export default function Home() {
                         if (n.id === prev.currentNodeId) {
                             updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
                         }
-                        if (branchRoot && n.id === branchRoot.id) {
+                        // If on Root, save to activeTab. Else save to branchRoot.
+                        const targetIdForNotes = (currentNode && currentNode.level === 0 && activeNoteTab)
+                            ? activeNoteTab
+                            : (branchRoot ? branchRoot.id : null);
+
+                        if (targetIdForNotes && n.id === targetIdForNotes) {
                             updates = { ...updates, notes: notesText };
                         }
                         return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
@@ -1014,7 +1046,15 @@ export default function Home() {
         // Load node state
         // Load node state
         const branchRoot = getBranchRootNode(node.id, mindMapData.nodes, mindMapData.edges);
-        const notesToLoad = branchRoot ? (branchRoot.notes || '') : (node.notes || '');
+        let notesToLoad = branchRoot ? (branchRoot.notes || '') : (node.notes || '');
+
+        // If entering Root (Level 0), default to Root's own notes (tab = null or Root ID)
+        if (node.level === 0) {
+            setActiveNoteTab(node.id);
+            notesToLoad = node.notes || '';
+        } else {
+            setActiveNoteTab(null);
+        }
 
         if (node.article) {
             setCurrentArticle(node.article);
@@ -1032,6 +1072,7 @@ export default function Home() {
         if (mindMapData.currentNodeId !== null) {
             setMindMapData(prev => {
                 const branchRoot = getBranchRootNode(prev.currentNodeId, prev.nodes, prev.edges);
+                const currentNode = prev.nodes.find(n => n.id === prev.currentNodeId);
                 return {
                     ...prev,
                     nodes: prev.nodes.map(n => {
@@ -1039,7 +1080,12 @@ export default function Home() {
                         if (n.id === prev.currentNodeId) {
                             updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
                         }
-                        if (branchRoot && n.id === branchRoot.id) {
+                        // If on Root, save to activeTab. Else save to branchRoot.
+                        const targetIdForNotes = (currentNode && currentNode.level === 0 && activeNoteTab)
+                            ? activeNoteTab
+                            : (branchRoot ? branchRoot.id : null);
+
+                        if (targetIdForNotes && n.id === targetIdForNotes) {
                             updates = { ...updates, notes: notesText };
                         }
                         return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
@@ -1562,6 +1608,41 @@ export default function Home() {
                                         onMouseDown={startResizing}
                                     />
                                     <div className={styles.notesPanelContent}>
+                                        {/* Tabs for Root Node Level 0 */}
+                                        {(() => {
+                                            const currentNode = mindMapData.nodes.find(n => n.id === mindMapData.currentNodeId);
+                                            if (currentNode && currentNode.level === 0) {
+                                                const rootTabs = [currentNode, ...mindMapData.nodes.filter(n => n.level === 1)];
+                                                // Sort: Root first, then others alphabetically or by creation
+                                                return (
+                                                    <div className={styles.notesTabs}>
+                                                        {rootTabs.map(tabNode => (
+                                                            <button
+                                                                key={tabNode.id}
+                                                                className={`${styles.noteTab} ${activeNoteTab === tabNode.id ? styles.activeTab : ''}`}
+                                                                onClick={() => {
+                                                                    // Save current notes to OLD tab
+                                                                    const oldTabId = activeNoteTab;
+                                                                    setMindMapData(prev => ({
+                                                                        ...prev,
+                                                                        nodes: prev.nodes.map(n => n.id === oldTabId ? { ...n, notes: notesText } : n)
+                                                                    }));
+
+                                                                    // Switch to NEW tab
+                                                                    setActiveNoteTab(tabNode.id);
+                                                                    setNotesText(tabNode.notes || '');
+                                                                }}
+                                                            >
+                                                                {tabNode.level === 0 ? 'General' : tabNode.label}
+                                                            </button>
+                                                        ))}
+                                                        {/* Empty Tab (Concept requested) */}
+                                                        <button className={styles.noteTab} disabled style={{ opacity: 0.5, cursor: 'default' }}>...</button>
+                                                    </div>
+                                                );
+                                            }
+                                        })()}
+
                                         <textarea
                                             className={styles.notesTextarea}
                                             value={notesText}
