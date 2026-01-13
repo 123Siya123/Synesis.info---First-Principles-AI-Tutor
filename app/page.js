@@ -46,6 +46,25 @@ Check if the user's question specifies a particular way of answering (e.g., "exp
 
 ${ARTICLE_GENERATION_PROMPT}`;
 
+// Helper to find the Root of the branch (Level 1) for a given node
+// If node is Level 0 or 1, it is its own root.
+// If node is Level > 1, traverse up to find Level 1 ancestor.
+const getBranchRootNode = (startNodeId, nodes, edges) => {
+    let currentId = startNodeId;
+    let currentNode = nodes.find(n => n.id === currentId);
+
+    // Safety break
+    let attempts = 0;
+    while (currentNode && currentNode.level > 1 && attempts < 100) {
+        attempts++;
+        const edge = edges.find(e => e.target === currentId);
+        if (!edge) break;
+        currentId = edge.source;
+        currentNode = nodes.find(n => n.id === currentId);
+    }
+    return currentNode;
+};
+
 export default function Home() {
     // Phase management
     const [phase, setPhase] = useState('topic-selection');
@@ -219,11 +238,17 @@ export default function Home() {
                 // Sync current notes/state to the active node in mind map before saving
                 let currentMindMap = { ...mindMapData };
                 if (phase === 'study' && currentMindMap.currentNodeId !== null) {
-                    currentMindMap.nodes = currentMindMap.nodes.map(n =>
-                        n.id === currentMindMap.currentNodeId
-                            ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle }
-                            : n
-                    );
+                    const branchRoot = getBranchRootNode(currentMindMap.currentNodeId, currentMindMap.nodes, currentMindMap.edges);
+                    currentMindMap.nodes = currentMindMap.nodes.map(n => {
+                        let updates = {};
+                        if (n.id === currentMindMap.currentNodeId) {
+                            updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
+                        }
+                        if (branchRoot && n.id === branchRoot.id) {
+                            updates = { ...updates, notes: notesText };
+                        }
+                        return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
+                    });
                 }
 
                 const sessionData = {
@@ -469,13 +494,20 @@ export default function Home() {
     // Generate article
     const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT) => {
         // Sync current state to Mind Map before navigating away
+        // Sync current state to Mind Map before navigating away
         let currentMindMap = { ...mindMapData };
         if (phase === 'study' && currentMindMap.currentNodeId !== null) {
-            currentMindMap.nodes = currentMindMap.nodes.map(n =>
-                n.id === currentMindMap.currentNodeId
-                    ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle }
-                    : n
-            );
+            const branchRoot = getBranchRootNode(currentMindMap.currentNodeId, currentMindMap.nodes, currentMindMap.edges);
+            currentMindMap.nodes = currentMindMap.nodes.map(n => {
+                let updates = {};
+                if (n.id === currentMindMap.currentNodeId) {
+                    updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
+                }
+                if (branchRoot && n.id === branchRoot.id) {
+                    updates = { ...updates, notes: notesText };
+                }
+                return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
+            });
             setMindMapData(currentMindMap);
         }
 
@@ -639,7 +671,17 @@ export default function Home() {
             setCurrentArticleTitle(extractedTitle);
 
             // Clear notes for new topic as we act as if we switched
-            if (isSubArticle) setNotesText('');
+            // Clear notes ONLY if we are starting a completely new branch (Level 1) from Root
+            // If we are deeper (Level > 1), we keep the notes (inherit/persist from parent)
+            if (isSubArticle) {
+                const parentId = currentMindMap.currentNodeId;
+                const parentNode = currentMindMap.nodes.find(n => n.id === parentId);
+                const parentLevel = parentNode ? parentNode.level : 0;
+
+                if (parentLevel === 0) {
+                    setNotesText('');
+                }
+            }
 
             // Dynamic growth for Mind Map - ONLY IF it's a sub-article (exploration)
             if (isPlanMode && isSubArticle && currentMindMap.currentNodeId !== null) {
@@ -936,11 +978,24 @@ export default function Home() {
 
     const handleNodeClick = async (node) => {
         // Save current progress before switching
+        // Save current progress before switching
         if (phase === 'study' && mindMapData.currentNodeId !== null) {
-            setMindMapData(prev => ({
-                ...prev,
-                nodes: prev.nodes.map(n => n.id === prev.currentNodeId ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle } : n)
-            }));
+            setMindMapData(prev => {
+                const branchRoot = getBranchRootNode(prev.currentNodeId, prev.nodes, prev.edges);
+                return {
+                    ...prev,
+                    nodes: prev.nodes.map(n => {
+                        let updates = {};
+                        if (n.id === prev.currentNodeId) {
+                            updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
+                        }
+                        if (branchRoot && n.id === branchRoot.id) {
+                            updates = { ...updates, notes: notesText };
+                        }
+                        return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
+                    })
+                };
+            });
         }
 
         // --- RESTRICTION CHECK: Mind Map Expansion ---
@@ -957,13 +1012,17 @@ export default function Home() {
         setMindMapData(prev => ({ ...prev, currentNodeId: node.id }));
 
         // Load node state
+        // Load node state
+        const branchRoot = getBranchRootNode(node.id, mindMapData.nodes, mindMapData.edges);
+        const notesToLoad = branchRoot ? (branchRoot.notes || '') : (node.notes || '');
+
         if (node.article) {
             setCurrentArticle(node.article);
             setCurrentArticleTitle(node.articleTitle || node.label);
-            setNotesText(node.notes || '');
+            setNotesText(notesToLoad);
             setPhase('study');
         } else {
-            setNotesText(node.notes || '');
+            setNotesText(notesToLoad);
             await generateArticle(node.label, false);
             setPhase('study');
         }
@@ -971,10 +1030,22 @@ export default function Home() {
 
     const handleBackToPlan = () => {
         if (mindMapData.currentNodeId !== null) {
-            setMindMapData(prev => ({
-                ...prev,
-                nodes: prev.nodes.map(n => n.id === prev.currentNodeId ? { ...n, notes: notesText, article: currentArticle, articleTitle: currentArticleTitle } : n)
-            }));
+            setMindMapData(prev => {
+                const branchRoot = getBranchRootNode(prev.currentNodeId, prev.nodes, prev.edges);
+                return {
+                    ...prev,
+                    nodes: prev.nodes.map(n => {
+                        let updates = {};
+                        if (n.id === prev.currentNodeId) {
+                            updates = { ...updates, article: currentArticle, articleTitle: currentArticleTitle };
+                        }
+                        if (branchRoot && n.id === branchRoot.id) {
+                            updates = { ...updates, notes: notesText };
+                        }
+                        return Object.keys(updates).length > 0 ? { ...n, ...updates } : n;
+                    })
+                };
+            });
         }
         setPhase('study-plan');
     };
