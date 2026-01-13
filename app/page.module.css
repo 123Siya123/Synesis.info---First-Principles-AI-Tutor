@@ -372,13 +372,15 @@ body.dark-mode .darkModeToggle:hover {
     /* Start under top bar */
     bottom: 100px;
     /* Above bottom bar */
-    background-color: var(--paper-white);
+    background-color: transparent;
+    /* Removed background to allow tabs shape */
     box-shadow: -4px 0 20px var(--shadow-medium);
     z-index: 200;
     display: flex;
     flex-direction: column;
-    padding: 2rem;
-    padding-left: 2.5rem;
+    padding: 0;
+    /* Remove generic padding */
+    padding-left: 8px;
     /* Space for handle */
 }
 
@@ -419,10 +421,77 @@ body.dark-mode .darkModeToggle:hover {
 .notesPanelContent {
     flex: 1;
     display: flex;
-    gap: 2rem;
+    flex-direction: column;
     overflow: hidden;
     position: relative;
-    /* For absolute positioning of bottom bubble */
+    background: transparent;
+}
+
+/* Tabs logic */
+.notesTabs {
+    display: flex;
+    align-items: flex-end;
+    background-color: #e5e7eb;
+    /* Browser chrome color */
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 8px 8px 0 8px;
+    gap: 0;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.noteTab {
+    padding: 6px 12px;
+    background: #d1d5db;
+    /* Inactive tab */
+    border: 1px solid var(--border-subtle);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    margin-right: -12px;
+    /* Overlap effect */
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    /* Responsive sizing */
+    flex: 1 1 auto;
+    min-width: 30px;
+    /* Allow shrinking to first letter */
+    max-width: 120px;
+
+    position: relative;
+    box-shadow: -1px 0 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease, z-index 0s;
+    user-select: none;
+}
+
+.noteTab:hover {
+    z-index: 20;
+    background-color: #e5e7eb;
+    margin-right: -4px;
+    /* Expand separation slightly */
+    max-width: 180px;
+    /* Peek width */
+}
+
+.noteTab.activeTab {
+    z-index: 30;
+    background-color: var(--paper-white);
+    color: var(--link-blue);
+    font-weight: 600;
+    border-bottom: 1px solid var(--paper-white);
+    /* Mask bottom border to merge with content */
+    margin-bottom: -1px;
+
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+    margin-right: -10px;
+
+    flex: 2 0 auto;
+    max-width: 250px;
+    /* Allow active to take more space */
 }
 
 .notesTextarea {
@@ -434,10 +503,15 @@ body.dark-mode .darkModeToggle:hover {
     resize: none;
     font-family: 'Georgia', 'Cambria', 'Times New Roman', serif;
     font-size: 1.05rem;
-    background-color: transparent;
+
+    /* White box style */
+    background-color: var(--paper-white);
     color: var(--text-primary);
+    padding: 1.5rem 2rem;
     padding-bottom: 5rem;
-    /* Space for floating bubble */
+
+    border-left: 1px solid var(--border-subtle);
+    /* Box border */
 }
 
 .selectedTextBanner {
@@ -1405,6 +1479,7 @@ body.dark-mode .darkModeToggle:hover {
         display: none;
     }
 }
+
 .legalFooter {
     width: 100%;
     display: flex;
@@ -1461,14 +1536,15 @@ body.dark-mode .darkModeToggle:hover {
 }
 
 .noteTab:hover {
-    background-color: rgba(0,0,0,0.05); /* Slight dark hover */
+    background-color: rgba(0, 0, 0, 0.05);
+    /* Slight dark hover */
     color: var(--text-primary);
 }
 
 .noteTab.activeTab {
-    background-color: var(--paper-white); /* White background like the panel */
+    background-color: var(--paper-white);
+    /* White background like the panel */
     color: var(--link-blue);
     border-bottom: 2px solid var(--link-blue);
     font-weight: 600;
 }
-
