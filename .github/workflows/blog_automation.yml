@@ -4,25 +4,80 @@ on:
   schedule:
     # Runs at 9:00 AM and 9:00 PM UTC every day (2 posts/day)
     - cron: '0 9,21 * * *'
-  workflow_dispatch: # Allows you to manually trigger it from the "Actions" tab
+  workflow_dispatch: # Allows manual trigger from the "Actions" tab
 
 jobs:
-  trigger-blog-generation:
+  generate-blog-posts:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
     steps:
-      - name: Trigger Blog API endpoint (Batch of 3)
+      - name: Generate Blog Post 1
         run: |
-          echo "Triggering blog generation batch..."
+          echo "🚀 Triggering blog generation (Post 1 of 3)..."
+          response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
+            --max-time 120 \
+            "https://www.synesis.info/api/cron/blog")
           
-          for i in {1..3}
-          do
-             echo "--- Attempt $i ---"
-             response=$(curl -L -s -w "\nHTTP_STATUS:%{http_code}" --max-time 300 https://www.synesis.info/api/cron/blog)
-             echo "Response Body:"
-             echo "$response"
-             
-             # Wait 10 seconds between posts to avoid rate limits
-             sleep 10
-          done
+          echo "Response:"
+          echo "$response"
+          echo ""
           
-          echo "Batch complete."
+          # Extract HTTP status
+          http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          
+          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+            echo "✅ Post 1 generated successfully"
+          else
+            echo "⚠️ Post 1 returned status $http_status (may be expected if no pending topics)"
+          fi
+          
+          # Wait between requests to avoid rate limits
+          sleep 15
+
+      - name: Generate Blog Post 2
+        run: |
+          echo "🚀 Triggering blog generation (Post 2 of 3)..."
+          response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
+            --max-time 120 \
+            "https://www.synesis.info/api/cron/blog")
+          
+          echo "Response:"
+          echo "$response"
+          echo ""
+          
+          http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          
+          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+            echo "✅ Post 2 generated successfully"
+          else
+            echo "⚠️ Post 2 returned status $http_status"
+          fi
+          
+          sleep 15
+
+      - name: Generate Blog Post 3
+        run: |
+          echo "🚀 Triggering blog generation (Post 3 of 3)..."
+          response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
+            --max-time 120 \
+            "https://www.synesis.info/api/cron/blog")
+          
+          echo "Response:"
+          echo "$response"
+          echo ""
+          
+          http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+          
+          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+            echo "✅ Post 3 generated successfully"
+          else
+            echo "⚠️ Post 3 returned status $http_status"
+          fi
+
+      - name: Summary
+        run: |
+          echo "=========================================="
+          echo "🎉 Blog automation batch complete!"
+          echo "Check https://www.synesis.info/blog for new posts"
+          echo "=========================================="
