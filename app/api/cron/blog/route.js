@@ -331,26 +331,28 @@ export async function GET(request) {
             }, { status: 500 });
         }
 
-        // STEP 1: Get the next UNIQUE pending topic
-        // We select topics that are 'pending' and order by created_at (FIFO)
-        const { data: topicData, error: topicError } = await supabase
-            .from('blog_topics')
-            .select('id, topic, status, created_at')
-            .eq('status', 'pending')
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .maybeSingle();
+        // STEP 1: Atomically claim the next pending topic by updating it to 'processing'
+        // This prevents race conditions where multiple requests grab the same topic
+        const { data: claimedTopic, error: claimError } = await supabase
+            .rpc('claim_next_blog_topic');
 
-        if (topicError) {
-            console.error(`${logPrefix} Error fetching topic:`, topicError);
+        if (claimError) {
+            console.error(`${logPrefix} Error claiming topic:`, claimError);
+
+            // If the RPC doesn't exist, fall back to manual claim
+            if (claimError.message.includes('does not exist')) {
+                console.log(`${logPrefix} RPC not found, using fallback method...`);
+                return await fallbackGeneration(logPrefix);
+            }
+
             return NextResponse.json({
-                error: 'Database error fetching topic',
-                details: topicError.message
+                error: 'Database error claiming topic',
+                details: claimError.message
             }, { status: 500 });
         }
 
-        if (!topicData) {
-            console.log(`${logPrefix} No pending topics found.`);
+        if (!claimedTopic || claimedTopic.length === 0) {
+            console.log(`${logPrefix} No pending topics available.`);
             return NextResponse.json({
                 success: true,
                 message: 'No pending topics found. Queue is empty.',
@@ -358,21 +360,21 @@ export async function GET(request) {
             }, { status: 200 });
         }
 
-        console.log(`${logPrefix} Found topic: "${topicData.topic}" (ID: ${topicData.id})`);
+        const topicData = claimedTopic[0];
+        console.log(`${logPrefix} Claimed topic: "${topicData.topic}" (ID: ${topicData.id})`);
 
-        // STEP 2: Check if a blog post already exists with a similar title
-        // This prevents regenerating the same topic if it was already published
+        // STEP 2: Check if we already have a post for this EXACT topic title
         const { data: existingPost } = await supabase
             .from('blog_posts')
             .select('id, title, slug')
-            .ilike('title', `%${topicData.topic.substring(0, 30)}%`)
+            .eq('title', topicData.topic)
             .limit(1)
             .maybeSingle();
 
         if (existingPost) {
-            console.log(`${logPrefix} Topic already has a published post. Marking as published.`);
+            console.log(`${logPrefix} Exact title match found. Marking topic as published.`);
 
-            // Mark this specific topic as published (by ID, not by topic string)
+            // Mark this topic as published (already have the content)
             await supabase
                 .from('blog_topics')
                 .update({ status: 'published', published_at: new Date().toISOString() })
@@ -381,7 +383,7 @@ export async function GET(request) {
             return NextResponse.json({
                 success: true,
                 skipped: true,
-                reason: 'Topic already has a published blog post',
+                reason: 'Blog post with exact title already exists',
                 existingSlug: existingPost.slug,
                 topicId: topicData.id
             });
@@ -446,6 +448,10 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
 
         if (!contentJsonString) {
             console.error(`${logPrefix} Empty response from Groq`);
+            await supabase
+                .from('blog_topics')
+                .update({ status: 'failed' })
+                .eq('id', topicData.id);
             return NextResponse.json({
                 error: 'Empty response from AI'
             }, { status: 500 });
@@ -458,7 +464,6 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
         } catch (e) {
             console.error(`${logPrefix} Failed to parse LLM JSON:`, contentJsonString.substring(0, 500));
 
-            // Mark as failed
             await supabase
                 .from('blog_topics')
                 .update({ status: 'failed' })
@@ -473,12 +478,37 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
         // Validate required fields
         if (!generatedPost.title || !generatedPost.content) {
             console.error(`${logPrefix} Missing required fields in generated post`);
+            await supabase
+                .from('blog_topics')
+                .update({ status: 'failed' })
+                .eq('id', topicData.id);
             return NextResponse.json({
                 error: 'Generated post missing title or content'
             }, { status: 500 });
         }
 
-        // STEP 5: Save to Database with unique slug handling
+        // STEP 5: Final duplicate check before insert (in case of race condition)
+        const { data: lastMinuteCheck } = await supabase
+            .from('blog_posts')
+            .select('id')
+            .eq('title', generatedPost.title)
+            .limit(1)
+            .maybeSingle();
+
+        if (lastMinuteCheck) {
+            console.log(`${logPrefix} Last-minute duplicate detected. Marking as published.`);
+            await supabase
+                .from('blog_topics')
+                .update({ status: 'published', published_at: new Date().toISOString() })
+                .eq('id', topicData.id);
+            return NextResponse.json({
+                success: true,
+                skipped: true,
+                reason: 'Duplicate detected at insert time'
+            });
+        }
+
+        // STEP 6: Save to Database with unique slug handling
         let slug = generatedPost.slug || generateSlug(generatedPost.title);
         let insertedPost = null;
         let attempt = 0;
@@ -516,6 +546,10 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
 
         if (!insertedPost) {
             console.error(`${logPrefix} Failed to insert post after ${attempt} attempts`);
+            await supabase
+                .from('blog_topics')
+                .update({ status: 'failed' })
+                .eq('id', topicData.id);
             return NextResponse.json({
                 error: 'Failed to insert post after multiple attempts'
             }, { status: 500 });
@@ -523,7 +557,7 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
 
         console.log(`${logPrefix} Post created: ${insertedPost.slug}`);
 
-        // STEP 6: Mark THIS specific topic as published (by ID)
+        // STEP 7: Mark THIS specific topic as published (by ID)
         const { error: updateError } = await supabase
             .from('blog_topics')
             .update({
@@ -534,7 +568,6 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
 
         if (updateError) {
             console.error(`${logPrefix} Warning: Post created but failed to update topic status:`, updateError);
-            // Don't fail the request - the post was created successfully
         }
 
         console.log(`${logPrefix} Success! Topic "${topicData.topic}" -> Post "${insertedPost.slug}"`);
@@ -555,4 +588,162 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
         }, { status: 500 });
     }
+}
+
+// Fallback method if RPC doesn't exist
+async function fallbackGeneration(logPrefix) {
+    // Get next pending topic
+    const { data: topicData, error: topicError } = await supabase
+        .from('blog_topics')
+        .select('id, topic, status, created_at')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+    if (topicError) {
+        return NextResponse.json({
+            error: 'Database error',
+            details: topicError.message
+        }, { status: 500 });
+    }
+
+    if (!topicData) {
+        return NextResponse.json({
+            success: true,
+            message: 'No pending topics found.',
+            generated: false
+        }, { status: 200 });
+    }
+
+    // Immediately mark as processing to prevent duplicates
+    const { error: lockError } = await supabase
+        .from('blog_topics')
+        .update({ status: 'processing' })
+        .eq('id', topicData.id)
+        .eq('status', 'pending'); // Only update if still pending
+
+    if (lockError) {
+        console.error(`${logPrefix} Failed to lock topic:`, lockError);
+        return NextResponse.json({
+            error: 'Failed to lock topic',
+            details: lockError.message
+        }, { status: 500 });
+    }
+
+    // Check for existing post with this exact title
+    const { data: existingPost } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug')
+        .eq('title', topicData.topic)
+        .limit(1)
+        .maybeSingle();
+
+    if (existingPost) {
+        await supabase
+            .from('blog_topics')
+            .update({ status: 'published', published_at: new Date().toISOString() })
+            .eq('id', topicData.id);
+
+        return NextResponse.json({
+            success: true,
+            skipped: true,
+            reason: 'Blog post already exists for this topic'
+        });
+    }
+
+    // Generate content
+    const groqApiKey = getGroqApiKey();
+    const filledSystemPrompt = BLOG_PROMPT_TEMPLATE.replace('[INSERT_TOPIC_TITLE_HERE]', topicData.topic);
+
+    const completion = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${groqApiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                { role: 'system', content: filledSystemPrompt },
+                {
+                    role: 'user',
+                    content: `Generate a blog post for the topic: "${topicData.topic}"
+                    
+OUTPUT VALID JSON ONLY. The JSON object must have these exact keys:
+{
+    "title": "The exact title for this blog post",
+    "slug": "url-friendly-slug-of-title", 
+    "excerpt": "A compelling 150-160 character meta description",
+    "keywords": ["keyword1", "keyword2", "keyword3"],
+    "content": "The full blog post content in Markdown format."
+}
+
+Do not output any text other than the JSON object.`
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 4000,
+            response_format: { type: "json_object" }
+        })
+    });
+
+    if (!completion.ok) {
+        await supabase
+            .from('blog_topics')
+            .update({ status: 'failed' })
+            .eq('id', topicData.id);
+        return NextResponse.json({ error: 'Groq API Error' }, { status: 500 });
+    }
+
+    const completionData = await completion.json();
+    const contentJsonString = completionData.choices?.[0]?.message?.content;
+
+    let generatedPost;
+    try {
+        generatedPost = JSON.parse(contentJsonString);
+    } catch (e) {
+        await supabase
+            .from('blog_topics')
+            .update({ status: 'failed' })
+            .eq('id', topicData.id);
+        return NextResponse.json({ error: 'Failed to parse JSON' }, { status: 500 });
+    }
+
+    // Insert the post
+    const slug = generatedPost.slug || generateSlug(generatedPost.title);
+
+    const { data: insertedPost, error: insertError } = await supabase
+        .from('blog_posts')
+        .insert({
+            title: generatedPost.title,
+            slug: `${slug}-${Date.now()}`, // Always add timestamp to prevent duplicates
+            content: generatedPost.content,
+            excerpt: generatedPost.excerpt || generatedPost.title,
+            seo_keywords: generatedPost.keywords || [],
+            published_at: new Date().toISOString()
+        })
+        .select()
+        .maybeSingle();
+
+    if (insertError) {
+        await supabase
+            .from('blog_topics')
+            .update({ status: 'failed' })
+            .eq('id', topicData.id);
+        return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    // Mark as published
+    await supabase
+        .from('blog_topics')
+        .update({ status: 'published', published_at: new Date().toISOString() })
+        .eq('id', topicData.id);
+
+    return NextResponse.json({
+        success: true,
+        generated: true,
+        topic: topicData.topic,
+        slug: insertedPost.slug
+    });
 }
