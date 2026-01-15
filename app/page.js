@@ -37,7 +37,9 @@ Since you are a text-only AI, you must create "drawings" and "visualizations" us
 - Use emojis or spatial formatting to enhance the visual appeal.
 - If a complex diagram is needed, describe it clearly or use a text-based representation (e.g., A -> B -> C).
 
-BE CLEAR, CONCRETE, REAL AND DONT USE JARGON. WRITE SO THE USER UNDERSTANDS, SO IF YOU USE A JARGON WORD, EXPLAIN IT IN A CLEAR UNDERSTANDABLE WAY`;
+BE CLEAR, CONCRETE, REAL AND DONT USE JARGON. WRITE SO THE USER UNDERSTANDS, SO IF YOU USE A JARGON WORD, EXPLAIN IT IN A CLEAR UNDERSTANDABLE WAY.
+
+When intruducing a new concept, or word shortly explain it but also relate it to the rest or the text or context somthing like this: It is like x previous concept but only looks at y. Or say xyz is the new word, it is this and this. While the previous word looked at this, this new word looks at this property of the same thing .... That way the user can connect and understand the relationship between concepts and words of a topic.`;
 
 const CHAT_QUESTION_PROMPT = `You are a helpful AI tutor.
 Check if the user's question specifies a particular way of answering (e.g., "explain like I'm 12", "simple english", "break it down").
@@ -1195,8 +1197,12 @@ export default function Home() {
                 body: JSON.stringify({
                     model: 'llama-3.3-70b-versatile',
                     messages: [
-                        { role: 'system', content: 'You are a curious student. Generate ONE simple, natural question from a different angle. Do NOT repeat previous questions. Ask about unclear parts, gaps, logical fallacies. Return ONLY the question. ASK THE USER QUESTIONS SPECIFICALLY ABOUT THE TOPIC AND WHAT HE TOUGHT TROUGH THE LENSE OF A STUDENT TRYING TO LEARN THE TOPIC THE USER HAS TALKED ABOUT. YOUR QUESTIONS SHOULD ASK FOR CLARIFIACTION, ASK TO EXPOSE A GAP IN THE USERS UNDERSTANDING OF THE ACTUALL SUBJECT MATTER (example, if the topic is mechatronics and the user talks about electrical engeneering and software developement but not about mechanical engeneering, then ask questions about that). DONT ASK UNRELEVANT QUESTIONS ABOUT THE TOPIC (FOR EXAMPLE, IF THE TOPIC IS PYTHON PROGRAMMING, DONT ASK ABOUT THE SOCIATAL ROLE OR PYTHON OR HOW HUMAN BAIS INFLUENCES PYTHON PROGRAMMING, SINCE THAT IS NOT SPECIFIC ABOUT THE SUBJECT MATTER. RATHER ASK QUESTIONS ABOUT PYTHON AND SPECIFICALLY WHAT THE USER TOUGHT, TO EXPOSE GAPS OR AREAS THE USER HAS SHALLOW BUT NOT DEEP KNOWLEDGE) CHALLANGE THE USER BUT DONT DISCOURAGE HIM WITH EXTREAMLY DIFFICULT QUESTIONS' },
-                        { role: 'user', content: `${context} Topic: ${currentArticleTitle || currentTopic} \n\nTeaching explanation: ${teachingText} \n\nGenerate ONE question from a new angle: ` }
+                        {
+                            role: 'system', content: `You are a curious student. Generate ONE simple, natural question from a different angle. Do NOT repeat previous questions. Ask about unclear parts, gaps, logical fallacies. Return ONLY the question. ASK THE USER QUESTIONS SPECIFICALLY ABOUT THE TOPIC AND WHAT HE TAUGHT THROUGH THE LENSE OF A STUDENT TRYING TO LEARN THE TOPIC THE USER HAS TALKED ABOUT. YOUR QUESTIONS SHOULD ASK FOR CLARIFICATION, ASK TO EXPOSE A GAP IN THE USERS UNDERSTANDING OF THE ACTUAL SUBJECT MATTER (example, if the topic is mechatronics and the user talks about electrical engineering and software development but not about mechanical engineering, then ask questions about that). DONT ASK UNRELEVANT QUESTIONS ABOUT THE TOPIC. CHALLENGE THE USER BUT DONT DISCOURAGE HIM WITH EXTREMELY DIFFICULT QUESTIONS.
+
+these are the subtopics the user explored whily studieng this subject: ${Array.from(new Set([...mindMapData.nodes.filter(n => n.level > 0).map(n => n.label), ...articleHistory.map(h => h.title)])).join(', ')}. 
+You can ask about the exact same sub topics to test if the user understood what he studied BUT ALSO ASK QUESTIONS ABOUT THE SUBJECT MATTER IN OTHER AREAS TO TEST THE USERS KNOWLEDGE AND FIND GAPS IN HIS UNDERSTANDING. ASK 1 QUESTION` },
+                        { role: 'user', content: `${context} Topic: ${currentArticleTitle || currentTopic} \nFirst sentence of article: ${currentArticle.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).join(' ').split(/[.!?]/)[0] || ''} \n\nTeaching explanation: ${teachingText} \n\nGenerate ONE question from a new angle: ` }
                     ],
                     temperature: 0.8,
                     max_tokens: 100,
