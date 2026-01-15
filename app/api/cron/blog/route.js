@@ -5,16 +5,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
+const supabase = supabaseUrl && supabaseServiceKey
+    ? createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { autoRefreshToken: false, persistSession: false }
+    })
+    : null;
 
 // Force dynamic to avoid caching
 export const dynamic = 'force-dynamic';
@@ -26,12 +21,9 @@ then position Synesis as the solution.
 MOST IMPORTANT:
 Generate blog post for the topic: [INSERT_TOPIC_TITLE_HERE]
 
-
-CRITICAL: Write as Siyamthanda Kuhlmann, in my style - direct, confident, authoritative,  experienced, and 
+CRITICAL: Write as Siyamthanda Kuhlmann, in my style - direct, confident, authoritative, experienced, and 
 urgently pushing readers toward action. Use "you" constantly. Vary sentence length. 
 Sound like a smart student who gets STEM students' pain points.
-
-═══════════════════════════════════════════════════════════════════════════════════
 
 ## SYNESIS PLATFORM: THE SHORT VERSION
 
@@ -39,8 +31,7 @@ Synesis is an AI-powered learning platform built on the Feynman Method. Instead 
 memorizing, students learn through:
 
 1. INPUT: Enter a topic (Quick Study for specific concepts, Plan Mode for complex ones)
-2. RECURSIVE QUESTIONING: Ask about things you don't understand until you reach 
-   the foundation (drilling down the knowledge tree)
+2. RECURSIVE QUESTIONING: Ask about things you don't understand until you reach the foundation
 3. INGRAIN & VALIDATE (The Feynman Method):
    - Brain dump everything you think you know
    - Teach an AI student (explain simply and logically)
@@ -49,8 +40,7 @@ memorizing, students learn through:
    - Fill those gaps with targeted study
 4. TRUE UNDERSTANDING emerges—not memorization
 
-Core Philosophy: "If you can't explain it simply, you don't truly understand it." 
-(Richard Feynman)
+Core Philosophy: "If you can't explain it simply, you don't truly understand it." (Richard Feynman)
 
 KEY FEATURES TO MENTION:
 - Recursive questioning that exposes knowledge gaps
@@ -59,250 +49,43 @@ KEY FEATURES TO MENTION:
 - Progress tracking and gap identification
 - Free 7-day trial available
 
-═══════════════════════════════════════════════════════════════════════════════════
-
 ## TONE & VOICE 
 
 ✓ Confident, experienced, slightly urgent
 ✓ Talk to ONE ambitious student/learner who's short on time but serious about results
 ✓ Use "you" constantly—make it personal and direct
-✓ Highlight RISK of inaction ("Miss this shift in how you learn, and you'll be stuck")
-✓ Highlight REWARD of action ("Master understanding, and you'll outpace your peers")
 ✓ Short punchy sentences mixed with longer ones
 ✓ Use contractions: you'll, don't, it's, can't, won't
-✓ Rhetorical questions and direct challenges: "Ready to actually understand this?"
-✓ Sound experienced, not theoretical: "I've seen this happen a thousand times..."
-✓ Avoid jargon without explanation. If you use "metacognition" or "E-E-A-T", explain it
-✓ Inject personality: mild optimism, pragmatism, a hint of "I've been there" wisdom
+✓ Sound experienced, not theoretical
 ✓ Never robotic. Never repetitive. Never filler.
 
-═══════════════════════════════════════════════════════════════════════════════════
+## STRUCTURE TO FOLLOW
 
-## STRUCTURE TO FOLLOW (EXACTLY)
+1. TITLE: Format: "How to [Outcome] Instead of [Old Way]" or "Why [Pain Point] (And How to Fix It)"
+2. OPENING (150-200 words): Start with relatable truth, pivot to stakes
+3. KEY TAKEAWAYS: 6 bullet points
+4. MAIN CONTENT (750-1200 words): Problem → Root Cause → Solution → How Synesis Helps
+5. FAQs (3-5 questions)
+6. CONCLUSION with CTA
 
-### 1. TITLE
-Format: "How to [Outcome] Instead of [Old Way]" or "Why [Pain Point] (And How to Fix It)"
-Examples:
-- "How to Understand Calculus Instead of Memorizing Formulas"
-- "Why Engineering Students Can't Explain Circuits (And How to Fix It)"
-- "How to Learn Physics: The Feynman Technique Explained"
-
-Make it keyword-rich and benefit-focused.
-
-### 2. OPENING LINES (150-200 words)
-Start with a broad, relatable truth about learning or education changing.
-Immediately pivot to the specific shift and its consequences (risk + opportunity).
-End with a clear winner/loser framing: "Students who master understanding will dominate. 
-Those stuck in memorization will fall behind."
-
-Don't mention Synesis yet. Just set up the problem and the stakes.
-
-Example opening:
-"Your school taught you to memorize. Your teachers made you drill formulas until they 
-stuck. You passed exams. But here's the uncomfortable truth: you forgot everything 
-within weeks. And when you hit upper-level courses, the real problem showed up—you 
-couldn't actually explain what you knew. The game has changed. Employers, universities, 
-and real engineering don't reward memorization. They reward understanding. And that 
-requires a completely different approach to learning."
-
-### 3. SOFT CTA + AUTHOR CREDIT (50-75 words)
-Line 1: "I hope you enjoy reading this post. If you want a deep learning tool 
-to accelerate your understanding, check out Synesis."
-Then: "By [Your Name], [Your Credentials/Affiliation]. Published [Date]."
-
-### 4. KEY TAKEAWAYS SECTION (6 bullet points, 1 line each)
-Each bullet is a complete, benefit-driven sentence that previews a major point.
-Acts as an executive summary for skimmers.
-
-Examples:
-- Understanding actually takes LESS time than memorization—you just remember more
-- Rote learning creates a "false illusion" that you know something you don't
-- The Feynman Method exposes exactly what you don't understand
-- Most engineering students fail upper-level courses because they never learned to understand
-- Deep learning compounds: understanding one concept makes the next one easier
-- Synesis automates the hardest part: finding your knowledge gaps
-
-### 5. MAIN PROMOTIONAL BANNER (Mid-post, after first section)
-Style: Highlighted box or section break
-Headline: example: "Master Deep Understanding With Synesis"
-Sub-text: example: "Stop memorizing. Start understanding."
-3-4 benefit bullets:examples:
-  • AI-powered Feynman Method built-in
-  • Recursive questioning reveals exactly what you don't know
-  • Learn faster by understanding deeper
-  • 7-day free trial—no credit card
-
-CTA Button: "Try Synesis Free"
-Link: synesis.info
-
-### 6. MAIN CONTENT SECTIONS (750-1200 words total)
-Use benefit-oriented subheadings. Start with "Why", "How", "What", or "[Topic]: Ways To…"
-Break content into logical flow: Problem → Root Cause → Why It Matters → The Solution → How Synesis Helps
-
-SUB-SUBHEADINGS: Break sections into 3-5 smaller points for scannability.
-
-INSIDE SECTIONS:
-- Use bold phrases and short lists
-- Short paragraphs (1-4 sentences max)
-- Real STEM examples (circuits, calculus, programming, physics, etc.)
-- Reference research/studies where relevant
-- Validate reader frustration ("You're not stupid. The system is broken.")
-
-SECTION TEMPLATES:
-
-**"The Problem" Section (150-200 words):**
-State what's broken in traditional learning. Use real examples. Reference research. 
-Validate frustration.
-Sub-points:
-  - What students struggle with (explain formulas but not concepts)
-  - Why it happens (schools teach procedures, not understanding)
-  - The consequence (upper-level courses expose the gap)
-
-**"Why This Happens" Section (100-150 words):**
-Explain the root cause. Reference cognitive science. Keep it simple.
-Sub-points:
-  - How memorization tricks the brain into thinking you know
-  - Why the education system teaches this way (systemic, not your fault)
-  - The hidden cost (poor transfer of knowledge)
-
-**"The Solution" Section (150-200 words):**
-Introduce deep learning and the Feynman Method. Use real example.
-Sub-points:
-  - What the Feynman Method is
-  - How questioning reveals gaps
-  - Why explaining forces understanding
-  - Example: "You memorize Ohm's law. But can you explain WHY it exists? 
-    That 'why' is where real understanding lives."
-
-**"How Synesis Helps" Section (100-150 words):**
-Position the app as the tool that makes this automatic.
-Sub-points:
-  - Recursive questioning feature (finds gaps automatically)
-  - Ingrain & Validate method (Feynman automated)
-  - Progress tracking (shows what you actually understand)
-  - Time savings (understand faster than memorization)
-
-Soft-sell language:
-"If you want a shortcut to this process, Synesis automates the recursive questioning 
-and gap-finding. Most students spend weeks doing this manually. Synesis does it in hours."
-
-### 7. OPTIONAL: 1-2 TOOL/FEATURE CALLOUTS (50-100 words each)
-Weave in naturally. Soft-sell tone. Format: Small box with benefit bullets.
-Example:
-"The Recursive Questioning Feature
-Instead of guessing what you don't know, Synesis asks. It finds gaps automatically, 
-saving you weeks of frustration. Try it free."
-
-### 8. FAQs SECTION (3-5 questions, 50-100 words per answer)
-Phrase naturally as reader questions.
-Answer directly. Reinforce main points. Don't sell, just help.
-
-Example Questions:
-- "Does understanding really take less time than memorization?"
-- "How do I know if I actually understand something?"
-- "Can I use the Feynman Method on any subject?"
-- "Why do most students fail upper-level courses?"
-
-### 9. CONCLUSION (100-150 words)
-Recap the transformation. Encourage small starting steps.
-End with Synesis as the next logical step.
-
-Example:
-"The education system isn't changing. But you can. Start by asking 'why' more. 
-Ask yourself what you can't explain. That's your knowledge gap. If you want to 
-automate this process and stop guessing about what you know, Synesis is built 
-exactly for this. Try it free for 7 days. See for yourself."
-
-CTA: "Ready to truly understand? Try Synesis free at synesis.info"
-
-### 10. ABOUT THE AUTHOR (50-75 words)
-Fixed bio at the end. Include credentials, any media mentions, authority signals.
-
-Example:
-"[Your Name] is a learning strategist and educator. He's written about STEM learning 
-on [Publication], and has helped [X] students shift from memorization to real understanding. 
-He's obsessed with the Feynman Method and how to teach it at scale."
-
-═══════════════════════════════════════════════════════════════════════════════════
-
-## FORMATTING & READABILITY RULES
-
+## FORMATTING RULES
 ✓ Short paragraphs (1-4 sentences max)
-✓ Frequent bold subheadings (every 100-150 words)
-✓ Bullet and numbered lists throughout
-✓ Em dashes for conversational asides—like this—to feel natural
-✓ No walls of text. Every section scannable.
-✓ White space matters. Use it.
-
-═══════════════════════════════════════════════════════════════════════════════════
-
-## CRITICAL TALKING POINTS (Include 3-4 Naturally Throughout)
-
-Required to hit:
-□ "If you can't explain it simply, you don't truly understand it" (Feynman quote)
-□ Why engineering students can explain formulas but not concepts
-□ How rote memorization creates "false illusions of understanding"
-□ The gap between passing exams and solving real problems
-□ Why traditional textbooks teach procedures, not comprehension
-□ Students forget 80% of rote-learned material (research fact)
-□ Understanding actually FASTER than memorization (counter-intuitive)
-□ Questions reveal more than answers
-
-═══════════════════════════════════════════════════════════════════════════════════
-
-## DO's AND DON'Ts
-
-DO:
-✓ Sound like you've experienced this problem
-✓ Use specific STEM examples (circuits, calculus, physics, programming)
-✓ Challenge traditional education naturally (not preachy)
-✓ Make the reader feel validated ("You're not stupid")
-✓ Use urgency subtly ("Students who adapt will dominate")
-✓ Mention research/studies for credibility
-✓ Position Synesis as a shortcut, not a miracle cure
-✓ Include 1-2 rhetorical questions
-✓ End every section with a sense of clarity or action
-
-DON'T:
-✗ Use salesy language ("revolutionary," "game-changer," "never seen before")
-✗ Make unsubstantiated claims
-✗ Ignore other tools/methods (acknowledge them, position Synesis as better)
-✗ Be academic or formal (this isn't a textbook)
-✗ Repeat the same point multiple ways
-✗ Forget to actually teach something valuable (reader should learn)
-✗ Hard-sell Synesis (soft integration only)
-✗ Use passive voice when active is stronger
-✗ Make paragraphs longer than 4 sentences
-
-═══════════════════════════════════════════════════════════════════════════════════
-
-## EXECUTION CHECKLIST
-
-For each post you generate:
-1. Replace [INSERT_TOPIC_TITLE_HERE] with specific blog title
-2. Generate ONE blog post (750-1200 words)
-3. Follow structure above exactly
-4. Include 3-4 key talking points naturally
-5. Make reader learn something valuable in the post itself
-6. Ensure 3-5 sub-subheadings per main section
-7. Include real STEM examples
-8. Reference 1-2 studies/research points
-9. Include the mid-post promotional banner
-10. End with clear CTA: "Ready to truly understand [topic]? Try Synesis free at synesis.info"
-11. Include author bio
+✓ Frequent subheadings
+✓ Bullet and numbered lists
+✓ No walls of text
 `;
 
 // Helper function to generate a unique slug
 function generateSlug(title) {
     return title
         .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
-        .replace(/\s+/g, '-')         // Spaces to hyphens
-        .replace(/-+/g, '-')          // Multiple hyphens to single
-        .substring(0, 80);            // Limit length
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 60);
 }
 
-// Helper function to get a Groq API key (supports rotation)
+// Helper function to get a Groq API key
 function getGroqApiKey() {
     const keys = [
         process.env.NEXT_PUBLIC_GROQ_API_KEY,
@@ -310,90 +93,95 @@ function getGroqApiKey() {
         process.env.GROQ_API_KEY_3
     ].filter(Boolean);
 
-    if (keys.length === 0) {
-        throw new Error('No Groq API keys configured');
-    }
-
-    // Simple random rotation
+    if (keys.length === 0) throw new Error('No Groq API keys configured');
     return keys[Math.floor(Math.random() * keys.length)];
 }
 
 export async function GET(request) {
-    const logPrefix = `[Blog Cron ${new Date().toISOString()}]`;
+    const runId = Math.random().toString(36).substring(7);
+    const log = (msg) => console.log(`[Blog ${runId}] ${msg}`);
 
     try {
-        console.log(`${logPrefix} Starting blog generation...`);
+        log('Starting...');
 
-        // Validate environment
-        if (!supabaseUrl || !supabaseServiceKey) {
-            return NextResponse.json({
-                error: 'Missing Supabase environment variables'
-            }, { status: 500 });
+        if (!supabase) {
+            return NextResponse.json({ error: 'Missing Supabase config' }, { status: 500 });
         }
 
-        // STEP 1: Atomically claim the next pending topic by updating it to 'processing'
-        // This prevents race conditions where multiple requests grab the same topic
-        const { data: claimedTopic, error: claimError } = await supabase
-            .rpc('claim_next_blog_topic');
+        // STEP 1: Get a pending topic and IMMEDIATELY try to mark it as processing
+        // Use a single atomic update that only succeeds if status is still 'pending'
+        const { data: topics, error: fetchError } = await supabase
+            .from('blog_topics')
+            .select('id, topic')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true })
+            .limit(1);
+
+        if (fetchError) {
+            log(`Fetch error: ${fetchError.message}`);
+            return NextResponse.json({ error: fetchError.message }, { status: 500 });
+        }
+
+        if (!topics || topics.length === 0) {
+            log('No pending topics');
+            return NextResponse.json({ success: true, message: 'No pending topics', generated: false });
+        }
+
+        const topic = topics[0];
+        log(`Found topic: "${topic.topic}" (${topic.id})`);
+
+        // STEP 2: Try to claim this topic atomically
+        // Only updates if status is STILL 'pending' - prevents race conditions
+        const { data: claimed, error: claimError } = await supabase
+            .from('blog_topics')
+            .update({ status: 'processing' })
+            .eq('id', topic.id)
+            .eq('status', 'pending')  // CRITICAL: Only claim if still pending
+            .select();
 
         if (claimError) {
-            console.error(`${logPrefix} Error claiming topic:`, claimError);
-
-            // If the RPC doesn't exist, fall back to manual claim
-            if (claimError.message.includes('does not exist')) {
-                console.log(`${logPrefix} RPC not found, using fallback method...`);
-                return await fallbackGeneration(logPrefix);
-            }
-
-            return NextResponse.json({
-                error: 'Database error claiming topic',
-                details: claimError.message
-            }, { status: 500 });
+            log(`Claim error: ${claimError.message}`);
+            return NextResponse.json({ error: claimError.message }, { status: 500 });
         }
 
-        if (!claimedTopic || claimedTopic.length === 0) {
-            console.log(`${logPrefix} No pending topics available.`);
+        if (!claimed || claimed.length === 0) {
+            log('Topic already claimed by another process');
             return NextResponse.json({
                 success: true,
-                message: 'No pending topics found. Queue is empty.',
-                generated: false
-            }, { status: 200 });
+                skipped: true,
+                reason: 'Topic claimed by concurrent request'
+            });
         }
 
-        const topicData = claimedTopic[0];
-        console.log(`${logPrefix} Claimed topic: "${topicData.topic}" (ID: ${topicData.id})`);
+        log('Topic claimed successfully');
 
-        // STEP 2: Check if we already have a post for this EXACT topic title
-        const { data: existingPost } = await supabase
+        // STEP 3: Check if a blog post with this EXACT title already exists
+        const { data: existing } = await supabase
             .from('blog_posts')
-            .select('id, title, slug')
-            .eq('title', topicData.topic)
+            .select('id, slug')
+            .eq('title', topic.topic)
             .limit(1)
             .maybeSingle();
 
-        if (existingPost) {
-            console.log(`${logPrefix} Exact title match found. Marking topic as published.`);
-
-            // Mark this topic as published (already have the content)
+        if (existing) {
+            log('Post already exists for this topic');
             await supabase
                 .from('blog_topics')
                 .update({ status: 'published', published_at: new Date().toISOString() })
-                .eq('id', topicData.id);
+                .eq('id', topic.id);
 
             return NextResponse.json({
                 success: true,
                 skipped: true,
-                reason: 'Blog post with exact title already exists',
-                existingSlug: existingPost.slug,
-                topicId: topicData.id
+                reason: 'Post already exists',
+                existingSlug: existing.slug
             });
         }
 
-        // STEP 3: Generate Content via Groq
+        // STEP 4: Generate content via Groq
+        log('Generating content...');
         const groqApiKey = getGroqApiKey();
-        const filledSystemPrompt = BLOG_PROMPT_TEMPLATE.replace('[INSERT_TOPIC_TITLE_HERE]', topicData.topic);
-
-        console.log(`${logPrefix} Calling Groq API...`);
+        const filledPrompt = BLOG_PROMPT_TEMPLATE.replace('[INSERT_TOPIC_TITLE_HERE]', topic.topic);
 
         const completion = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
@@ -404,21 +192,21 @@ export async function GET(request) {
             body: JSON.stringify({
                 model: 'llama-3.3-70b-versatile',
                 messages: [
-                    { role: 'system', content: filledSystemPrompt },
+                    { role: 'system', content: filledPrompt },
                     {
                         role: 'user',
-                        content: `Generate a blog post for the topic: "${topicData.topic}"
+                        content: `Generate a blog post for: "${topic.topic}"
                         
-OUTPUT VALID JSON ONLY. The JSON object must have these exact keys:
+Return ONLY valid JSON with these keys:
 {
-    "title": "The exact title for this blog post",
-    "slug": "url-friendly-slug-of-title",
-    "excerpt": "A compelling 150-160 character meta description",
-    "keywords": ["keyword1", "keyword2", "keyword3"],
-    "content": "The full blog post content in Markdown format, following all structural rules from the system prompt."
+    "title": "${topic.topic}",
+    "slug": "url-friendly-slug",
+    "excerpt": "150-160 char description",
+    "keywords": ["keyword1", "keyword2"],
+    "content": "Full markdown content"
 }
 
-Do not output any text other than the JSON object. Do not wrap in markdown code blocks.`
+IMPORTANT: The title MUST be exactly "${topic.topic}"`
                     }
                 ],
                 temperature: 0.7,
@@ -428,322 +216,94 @@ Do not output any text other than the JSON object. Do not wrap in markdown code 
         });
 
         if (!completion.ok) {
-            const errBody = await completion.text();
-            console.error(`${logPrefix} Groq API Error:`, errBody);
-
-            // Mark topic as failed so we can retry later
-            await supabase
-                .from('blog_topics')
-                .update({ status: 'failed' })
-                .eq('id', topicData.id);
-
-            return NextResponse.json({
-                error: 'Groq API Error',
-                details: errBody
-            }, { status: 500 });
+            const err = await completion.text();
+            log(`Groq error: ${err}`);
+            await supabase.from('blog_topics').update({ status: 'failed' }).eq('id', topic.id);
+            return NextResponse.json({ error: 'Groq API error' }, { status: 500 });
         }
 
-        const completionData = await completion.json();
-        const contentJsonString = completionData.choices?.[0]?.message?.content;
+        const result = await completion.json();
+        const content = result.choices?.[0]?.message?.content;
 
-        if (!contentJsonString) {
-            console.error(`${logPrefix} Empty response from Groq`);
-            await supabase
-                .from('blog_topics')
-                .update({ status: 'failed' })
-                .eq('id', topicData.id);
-            return NextResponse.json({
-                error: 'Empty response from AI'
-            }, { status: 500 });
+        if (!content) {
+            log('Empty Groq response');
+            await supabase.from('blog_topics').update({ status: 'failed' }).eq('id', topic.id);
+            return NextResponse.json({ error: 'Empty AI response' }, { status: 500 });
         }
 
-        // STEP 4: Parse the generated content
-        let generatedPost;
+        // STEP 5: Parse JSON
+        let post;
         try {
-            generatedPost = JSON.parse(contentJsonString);
+            post = JSON.parse(content);
         } catch (e) {
-            console.error(`${logPrefix} Failed to parse LLM JSON:`, contentJsonString.substring(0, 500));
-
-            await supabase
-                .from('blog_topics')
-                .update({ status: 'failed' })
-                .eq('id', topicData.id);
-
-            return NextResponse.json({
-                error: 'Failed to parse generated content as JSON',
-                raw: contentJsonString.substring(0, 200)
-            }, { status: 500 });
+            log('JSON parse failed');
+            await supabase.from('blog_topics').update({ status: 'failed' }).eq('id', topic.id);
+            return NextResponse.json({ error: 'Invalid JSON from AI' }, { status: 500 });
         }
 
-        // Validate required fields
-        if (!generatedPost.title || !generatedPost.content) {
-            console.error(`${logPrefix} Missing required fields in generated post`);
-            await supabase
-                .from('blog_topics')
-                .update({ status: 'failed' })
-                .eq('id', topicData.id);
-            return NextResponse.json({
-                error: 'Generated post missing title or content'
-            }, { status: 500 });
+        if (!post.content) {
+            log('Missing content in response');
+            await supabase.from('blog_topics').update({ status: 'failed' }).eq('id', topic.id);
+            return NextResponse.json({ error: 'Missing content' }, { status: 500 });
         }
 
-        // STEP 5: Final duplicate check before insert (in case of race condition)
-        const { data: lastMinuteCheck } = await supabase
+        // STEP 6: Insert post - use topic.topic as title to ensure consistency
+        // The title has a UNIQUE constraint, so duplicates will fail
+        const finalTitle = topic.topic; // Use original topic, NOT AI-generated title
+        const slug = generateSlug(finalTitle) + '-' + Date.now(); // Timestamp ensures unique slug
+
+        log(`Inserting post: "${finalTitle}"`);
+
+        const { data: inserted, error: insertError } = await supabase
             .from('blog_posts')
-            .select('id')
-            .eq('title', generatedPost.title)
-            .limit(1)
-            .maybeSingle();
-
-        if (lastMinuteCheck) {
-            console.log(`${logPrefix} Last-minute duplicate detected. Marking as published.`);
-            await supabase
-                .from('blog_topics')
-                .update({ status: 'published', published_at: new Date().toISOString() })
-                .eq('id', topicData.id);
-            return NextResponse.json({
-                success: true,
-                skipped: true,
-                reason: 'Duplicate detected at insert time'
-            });
-        }
-
-        // STEP 6: Save to Database with unique slug handling
-        let slug = generatedPost.slug || generateSlug(generatedPost.title);
-        let insertedPost = null;
-        let attempt = 0;
-
-        while (!insertedPost && attempt < 5) {
-            attempt++;
-            const currentSlug = attempt === 1 ? slug : `${slug}-${Date.now()}`;
-
-            const { data, error } = await supabase
-                .from('blog_posts')
-                .insert({
-                    title: generatedPost.title,
-                    slug: currentSlug,
-                    content: generatedPost.content,
-                    excerpt: generatedPost.excerpt || generatedPost.title,
-                    seo_keywords: generatedPost.keywords || [],
-                    published_at: new Date().toISOString()
-                })
-                .select()
-                .maybeSingle();
-
-            if (error) {
-                // Check for unique constraint violation (Postgres code 23505)
-                if (error.code === '23505') {
-                    console.warn(`${logPrefix} Slug collision: ${currentSlug}. Retrying...`);
-                    continue;
-                } else {
-                    console.error(`${logPrefix} Error inserting post:`, error);
-                    throw error;
-                }
-            }
-
-            insertedPost = data;
-        }
-
-        if (!insertedPost) {
-            console.error(`${logPrefix} Failed to insert post after ${attempt} attempts`);
-            await supabase
-                .from('blog_topics')
-                .update({ status: 'failed' })
-                .eq('id', topicData.id);
-            return NextResponse.json({
-                error: 'Failed to insert post after multiple attempts'
-            }, { status: 500 });
-        }
-
-        console.log(`${logPrefix} Post created: ${insertedPost.slug}`);
-
-        // STEP 7: Mark THIS specific topic as published (by ID)
-        const { error: updateError } = await supabase
-            .from('blog_topics')
-            .update({
-                status: 'published',
+            .insert({
+                title: finalTitle,
+                slug: slug,
+                content: post.content,
+                excerpt: post.excerpt || finalTitle.substring(0, 160),
+                seo_keywords: post.keywords || [],
                 published_at: new Date().toISOString()
             })
-            .eq('id', topicData.id);
+            .select()
+            .maybeSingle();
 
-        if (updateError) {
-            console.error(`${logPrefix} Warning: Post created but failed to update topic status:`, updateError);
+        if (insertError) {
+            // If duplicate title error, just mark as published
+            if (insertError.code === '23505') {
+                log('Duplicate detected at insert - marking as published');
+                await supabase
+                    .from('blog_topics')
+                    .update({ status: 'published', published_at: new Date().toISOString() })
+                    .eq('id', topic.id);
+                return NextResponse.json({
+                    success: true,
+                    skipped: true,
+                    reason: 'Duplicate title constraint'
+                });
+            }
+
+            log(`Insert error: ${insertError.message}`);
+            await supabase.from('blog_topics').update({ status: 'failed' }).eq('id', topic.id);
+            return NextResponse.json({ error: insertError.message }, { status: 500 });
         }
 
-        console.log(`${logPrefix} Success! Topic "${topicData.topic}" -> Post "${insertedPost.slug}"`);
+        // STEP 7: Mark topic as published
+        await supabase
+            .from('blog_topics')
+            .update({ status: 'published', published_at: new Date().toISOString() })
+            .eq('id', topic.id);
+
+        log(`SUCCESS: ${inserted.slug}`);
 
         return NextResponse.json({
             success: true,
             generated: true,
-            topic: topicData.topic,
-            topicId: topicData.id,
-            slug: insertedPost.slug,
-            title: insertedPost.title
+            topic: topic.topic,
+            slug: inserted.slug
         });
 
     } catch (error) {
-        console.error(`${logPrefix} Unexpected error:`, error);
-        return NextResponse.json({
-            error: error.message || 'Unknown error occurred',
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        }, { status: 500 });
+        console.error(`[Blog ${runId}] Error:`, error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-}
-
-// Fallback method if RPC doesn't exist
-async function fallbackGeneration(logPrefix) {
-    // Get next pending topic
-    const { data: topicData, error: topicError } = await supabase
-        .from('blog_topics')
-        .select('id, topic, status, created_at')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-    if (topicError) {
-        return NextResponse.json({
-            error: 'Database error',
-            details: topicError.message
-        }, { status: 500 });
-    }
-
-    if (!topicData) {
-        return NextResponse.json({
-            success: true,
-            message: 'No pending topics found.',
-            generated: false
-        }, { status: 200 });
-    }
-
-    // Immediately mark as processing to prevent duplicates
-    const { error: lockError } = await supabase
-        .from('blog_topics')
-        .update({ status: 'processing' })
-        .eq('id', topicData.id)
-        .eq('status', 'pending'); // Only update if still pending
-
-    if (lockError) {
-        console.error(`${logPrefix} Failed to lock topic:`, lockError);
-        return NextResponse.json({
-            error: 'Failed to lock topic',
-            details: lockError.message
-        }, { status: 500 });
-    }
-
-    // Check for existing post with this exact title
-    const { data: existingPost } = await supabase
-        .from('blog_posts')
-        .select('id, title, slug')
-        .eq('title', topicData.topic)
-        .limit(1)
-        .maybeSingle();
-
-    if (existingPost) {
-        await supabase
-            .from('blog_topics')
-            .update({ status: 'published', published_at: new Date().toISOString() })
-            .eq('id', topicData.id);
-
-        return NextResponse.json({
-            success: true,
-            skipped: true,
-            reason: 'Blog post already exists for this topic'
-        });
-    }
-
-    // Generate content
-    const groqApiKey = getGroqApiKey();
-    const filledSystemPrompt = BLOG_PROMPT_TEMPLATE.replace('[INSERT_TOPIC_TITLE_HERE]', topicData.topic);
-
-    const completion = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${groqApiKey}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-                { role: 'system', content: filledSystemPrompt },
-                {
-                    role: 'user',
-                    content: `Generate a blog post for the topic: "${topicData.topic}"
-                    
-OUTPUT VALID JSON ONLY. The JSON object must have these exact keys:
-{
-    "title": "The exact title for this blog post",
-    "slug": "url-friendly-slug-of-title", 
-    "excerpt": "A compelling 150-160 character meta description",
-    "keywords": ["keyword1", "keyword2", "keyword3"],
-    "content": "The full blog post content in Markdown format."
-}
-
-Do not output any text other than the JSON object.`
-                }
-            ],
-            temperature: 0.7,
-            max_tokens: 4000,
-            response_format: { type: "json_object" }
-        })
-    });
-
-    if (!completion.ok) {
-        await supabase
-            .from('blog_topics')
-            .update({ status: 'failed' })
-            .eq('id', topicData.id);
-        return NextResponse.json({ error: 'Groq API Error' }, { status: 500 });
-    }
-
-    const completionData = await completion.json();
-    const contentJsonString = completionData.choices?.[0]?.message?.content;
-
-    let generatedPost;
-    try {
-        generatedPost = JSON.parse(contentJsonString);
-    } catch (e) {
-        await supabase
-            .from('blog_topics')
-            .update({ status: 'failed' })
-            .eq('id', topicData.id);
-        return NextResponse.json({ error: 'Failed to parse JSON' }, { status: 500 });
-    }
-
-    // Insert the post
-    const slug = generatedPost.slug || generateSlug(generatedPost.title);
-
-    const { data: insertedPost, error: insertError } = await supabase
-        .from('blog_posts')
-        .insert({
-            title: generatedPost.title,
-            slug: `${slug}-${Date.now()}`, // Always add timestamp to prevent duplicates
-            content: generatedPost.content,
-            excerpt: generatedPost.excerpt || generatedPost.title,
-            seo_keywords: generatedPost.keywords || [],
-            published_at: new Date().toISOString()
-        })
-        .select()
-        .maybeSingle();
-
-    if (insertError) {
-        await supabase
-            .from('blog_topics')
-            .update({ status: 'failed' })
-            .eq('id', topicData.id);
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
-    }
-
-    // Mark as published
-    await supabase
-        .from('blog_topics')
-        .update({ status: 'published', published_at: new Date().toISOString() })
-        .eq('id', topicData.id);
-
-    return NextResponse.json({
-        success: true,
-        generated: true,
-        topic: topicData.topic,
-        slug: insertedPost.slug
-    });
 }
