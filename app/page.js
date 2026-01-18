@@ -10,7 +10,7 @@ import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
-import { Menu, User as UserIcon, PenTool } from 'lucide-react';
+import { Menu, User as UserIcon, PenTool, History } from 'lucide-react';
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -111,6 +111,9 @@ export default function Home() {
     const [identifiedGaps, setIdentifiedGaps] = useState('');
     const [language, setLanguage] = useState('en-US');
     const [showSaveFeedback, setShowSaveFeedback] = useState(false);
+    const [feynmanHistory, setFeynmanHistory] = useState([]);
+    const [showHistory, setShowHistory] = useState(false);
+    const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
     const recognitionRef = useRef(null);
     const studyTimerRef = useRef(null);
@@ -178,6 +181,49 @@ export default function Home() {
             setMonthlyArticleCount(data.monthly_article_count || 0);
         } else if (error && error.code === 'PGRST116') {
             // Profile doesn't exist yet, usually handled by trigger but good fallback
+        }
+    };
+
+    const fetchFeynmanHistory = async (studyId = null) => {
+        if (!user) return;
+        setIsHistoryLoading(true);
+        try {
+            const currentStudyId = studyId || studies.find(s => s.topic === currentTopic)?.id;
+            const url = `/api/feynman/list?userId=${user.id}${currentStudyId ? `&studyId=${currentStudyId}` : ''}`;
+            const response = await fetch(url);
+            const res = await response.json();
+            if (res.data) setFeynmanHistory(res.data);
+        } catch (err) {
+            console.error("Error fetching feynman history:", err);
+        } finally {
+            setIsHistoryLoading(false);
+        }
+    };
+
+    const saveFeynmanHistory = async () => {
+        if (!user || !essayText.trim()) return;
+
+        const currentStudyId = studies.find(s => s.topic === currentTopic)?.id;
+        const subtopicLabel = mindMapData.currentNodeId !== null ? mindMapData.nodes.find(n => n.id === mindMapData.currentNodeId)?.label : null;
+
+        try {
+            await fetch('/api/feynman/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user.id,
+                    studyId: currentStudyId,
+                    topic: currentTopic,
+                    subtopic: subtopicLabel !== currentTopic ? subtopicLabel : null,
+                    essayText,
+                    teachingText,
+                    questionHistory
+                })
+            });
+            // Refresh local history
+            fetchFeynmanHistory(currentStudyId);
+        } catch (err) {
+            console.error("Error saving feynman history:", err);
         }
     };
 
@@ -308,6 +354,7 @@ export default function Home() {
                 setIsSidebarOpen(false);
                 // Sync to localStorage
                 localStorage.setItem('learningAppSession', JSON.stringify(data));
+                fetchFeynmanHistory(study.id);
             }
         } catch (e) {
             console.error('Failed to load study:', e);
@@ -1257,7 +1304,12 @@ You can ask about the exact same sub topics to test if the user understood what 
     };
 
     // Finish teaching and go back to study
-    const handleFinishTeaching = () => {
+    const handleFinishTeaching = async () => {
+        // Save to History before clearing
+        if (essayText.trim() || teachingText.trim()) {
+            await saveFeynmanHistory();
+        }
+
         if (identifiedGaps.trim()) {
             const gaps = identifiedGaps.split('\n').filter(g => g.trim());
             gaps.forEach(gap => setNotesText(prev => prev + (prev ? '\n\n' : '') + gap + (gap.endsWith('?') ? '' : '?') + '\n'));
@@ -1301,6 +1353,19 @@ You can ask about the exact same sub topics to test if the user understood what 
                     <span className={styles.toggleLabel}>{showGuidance ? 'Tips On' : 'Tips Off'}</span>
                 </button>
                 <button onClick={() => setDarkMode(!darkMode)} className={styles.darkModeToggle}>{darkMode ? '☀️' : '🌙'}</button>
+                {user && (phase === 'study' || phase === 'study-plan') && (
+                    <button
+                        onClick={() => {
+                            if (!showHistory) fetchFeynmanHistory();
+                            setShowHistory(!showHistory);
+                        }}
+                        className={styles.historyToggle}
+                        title="View Feynman History"
+                    >
+                        <History size={18} />
+                        <span className={styles.toggleLabel}>History</span>
+                    </button>
+                )}
                 {isPlanMode && (phase === 'study' || phase === 'ingrain-essay' || phase === 'ingrain-teach' || phase === 'study-plan') && <button onClick={handleBackToPlan} className="btn-secondary">🗺️ Mind Map</button>}
                 {(phase === 'study' || phase === 'account') && <button onClick={() => setNotesOpen(!notesOpen)} className="btn-secondary">{notesOpen ? 'Close Notes' : 'Open Notes'}</button>}
                 {(phase === 'study' || phase === 'study-plan') && <button onClick={() => setPhase('ingrain-essay')} className="btn-primary" disabled={studyTime < 10}>Ingrain & Validate Knowledge</button>}
@@ -1930,6 +1995,62 @@ You can ask about the exact same sub topics to test if the user understood what 
         }
     };
 
+    const renderHistory = () => {
+        if (!showHistory) return null;
+
+        return (
+            <div className={styles.historyOverlay}>
+                <div className={styles.historyHeader}>
+                    <h3><History size={20} /> Feynman History</h3>
+                    <button onClick={() => setShowHistory(false)} className={styles.closeHistoryBtn}>×</button>
+                </div>
+                <div className={styles.historyContent}>
+                    {isHistoryLoading ? (
+                        <div className={styles.loadingContainer}><div className="spinner-small"></div><p>Loading history...</p></div>
+                    ) : feynmanHistory.length === 0 ? (
+                        <div className={styles.historyEmpty}>
+                            <p>No history for this topic yet. Master a topic to see it here!</p>
+                        </div>
+                    ) : (
+                        feynmanHistory.map((item, index) => (
+                            <div key={item.id} className={styles.historyItemCard}>
+                                <div className={styles.historyItemMeta}>
+                                    <span className={styles.historySubtopic}>{item.subtopic || 'Main Topic'}</span>
+                                    <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                </div>
+                                {item.essay_text && (
+                                    <>
+                                        <div className={styles.historySectionTitle}>📝 Step 1: Braindump</div>
+                                        <div className={styles.historyText}>{item.essay_text}</div>
+                                    </>
+                                )}
+                                {item.teaching_text && (
+                                    <>
+                                        <div className={styles.historySectionTitle}>🎓 Step 2: Teaching</div>
+                                        <div className={styles.historyText}>{item.teaching_text}</div>
+                                    </>
+                                )}
+                                {item.question_history && item.question_history.length > 0 && (
+                                    <>
+                                        <div className={styles.historySectionTitle}>❓ Q&A Session</div>
+                                        <div className={styles.historyQA}>
+                                            {item.question_history.map((qa, i) => (
+                                                <div key={i} className={styles.historyQAItem}>
+                                                    <p><strong>Q:</strong> {qa.question}</p>
+                                                    <p><strong>A:</strong> {qa.answer}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <>
             <main className={styles.main}>{renderHeader()}{renderPhase()}</main>
@@ -1946,6 +2067,12 @@ You can ask about the exact same sub topics to test if the user understood what 
                     setIsSidebarOpen(false);
                     setIsSubscriptionModalOpen(true);
                 }}
+                onViewHistory={(study) => {
+                    setCurrentTopic(study.topic);
+                    fetchFeynmanHistory(study.id);
+                    setShowHistory(true);
+                    setIsSidebarOpen(false);
+                }}
             />
             <AuthModal
                 isOpen={isAuthModalOpen}
@@ -1958,6 +2085,7 @@ You can ask about the exact same sub topics to test if the user understood what 
                 currentTier={subscriptionTier}
                 onUpgrade={handleUpgrade}
             />
+            {renderHistory()}
         </>
     );
 }

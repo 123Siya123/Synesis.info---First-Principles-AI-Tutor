@@ -1,9 +1,9 @@
 
 import { useRef } from 'react';
 import styles from './Sidebar.module.css';
-import { BookOpen, Clock, LogOut, User, Trash2, Sparkles } from 'lucide-react';
+import { BookOpen, Clock, LogOut, User, Trash2, Sparkles, History } from 'lucide-react';
 
-export default function Sidebar({ isOpen, onClose, user, studies, onSelect, onLogout, onDelete, subscriptionTier, onOpenSubscription }) {
+export default function Sidebar({ isOpen, onClose, user, studies, onSelect, onLogout, onDelete, subscriptionTier, onOpenSubscription, onViewHistory }) {
     const sidebarRef = useRef(null);
 
     // Close on click outside (already handled by overlay in CSS structure generally, but here checking explicitly if needed)
@@ -48,23 +48,30 @@ export default function Sidebar({ isOpen, onClose, user, studies, onSelect, onLo
                                         {formatDate(study.updated_at)}
                                     </span>
                                     {onDelete && (
-                                        <div
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                if (confirm('Delete this study?')) onDelete(study.id);
-                                            }}
-                                            style={{
-                                                position: 'absolute',
-                                                right: 10,
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                padding: 8,
-                                                color: '#ef4444',
-                                                opacity: 0.6
-                                            }}
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={16} />
+                                        <div className={styles.itemActions}>
+                                            {onViewHistory && (
+                                                <div
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onViewHistory(study);
+                                                    }}
+                                                    className={styles.actionIcon}
+                                                    title="View History"
+                                                >
+                                                    <History size={16} />
+                                                </div>
+                                            )}
+                                            <div
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (confirm('Delete this study?')) onDelete(study.id);
+                                                }}
+                                                className={styles.actionIcon}
+                                                style={{ color: '#ef4444' }}
+                                                title="Delete"
+                                            >
+                                                <Trash2 size={16} />
+                                            </div>
                                         </div>
                                     )}
                                 </button>
