@@ -10,7 +10,7 @@ import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
-import { Menu, User as UserIcon, PenTool, History, Timer } from 'lucide-react';
+import { Menu, User as UserIcon, PenTool, History, Timer, Play, Pause } from 'lucide-react';
 import PomodoroTimer from './components/PomodoroTimer';
 
 
@@ -122,6 +122,7 @@ export default function Home() {
     });
 
     const [isPomoVisible, setIsPomoVisible] = useState(false);
+    const [isPomoActive, setIsPomoActive] = useState(false);
 
     const recognitionRef = useRef(null);
     const studyTimerRef = useRef(null);
@@ -1385,6 +1386,18 @@ You can ask about the exact same sub topics to test if the user understood what 
                     <span className={styles.toggleLabel}>{showGuidance ? 'Tips On' : 'Tips Off'}</span>
                 </button>
                 <button onClick={() => setDarkMode(!darkMode)} className={styles.darkModeToggle}>{darkMode ? '☀️' : '🌙'}</button>
+
+                {pomodoroSettings.enabled && (phase === 'study' || phase === 'study-plan') && (
+                    <button
+                        className={styles.pomoHeaderBtn}
+                        onClick={() => setIsPomoActive(!isPomoActive)}
+                        title={isPomoActive ? "Pause Focus" : "Start Focus"}
+                    >
+                        {isPomoActive ? <Pause size={18} /> : <Play size={18} />}
+                        <span className={styles.toggleLabel}>{isPomoActive ? 'Focusing' : 'Start Focus'}</span>
+                    </button>
+                )}
+
                 {user && (phase === 'study' || phase === 'study-plan') && (
                     <button
                         onClick={() => {
@@ -1970,8 +1983,8 @@ You can ask about the exact same sub topics to test if the user understood what 
                                     {questionHistory.length > 0 && (
                                         <div className={styles.historySection}>
                                             <h4>Previous Q&amp;A ({questionHistory.length})</h4>
-                                            {questionHistory.slice(-3).map((qa, index) => (
-                                                <div key={index} className={styles.historyItem}>
+                                            {questionHistory.slice(-3).map((qa, i) => (
+                                                <div key={i} className={styles.historyItem}>
                                                     <p><strong>Q:</strong> {qa.question}</p>
                                                     <p><strong>A:</strong> {qa.answer}</p>
                                                 </div>
@@ -2128,6 +2141,8 @@ You can ask about the exact same sub topics to test if the user understood what 
                 settings={pomodoroSettings}
                 isVisible={isPomoVisible}
                 onSettingsClick={() => setPhase('account')}
+                isActive={isPomoActive}
+                setIsActive={setIsPomoActive}
             />
         </>
     );

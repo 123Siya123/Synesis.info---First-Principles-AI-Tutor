@@ -4,11 +4,10 @@ import styles from './PomodoroTimer.module.css';
 import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music } from 'lucide-react';
 import { lofiTracks, SIGNAL_SOUND } from '../lib/lofiTracks';
 
-export default function PomodoroTimer({ settings, isVisible, onSettingsClick }) {
+export default function PomodoroTimer({ settings, isVisible, onSettingsClick, isActive, setIsActive }) {
     const [phase, setPhase] = useState('focus'); // 'focus' | 'break'
     const [timeLeft, setTimeLeft] = useState(settings.focusDuration * 60);
     const [repsDone, setRepsDone] = useState(0);
-    const [isActive, setIsActive] = useState(false);
     const [showOverlay, setShowOverlay] = useState(false);
     const [overlayText, setOverlayText] = useState('');
     const [countdownSeconds, setCountdownSeconds] = useState(0);
@@ -26,6 +25,9 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick }) 
     useEffect(() => {
         if (!isActive) {
             setTimeLeft(phase === 'focus' ? settings.focusDuration * 60 : settings.breakDuration * 60);
+        } else if (phase === 'focus' && timeLeft === settings.focusDuration * 60) {
+            // If just started externally
+            startFocusSequence();
         }
     }, [settings, phase, isActive]);
 
@@ -92,17 +94,27 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick }) 
     const toggleTimer = () => {
         if (!isActive) {
             startFocusSequence();
+            setIsActive(true);
+        } else {
+            setIsActive(false);
         }
-        setIsActive(!isActive);
     };
 
     // Audio Controls
     useEffect(() => {
-        if (!audioRef.current) return;
+        const audio = audioRef.current;
+        if (!audio) return;
+
         if (isPlaying && phase === 'focus' && isActive) {
-            audioRef.current.play().catch(e => console.log("Audio play failed", e));
+            // User interaction has already happened via the Start button
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Playback prevented:", error);
+                });
+            }
         } else {
-            audioRef.current.pause();
+            audio.pause();
         }
     }, [isPlaying, currentTrackIndex, phase, isActive]);
 
@@ -216,6 +228,7 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick }) 
                 src={lofiTracks[currentTrackIndex].url}
                 onEnded={handleNextTrack}
                 loop={false}
+                preload="auto"
             />
         </>
     );
