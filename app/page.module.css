@@ -325,6 +325,14 @@ body.dark-mode .darkModeToggle:hover {
     text-align: center;
 }
 
+.subHeader {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    line-height: 1.4;
+}
+
 .article p {
     margin-bottom: 1.5rem;
     text-align: justify;

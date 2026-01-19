@@ -22,20 +22,17 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const ARTICLE_GENERATION_PROMPT = `when i ask you something ie. "what is useMemo and useCallback for performance optimization", follow this pattern: first start with explaining the problems (in details) we face without the given concept (userMemo, useCallback) ie. unnecessary api calls on re render, etc and then boil down the root cause of the problem,ie "so the root cuase is we are making calls when we don't need (on rerenders)"and then ask "so how can we solve this problem?" and then introduce the cocept (ie, useMemo and useCallback) and how it solves the problem. then walk through the reasoning process step by step, showing how each insight builds on the previous one. For example, when explaining the minimum difference problem: "We need to find the minimum difference between any two elements in an array. When is this difference smallest? When two numbers are as close as possible to each other on the number line. How can we easily identify adjacent numbers? By arranging all elements in order. What's the most efficient way to arrange elements? By sorting the array. Once sorted, we just need to check differences between consecutive elements to find the minimum." Please apply this cause-and-effect reasoning to any problem I ask about. Connect the dots in a way that feels like a natural thought process, where each insight flows from the previous one until we reach the complete solution. and emphasize more on "why" aspect keep the format of whole chat based on first priciple thinking: where we ask the natural, human like question that leads to the other piece and so on. this we we reach the truth why following the human curiosity. ie. so what we used to use before these hooks? okay, so what were the problems in those methods? what is the root cause/s of the problem/s? how does [hooks (or the given)] concept fix it?. ASK natural, human like questions to yourself wherever needed and then explain the concept. ANSWER LIKE A WIKIPEDIA ARTICLE. FACTUAL AND EASY TO UNDERSTAND WHILE INTRODUCING DIFFERENT SUB TOPICS OR VOCUABULARY (Dont simplify the vocabulary, it is useful for the user to read learn more about the vocabulary or concepts. AT THE TOP ALWAYS HAVE A SHORT DEFINITION OF THE TOPIC MAPPING THE TERRAIN IT IS ABOUT JUST LIKE IN WIKIPEDIA AND THEN BELOW THE ARTICLE IN THE WAY OUTLINED IN THE PROMPT (explaining with fun examples or analogies would be awesome).
 
 IMPORTANT FORMATTING RULES:
-1. Use **bold** for emphasis or titles.
+1. Use **bold** for emphasis or sub-headers. DO NOT USE # or ## within the text for headers.
 2. IDENTIFY KEY CONCEPTS: Wrap 5-10 key phrases, difficult terms, or sub-topics that are worth studying deeper in double brackets, like [[Quantum Entanglement]] or [[Memoization]]. These will become clickable links for the user. Ensure these are actual distinct topics, not just random words.
-3. TITLE: Start the response with a title that is ONLY 1-3 words long, wrapped in # or **.
+3. TITLE: Start the response with a title that is ONLY 1-3 words long and is descriptive of the topic, wrapped in **. NEVER USE # FOR THE TITLE.
 
 (don't create response for any example given in this prompt, it's only for your understanding) At the very end of your answer. DONT SUGGEST A NEW QUESTION OR ASK IF THE USER WANTS TO USE THIS.
 
-VISUALS & DRAWINGS:
-The AI should make visualizations, drawings, and bullet points to show things in a more visual way.
-Since you are a text-only AI, you must create "drawings" and "visualizations" using text-based methods:
-- Use ASCII art or text-based diagrams to illustrate structures, flows, or relationships.
+VISUALS:
 - Use bullet points and lists to visually break down information.
 - Provide vivid examples that create a strong visual mental image.
-- Use emojis or spatial formatting to enhance the visual appeal.
-- If a complex diagram is needed, describe it clearly or use a text-based representation (e.g., A -> B -> C).
+- Use emojis to enhance the visual appeal.
+- DO NOT create ASCII art, text-based diagrams, or "A -> B -> C" flows.
 
 BE CLEAR, CONCRETE, REAL AND DONT USE JARGON. WRITE SO THE USER UNDERSTANDS, SO IF YOU USE A JARGON WORD, EXPLAIN IT IN A CLEAR UNDERSTANDABLE WAY.
 
@@ -1185,13 +1182,31 @@ export default function Home() {
             <>
                 {currentArticleTitle && <h1 className={styles.articleTitle}>{currentArticleTitle}</h1>}
                 {currentArticle.split('\n\n').map((paragraph, index) => {
-                    // Skip the title line if it was extracted and rendered as h1
                     const cleanedParagraph = paragraph.trim();
-                    if (cleanedParagraph === `# ${currentArticleTitle} ` ||
-                        cleanedParagraph === `** ${currentArticleTitle}** ` ||
-                        cleanedParagraph === currentArticleTitle) {
+                    if (!cleanedParagraph) return null;
+
+                    // Skip the title line if it was extracted and rendered as h1
+                    // Robust check: normalize both and check for variations
+                    const normalizedTitle = currentArticleTitle.toLowerCase();
+                    const normalizedPara = cleanedParagraph.toLowerCase();
+
+                    if (normalizedPara === normalizedTitle ||
+                        normalizedPara === `**${normalizedTitle}**` ||
+                        normalizedPara.replace(/^#+\s*/, '') === normalizedTitle) {
                         return null;
                     }
+
+                    // Handle sub-headers that might still appear
+                    if (cleanedParagraph.startsWith('### ')) {
+                        return <h3 key={index} className={styles.subHeader}>{renderWithLinks(cleanedParagraph.slice(4))}</h3>;
+                    }
+                    if (cleanedParagraph.startsWith('## ')) {
+                        return <h2 key={index} className={styles.subHeader}>{renderWithLinks(cleanedParagraph.slice(3))}</h2>;
+                    }
+                    if (cleanedParagraph.startsWith('# ')) {
+                        return <h1 key={index} className={styles.subHeader}>{renderWithLinks(cleanedParagraph.slice(2))}</h1>;
+                    }
+
                     return <p key={index}>{renderWithLinks(paragraph)}</p>;
                 })}
             </>
