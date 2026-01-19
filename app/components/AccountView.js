@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import styles from './AccountView.module.css';
-import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft, RefreshCw } from 'lucide-react';
+import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft, RefreshCw, Timer } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription, onRefreshProfile }) {
@@ -10,6 +10,45 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [newName, setNewName] = useState(user?.user_metadata?.full_name || '');
     const [stats, setStats] = useState({ totalTime: 0, topicCount: 0 });
+
+    // Pomodoro local state
+    const [pomoEnabled, setPomoEnabled] = useState(false);
+    const [pomoFocus, setPomoFocus] = useState(25);
+    const [pomoBreak, setPomoBreak] = useState(5);
+    const [pomoReps, setPomoReps] = useState(4);
+    const [isSavingPomo, setIsSavingPomo] = useState(false);
+
+    useEffect(() => {
+        const fetchPomoSettings = async () => {
+            const { data } = await supabase.from('profiles').select('pomodoro_enabled, pomodoro_focus_duration, pomodoro_break_duration, pomodoro_repetitions').eq('id', user.id).single();
+            if (data) {
+                setPomoEnabled(data.pomodoro_enabled);
+                setPomoFocus(data.pomodoro_focus_duration);
+                setPomoBreak(data.pomodoro_break_duration);
+                setPomoReps(data.pomodoro_repetitions);
+            }
+        };
+        if (user) fetchPomoSettings();
+    }, [user]);
+
+    const handleSavePomo = async () => {
+        setIsSavingPomo(true);
+        try {
+            const { error } = await supabase.from('profiles').update({
+                pomodoro_enabled: pomoEnabled,
+                pomodoro_focus_duration: pomoFocus,
+                pomodoro_break_duration: pomoBreak,
+                pomodoro_repetitions: pomoReps
+            }).eq('id', user.id);
+            if (error) throw error;
+            if (onRefreshProfile) onRefreshProfile();
+            alert('Settings saved!');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setIsSavingPomo(false);
+        }
+    };
 
     useEffect(() => {
         // Also refresh on mount to be sure
@@ -247,6 +286,68 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                             </div>
                         </div>
 
+                    </div>
+                </div>
+
+                {/* Pomodoro Settings */}
+                <div className={styles.card}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                        <Timer className={styles.iconBlue} />
+                        <h2 className={styles.cardTitle} style={{ margin: 0 }}>Study Timer (Pomodoro)</h2>
+                    </div>
+
+                    <div className={styles.pomoSettings}>
+                        <div className={styles.settingRow}>
+                            <label>Enable Timer</label>
+                            <div className={styles.toggle_switch}>
+                                <input
+                                    type="checkbox"
+                                    checked={pomoEnabled}
+                                    onChange={(e) => setPomoEnabled(e.target.checked)}
+                                />
+                                <span className={styles.slider}></span>
+                            </div>
+                        </div>
+
+                        {pomoEnabled && (
+                            <div className={styles.pomoInputs}>
+                                <div className={styles.inputField}>
+                                    <label>Focus (min)</label>
+                                    <input
+                                        type="number"
+                                        value={pomoFocus}
+                                        onChange={(e) => setPomoFocus(parseInt(e.target.value))}
+                                        min="1" max="120"
+                                    />
+                                </div>
+                                <div className={styles.inputField}>
+                                    <label>Break (min)</label>
+                                    <input
+                                        type="number"
+                                        value={pomoBreak}
+                                        onChange={(e) => setPomoBreak(parseInt(e.target.value))}
+                                        min="1" max="60"
+                                    />
+                                </div>
+                                <div className={styles.inputField}>
+                                    <label>Sessions</label>
+                                    <input
+                                        type="number"
+                                        value={pomoReps}
+                                        onChange={(e) => setPomoReps(parseInt(e.target.value))}
+                                        min="1" max="20"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <button
+                            className={styles.savePomoBtn}
+                            onClick={handleSavePomo}
+                            disabled={isSavingPomo}
+                        >
+                            {isSavingPomo ? 'Saving...' : 'Save Timer Settings'}
+                        </button>
                     </div>
                 </div>
 

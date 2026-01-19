@@ -10,7 +10,8 @@ import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
-import { Menu, User as UserIcon, PenTool, History } from 'lucide-react';
+import { Menu, User as UserIcon, PenTool, History, Timer } from 'lucide-react';
+import PomodoroTimer from './components/PomodoroTimer';
 
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
@@ -112,6 +113,16 @@ export default function Home() {
     const [showHistory, setShowHistory] = useState(false);
     const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
+    // Pomodoro settings
+    const [pomodoroSettings, setPomodoroSettings] = useState({
+        enabled: false,
+        focusDuration: 25,
+        breakDuration: 5,
+        repetitions: 4
+    });
+
+    const [isPomoVisible, setIsPomoVisible] = useState(false);
+
     const recognitionRef = useRef(null);
     const studyTimerRef = useRef(null);
     const selectionTimeoutRef = useRef(null);
@@ -176,6 +187,12 @@ export default function Home() {
         if (data) {
             setSubscriptionTier(data.subscription_tier || 'free');
             setMonthlyArticleCount(data.monthly_article_count || 0);
+            setPomodoroSettings({
+                enabled: data.pomodoro_enabled || false,
+                focusDuration: data.pomodoro_focus_duration || 25,
+                breakDuration: data.pomodoro_break_duration || 5,
+                repetitions: data.pomodoro_repetitions || 4
+            });
         } else if (error && error.code === 'PGRST116') {
             // Profile doesn't exist yet, usually handled by trigger but good fallback
         }
@@ -1388,8 +1405,14 @@ You can ask about the exact same sub topics to test if the user understood what 
                 {user ? (
                     <button
                         className={styles.accountHeaderBtn}
-                        onClick={() => setPhase('account')}
-                        title="Account Settings"
+                        onClick={() => {
+                            if (pomodoroSettings.enabled && (phase === 'study' || phase === 'study-plan')) {
+                                setIsPomoVisible(!isPomoVisible);
+                            } else {
+                                setPhase('account');
+                            }
+                        }}
+                        title={pomodoroSettings.enabled ? "Toggle Timer / Account Settings" : "Account Settings"}
                     >
                         {user.user_metadata?.avatar_url ? (
                             <img src={user.user_metadata.avatar_url} alt="Profile" className={styles.headerAvatar} />
@@ -2101,6 +2124,11 @@ You can ask about the exact same sub topics to test if the user understood what 
                 onUpgrade={handleUpgrade}
             />
             {renderHistory()}
+            <PomodoroTimer
+                settings={pomodoroSettings}
+                isVisible={isPomoVisible}
+                onSettingsClick={() => setPhase('account')}
+            />
         </>
     );
 }
