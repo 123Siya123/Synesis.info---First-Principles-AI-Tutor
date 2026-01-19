@@ -297,8 +297,8 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                     </div>
 
                     <div className={styles.pomoSettings}>
-                        <div className={styles.settingRow}>
-                            <label>Enable Timer</label>
+                        <label className={styles.settingRow}>
+                            <span>Enable Timer</span>
                             <div className={styles.toggle_switch}>
                                 <input
                                     type="checkbox"
@@ -307,7 +307,7 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                                 />
                                 <span className={styles.slider}></span>
                             </div>
-                        </div>
+                        </label>
 
                         {pomoEnabled && (
                             <div className={styles.pomoInputs}>

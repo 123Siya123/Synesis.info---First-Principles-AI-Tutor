@@ -416,9 +416,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.settingRow label {
+    cursor: pointer;
     font-weight: 600;
     color: #475569;
 }
@@ -488,9 +486,13 @@
 }
 
 .toggle_switch input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
     opacity: 0;
-    width: 0;
-    height: 0;
+    z-index: 2;
+    cursor: pointer;
+    margin: 0;
 }
 
 .slider {
