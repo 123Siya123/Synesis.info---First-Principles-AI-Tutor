@@ -1398,22 +1398,15 @@ You can ask about the exact same sub topics to test if the user understood what 
                     </button>
                 )}
 
-                {user && (phase === 'study' || phase === 'study-plan') && (
-                    <button
-                        onClick={() => {
-                            if (!showHistory) fetchFeynmanHistory();
-                            setShowHistory(!showHistory);
-                        }}
-                        className={styles.historyToggle}
-                        title="View Feynman History"
-                    >
-                        <History size={18} />
-                        <span className={styles.toggleLabel}>History</span>
-                    </button>
-                )}
+                {/* History Moved to Account */}
                 {isPlanMode && (phase === 'study' || phase === 'ingrain-essay' || phase === 'ingrain-teach' || phase === 'study-plan') && <button onClick={handleBackToPlan} className="btn-secondary">🗺️ Mind Map</button>}
                 {(phase === 'study' || phase === 'account') && <button onClick={() => setNotesOpen(!notesOpen)} className="btn-secondary">{notesOpen ? 'Close Notes' : 'Open Notes'}</button>}
-                {(phase === 'study' || phase === 'study-plan') && <button onClick={() => setPhase('ingrain-essay')} className="btn-primary" disabled={studyTime < 10}>Ingrain & Validate Knowledge</button>}
+                {(phase === 'study' || phase === 'study-plan') && (
+                    <>
+                        <button onClick={() => alert("Practice mode coming soon!")} className="btn-secondary" style={{ marginRight: '10px' }}>Practice Knowledge</button>
+                        <button onClick={() => setPhase('ingrain-essay')} className="btn-primary" disabled={studyTime < 10}>Test Understanding</button>
+                    </>
+                )}
 
                 {user ? (
                     <button
@@ -1561,8 +1554,8 @@ You can ask about the exact same sub topics to test if the user understood what 
 
                                     {/* Step 3 */}
                                     <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>3</span> Ingrain &amp; Validate (Feynman Method)</h3>
-                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Ingrain &amp; Validate</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
+                                        <h3><span className={styles.stepNumberBadge}>3</span> Test Understanding (Feynman Method)</h3>
+                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Test Understanding</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
 
                                         <h4>It works as follows:</h4>
                                         <div className={styles.feynmanSteps}>
@@ -2008,6 +2001,11 @@ You can ask about the exact same sub topics to test if the user understood what 
                         monthlyArticleCount={monthlyArticleCount}
                         onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
                         onRefreshProfile={() => user && fetchProfile(user.id)}
+                        onViewHistory={(study) => {
+                            setCurrentTopic(study.topic);
+                            fetchFeynmanHistory(study.id);
+                            setShowHistory(true);
+                        }}
                     />
                 );
             default: return null;

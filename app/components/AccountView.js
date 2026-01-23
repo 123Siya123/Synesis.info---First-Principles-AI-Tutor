@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import styles from './AccountView.module.css';
-import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft, RefreshCw, Timer } from 'lucide-react';
+import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft, RefreshCw, Timer, History } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription, onRefreshProfile }) {
+export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription, onRefreshProfile, onViewHistory }) {
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -364,13 +364,32 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                                             {formatTime(study.session_data?.studyTime || 0)} spent
                                         </span>
                                     </div>
-                                    <button
-                                        onClick={() => confirm(`Delete "${study.topic}"?`) && onDeleteStudy(study.id)}
-                                        className={styles.deleteBtn}
-                                        title="Delete Topic"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button
+                                            onClick={() => onViewHistory && onViewHistory(study)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: '#64748b',
+                                                cursor: 'pointer',
+                                                padding: '0.5rem',
+                                                borderRadius: '8px',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#3b82f6'; }}
+                                            onMouseLeave={(e) => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#64748b'; }}
+                                            title="View History"
+                                        >
+                                            <History size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => confirm(`Delete "${study.topic}"?`) && onDeleteStudy(study.id)}
+                                            className={styles.deleteBtn}
+                                            title="Delete Topic"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))
                         ) : (
