@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import styles from './page.module.css';
 import MindMap from './components/MindMap';
+import PracticeHub from './components/PracticeHub';
 import * as pdfjs from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { supabase } from './lib/supabaseClient';
@@ -131,6 +132,7 @@ export default function Home() {
     const articleContainerRef = useRef(null);
     const isResizingRef = useRef(false);
     const [activeNoteTab, setActiveNoteTab] = useState(null); // node_id of the active tab (only for Level 0 view)
+    const [returnToPhase, setReturnToPhase] = useState(null); // Target history length for navigation back to Practice Hub
 
     // Subscription & Limits
     const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free', 'premium', 'pro'
@@ -1023,6 +1025,11 @@ export default function Home() {
                 setMindMapData(prev => ({ ...prev, currentNodeId: previous.nodeId }));
             }
             setArticleHistory(prev => prev.slice(0, -1));
+
+            if (returnToPhase !== null && (articleHistory.length - 1) === returnToPhase) {
+                setPhase('practice-hub');
+                setReturnToPhase(null);
+            }
         }
     };
 
@@ -1168,12 +1175,19 @@ export default function Home() {
         setShowLearnMore(false);
     };
 
-    const handleLearnMore = async () => {
-        const textToLearn = selectedText;
+    const handleLearnMore = async (queryOrEvent) => {
+        const query = typeof queryOrEvent === 'string' ? queryOrEvent : null;
+        if (query) {
+            // Came from Practice Hub or other specific query
+            if (phase === 'practice-hub') setReturnToPhase('practice-hub');
+            setPhase('study'); // Switch to view article
+        }
+
+        const textToLearn = query || selectedText;
         setShowLearnMore(false);
         setSourceTextForSubArticle(textToLearn);
         await generateArticle(textToLearn, true);
-        window.getSelection().removeAllRanges();
+        if (!query) window.getSelection().removeAllRanges();
     };
 
     // Memoized article rendering to prevent selection loss
@@ -1403,8 +1417,8 @@ You can ask about the exact same sub topics to test if the user understood what 
                 {(phase === 'study' || phase === 'account') && <button onClick={() => setNotesOpen(!notesOpen)} className="btn-secondary">{notesOpen ? 'Close Notes' : 'Open Notes'}</button>}
                 {(phase === 'study' || phase === 'study-plan') && (
                     <>
-                        <button onClick={() => alert("Practice mode coming soon!")} className="btn-secondary" style={{ marginRight: '10px' }}>Practice Knowledge</button>
-                        <button onClick={() => setPhase('ingrain-essay')} className="btn-primary" disabled={studyTime < 10}>Test Understanding</button>
+                        <button onClick={() => setPhase('practice-hub')} className="btn-secondary" style={{ marginRight: '10px' }}>Practice Knowledge</button>
+                        <button onClick={() => setPhase('ingrain-essay')} className="btn-primary" disabled={studyTime < 10}>Test understanding by teaching - Feynman technique</button>
                     </>
                 )}
 
@@ -1555,7 +1569,7 @@ You can ask about the exact same sub topics to test if the user understood what 
                                     {/* Step 3 */}
                                     <div className={styles.detailedStep}>
                                         <h3><span className={styles.stepNumberBadge}>3</span> Test Understanding (Feynman Method)</h3>
-                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Test Understanding</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
+                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Test understanding by teaching - Feynman technique</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
 
                                         <h4>It works as follows:</h4>
                                         <div className={styles.feynmanSteps}>
@@ -2006,6 +2020,39 @@ You can ask about the exact same sub topics to test if the user understood what 
                             fetchFeynmanHistory(study.id);
                             setShowHistory(true);
                         }}
+                    />
+                );
+            case 'practice-hub':
+                const practiceContext = (() => {
+                    const currentNode = mindMapData.nodes.find(n => n.id === mindMapData.currentNodeId);
+                    if (!currentNode) return '';
+                    let ctx = `Main Topic: ${currentNode.label}\nArticle Content: ${currentNode.article || currentArticle}\n\nSubtopics:\n`;
+
+                    const childEdges = mindMapData.edges.filter(e => e.source === currentNode.id);
+                    const childIds = childEdges.map(e => e.target);
+                    const children = mindMapData.nodes.filter(n => childIds.includes(n.id));
+
+                    children.forEach(child => {
+                        ctx += `- ${child.label}: `;
+                        if (child.article) {
+                            const sentences = child.article.split(/[.!?]/).slice(0, 2).join('. ') + '.';
+                            ctx += sentences + '\n';
+                        } else {
+                            ctx += '(Not yet explored)\n';
+                        }
+                    });
+                    return ctx;
+                })();
+
+                return (
+                    <PracticeHub
+                        user={user}
+                        studyId={studies.find(s => s.topic === currentTopic)?.id}
+                        nodeId={mindMapData.currentNodeId}
+                        topic={currentArticleTitle || currentTopic}
+                        context={practiceContext}
+                        onClose={() => setPhase('study')}
+                        onLearnMore={handleLearnMore}
                     />
                 );
             default: return null;

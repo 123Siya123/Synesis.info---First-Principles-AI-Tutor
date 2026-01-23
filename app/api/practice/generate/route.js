@@ -1,0 +1,78 @@
+
+import { NextResponse } from 'next/server';
+
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+const SYSTEM_PROMPT_CORE = `You are an expert tutor designing a "Core Exercise Center" for deep learning. 
+Your goal is to create 3-5 progressive exercises that force the user to apply knowledge, not just regurgitate it.
+Format output as JSON: { "exercises": [ { "type": "Design|Troubleshoot|Innovate", "scenario": "...", "task": "..." } ] }
+Rules:
+- Scenarios must be realistic (e.g., engineering, medical, business contexts).
+- Tasks must be open-ended.
+- Avoid multiple choice.
+`;
+
+const SYSTEM_PROMPT_SAT = `You are an expert tutor designing SAT-style questions for a specific topic.
+Generate 10 multiple-choice questions testing critical thinking and application.
+Format output as JSON: { "questions": [ { "id": "1", "text": "...", "options": [ {"key": "A", "text": "..."}, ... ], "correctKey": "A", "explanation": "...", "relatedTopic": "..." } ] }
+Rules:
+- Questions must be challenging.
+- Options must be plausible.
+`;
+
+export async function POST(req) {
+    if (!GROQ_API_KEY) {
+        return NextResponse.json({ error: "Server API Key missing" }, { status: 500 });
+    }
+
+    try {
+        const { type, topic, context } = await req.json();
+
+        let systemPrompt = "";
+        let userPrompt = `Topic: ${topic}\nContext from mind map: ${context}\n`;
+
+        if (type === 'core') {
+            systemPrompt = SYSTEM_PROMPT_CORE;
+            userPrompt += "Create 3 progressive exercises based on this context.";
+        } else if (type === 'sat') {
+            systemPrompt = SYSTEM_PROMPT_SAT;
+            userPrompt += "Create 5 SAT-style questions based on this context.";
+        } else {
+            return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+        }
+
+        const response = await fetch(GROQ_API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'llama-3.3-70b-versatile', // Or similar high-perf model
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                response_format: { type: "json_object" }, // Enforce JSON
+                temperature: 0.7
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.text();
+            throw new Error(`Groq API error: ${err}`);
+        }
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+
+        // Parse JSON
+        const result = JSON.parse(content);
+        return NextResponse.json({ result });
+
+    } catch (err) {
+        console.error("Generate error:", err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}

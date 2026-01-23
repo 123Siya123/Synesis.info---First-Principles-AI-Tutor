@@ -1,0 +1,366 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: #f8fafc;
+    color: #1e293b;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+:global(body.dark-mode) .container {
+    background-color: #0f172a;
+    color: #f1f5f9;
+}
+
+.header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+:global(body.dark-mode) .header {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.closeBtn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #64748b;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.closeBtn:hover {
+    background: #f1f5f9;
+    color: #ef4444;
+}
+
+:global(body.dark-mode) .closeBtn:hover {
+    background: #334155;
+}
+
+.tabs {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+:global(body.dark-mode) .tabs {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+.tab {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    color: #3b82f6;
+}
+
+.activeTab {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+:global(body.dark-mode) .tab {
+    color: #94a3b8;
+}
+
+:global(body.dark-mode) .activeTab {
+    color: #3b82f6;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.sectionTitle {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #334155;
+}
+
+:global(body.dark-mode) .sectionTitle {
+    color: #f1f5f9;
+}
+
+.description {
+    color: #64748b;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+:global(body.dark-mode) .description {
+    color: #cbd5e1;
+}
+
+/* Core Exercise Styles */
+.exerciseCard {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+:global(body.dark-mode) .exerciseCard {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.scenarioText {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-left: 4px solid #3b82f6;
+    border-radius: 4px;
+}
+
+:global(body.dark-mode) .scenarioText {
+    background: #0f172a;
+}
+
+.inputArea {
+    width: 100%;
+    min-height: 150px;
+    padding: 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    resize: vertical;
+    background: #fff;
+    color: #1e293b;
+}
+
+:global(body.dark-mode) .inputArea {
+    background: #0f172a;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+.inputArea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.actionBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.actionBtn:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.actionBtn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* Feedback Styles */
+.feedbackSection {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e2e8f0;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.feedbackTitle {
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.feedbackContent {
+    background: #ecfdf5;
+    padding: 1.5rem;
+    border-radius: 8px;
+    color: #064e3b;
+}
+
+:global(body.dark-mode) .feedbackContent {
+    background: rgba(16, 185, 129, 0.1);
+    color: #a7f3d0;
+}
+
+.learnMoreBtn {
+    margin-top: 1rem;
+    background: none;
+    border: 1px solid #10b981;
+    color: #10b981;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.learnMoreBtn:hover {
+    background: #10b981;
+    color: white;
+}
+
+/* SAT Question Styles */
+.satOption {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.satOption:hover {
+    background: #f8fafc;
+    border-color: #3b82f6;
+}
+
+.satOption.selected {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+:global(body.dark-mode) .satOption:hover {
+    background: #1e293b;
+}
+
+:global(body.dark-mode) .satOption.selected {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.correct {
+    border-color: #10b981 !important;
+    background: #ecfdf5 !important;
+}
+
+.incorrect {
+    border-color: #ef4444 !important;
+    background: #fef2f2 !important;
+}
+
+/* Custom/Chat Styles */
+.chatContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.chatMessage {
+    display: flex;
+    gap: 1rem;
+}
+
+.userMessage {
+    flex-direction: row-reverse;
+}
+
+.messageBubble {
+    padding: 1rem;
+    border-radius: 12px;
+    max-width: 80%;
+    line-height: 1.5;
+}
+
+.aiBubble {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-top-left-radius: 0;
+}
+
+:global(body.dark-mode) .aiBubble {
+    background: #1e293b;
+    color: #f1f5f9;
+}
+
+.userBubble {
+    background: #3b82f6;
+    color: white;
+    border-top-right-radius: 0;
+}
+
+.toolbar {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+:global(body.dark-mode) .toolbar {
+    background: #1e293b;
+    border-color: #334155;
+}
