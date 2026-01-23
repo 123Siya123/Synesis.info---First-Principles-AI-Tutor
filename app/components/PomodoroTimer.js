@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import styles from './PomodoroTimer.module.css';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Loader2 } from 'lucide-react';
 import { lofiTracks, SIGNAL_SOUND } from '../lib/lofiTracks';
 
 export default function PomodoroTimer({ settings, isVisible, onSettingsClick, isActive, setIsActive }) {
@@ -17,6 +17,8 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
     const [volume, setVolume] = useState(0.5);
     const [isMuted, setIsMuted] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [hasError, setHasError] = useState(false);
 
     const audioRef = useRef(null);
     const timerRef = useRef(null);
@@ -106,17 +108,43 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
         if (!audio) return;
 
         if (isPlaying && phase === 'focus' && isActive) {
-            // User interaction has already happened via the Start button
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.log("Playback prevented:", error);
-                });
-            }
+            // Load the new track first, then play
+            setIsLoading(true);
+            setHasError(false);
+            audio.load();
         } else {
             audio.pause();
         }
     }, [isPlaying, currentTrackIndex, phase, isActive]);
+
+    // Handle audio events
+    const handleCanPlay = () => {
+        setIsLoading(false);
+        setHasError(false);
+        if (isPlaying && phase === 'focus' && isActive) {
+            const playPromise = audioRef.current?.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Playback prevented:", error);
+                    setHasError(true);
+                });
+            }
+        }
+    };
+
+    const handleLoadStart = () => {
+        setIsLoading(true);
+    };
+
+    const handleError = (e) => {
+        console.log("Audio error:", e);
+        setIsLoading(false);
+        setHasError(true);
+        // Auto-skip to next track on error
+        setTimeout(() => {
+            handleNextTrack();
+        }, 1000);
+    };
 
     useEffect(() => {
         if (!audioRef.current) return;
@@ -193,16 +221,18 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
             {/* Music Controls (Bottom corner, hover to reveal) */}
             <div className={styles.musicContainer}>
                 <div className={styles.musicIcon}>
-                    <Music size={20} />
+                    {isLoading ? <Loader2 size={20} className={styles.spinningLoader} /> : <Music size={20} />}
                     <div className={styles.musicControls}>
                         <div className={styles.trackInfo}>
-                            <p>{lofiTracks[currentTrackIndex].title}</p>
+                            <p>
+                                {isLoading ? 'Loading...' : hasError ? 'Error - skipping...' : lofiTracks[currentTrackIndex].title}
+                            </p>
                             <span>{lofiTracks[currentTrackIndex].artist}</span>
                         </div>
                         <div className={styles.controlButtons}>
                             <button onClick={handlePrevTrack}><SkipBack size={16} /></button>
-                            <button onClick={() => setIsPlaying(!isPlaying)}>
-                                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                            <button onClick={() => setIsPlaying(!isPlaying)} disabled={isLoading}>
+                                {isLoading ? <Loader2 size={16} className={styles.spinningLoader} /> : isPlaying ? <Pause size={16} /> : <Play size={16} />}
                             </button>
                             <button onClick={handleNextTrack}><SkipForward size={16} /></button>
                         </div>
@@ -227,6 +257,9 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
                 ref={audioRef}
                 src={lofiTracks[currentTrackIndex].url}
                 onEnded={handleNextTrack}
+                onCanPlay={handleCanPlay}
+                onLoadStart={handleLoadStart}
+                onError={handleError}
                 loop={false}
                 preload="auto"
             />
