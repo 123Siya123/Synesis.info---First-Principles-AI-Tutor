@@ -182,42 +182,44 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
         const currentFeedback = feedback[currentStep];
 
         return (
-            <div>
-                <div className={styles.exerciseCard}>
-                    <div className={styles.headerRow}>
-                        <h4>Exercise {currentStep + 1} of {exercises.length}</h4>
-                        <span className={styles.tag}>{currentExercise.type}</span>
+            <>
+                {/* Scenario/Question Header */}
+                <div className={styles.scenarioHeader}>
+                    <div className={styles.scenarioTitle}>
+                        Exercise {currentStep + 1} of {exercises.length} • {currentExercise.type}
                     </div>
                     <div className={styles.scenarioText}>
-                        <p>{currentExercise.scenario}</p>
-                        <p><strong>Task:</strong> {currentExercise.task}</p>
+                        <p><strong>Scenario:</strong> {currentExercise.scenario}</p>
+                        <p><strong>Your Task:</strong> {currentExercise.task}</p>
                     </div>
+                </div>
 
-                    {!currentFeedback ? (
-                        <>
+                {/* Full-Width Input Section */}
+                {!currentFeedback ? (
+                    <div className={styles.inputSection}>
+                        <textarea
+                            className={styles.inputArea}
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            placeholder="Think deeply and explain your reasoning step-by-step. Use this space to brainstorm, sketch ideas with text, and develop your solution..."
+                            autoFocus
+                        />
+                        <div className={styles.controls}>
                             <div className={styles.toolbar}>
                                 <button onClick={toggleVoice} className={styles.toolBtn} title="Voice Input">
-                                    <Mic size={18} color={isListening ? 'red' : 'currentColor'} />
+                                    <Mic size={18} color={isListening ? '#ef4444' : 'currentColor'} />
                                 </button>
-                                {/* Drawing Placeholder */}
                                 <button className={styles.toolBtn} title="Drawing (Coming Soon)" disabled>
                                     <PenTool size={18} />
                                 </button>
                             </div>
-                            <textarea
-                                className={styles.inputArea}
-                                value={input}
-                                onChange={e => setInput(e.target.value)}
-                                placeholder="Explain your reasoning step-by-step..."
-                            />
-                            <div className={styles.controls}>
-                                <button className="btn-secondary" onClick={() => {/* Hint logic */ }}>Need a Hint?</button>
-                                <button onClick={() => handleSubmitAnswer('core')} className={styles.actionBtn} disabled={isLoading || !input.trim()}>
-                                    Submit Answer
-                                </button>
-                            </div>
-                        </>
-                    ) : (
+                            <button onClick={() => handleSubmitAnswer('core')} className={styles.actionBtn} disabled={isLoading || !input.trim()}>
+                                {isLoading ? 'Evaluating...' : 'Submit Answer'}
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className={styles.inputSection}>
                         <div className={styles.feedbackSection}>
                             <h4 className={styles.feedbackTitle}>
                                 {currentFeedback.isCorrect ? <Check size={20} /> : <AlertTriangle size={20} />}
@@ -225,9 +227,11 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                             </h4>
                             <div className={styles.feedbackContent}>
                                 <p>{currentFeedback.text}</p>
-                                <div className={styles.principles}>
-                                    <strong>First Principles:</strong> {currentFeedback.principles}
-                                </div>
+                                {currentFeedback.principles && (
+                                    <div className={styles.principles}>
+                                        <strong>First Principles:</strong> {currentFeedback.principles}
+                                    </div>
+                                )}
                             </div>
                             <div className={styles.controls}>
                                 {currentFeedback.learnMoreQuery && (
@@ -246,13 +250,15 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                                         Next Exercise <ChevronRight size={16} />
                                     </button>
                                 ) : (
-                                    <p>Series Complete! Great job.</p>
+                                    <div style={{ textAlign: 'center', padding: '2rem', color: '#10b981', fontWeight: 600, fontSize: '1.125rem' }}>
+                                        🎉 Series Complete! Excellent work.
+                                    </div>
                                 )}
                             </div>
                         </div>
-                    )}
-                </div>
-            </div>
+                    </div>
+                )}
+            </>
         );
     };
 
