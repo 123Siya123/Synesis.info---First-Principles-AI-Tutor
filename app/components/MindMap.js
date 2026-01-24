@@ -67,7 +67,7 @@ export default function MindMap({ data, onNodeClick, currentNodeId, baseColor = 
 
                 // Calculate minimum spacing needed based on node sizes
                 const nodeSize = Math.max(30, 80 - (parentLevel + 1) * 15);
-                const minSpacing = nodeSize * 2.5; // Minimum distance between node centers
+                const minSpacing = nodeSize * 1.8; // Tighter spacing - just enough to prevent overlap
 
                 // Calculate required radius based on arc length needed for all children
                 // Arc length = radius * angle, so radius = arc_length / angle
@@ -75,10 +75,11 @@ export default function MindMap({ data, onNodeClick, currentNodeId, baseColor = 
                 const radiusFromSpacing = totalArcNeeded / parentPos.wedge;
 
                 // Base radius increases with depth to spread out the tree
-                const baseRadius = 180 + (parentLevel * 60);
+                const baseRadius = 160 + (parentLevel * 40);
 
-                // Use the larger of the two to ensure adequate spacing
-                const radius = Math.max(baseRadius, radiusFromSpacing);
+                // Use the larger of the two, but cap maximum radius to prevent excessive sprawl
+                const calculatedRadius = Math.max(baseRadius, radiusFromSpacing);
+                const radius = Math.min(calculatedRadius, 350); // Cap at 350px to keep it manageable
 
                 children.forEach((childId, index) => {
                     const angle = startAngle + (index + 0.5) * wedgePerChild;
