@@ -926,7 +926,7 @@ export default function Home() {
                         ...
                 ]
             }
-            Provide 5 - 10 sub - topics.Return ONLY the JSON.`;
+            Provide 8-12 comprehensive sub-topics that cover the main aspects of this subject. Return ONLY the JSON.`;
 
             // Use Backend API to secure keys and enforce limits
             const response = await fetch('/api/generate-plan', {
