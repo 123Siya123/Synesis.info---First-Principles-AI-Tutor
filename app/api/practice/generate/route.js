@@ -17,8 +17,11 @@ const SYSTEM_PROMPT_SAT = `You are an expert tutor designing SAT-style questions
 Generate 10 multiple-choice questions testing critical thinking and application.
 Format output as JSON: { "questions": [ { "id": "1", "text": "...", "options": [ {"key": "A", "text": "..."}, ... ], "correctKey": "A", "explanation": "...", "relatedTopic": "..." } ] }
 Rules:
-- Questions must be challenging.
-- Options must be plausible.
+- ONE option MUST be undeniably correct. Do NOT create "trick" questions where the correct answer is missing.
+- Options must be plausible but clearly distinguishable from the correct one.
+- The "explanation" must clearly explain WHY the correctKey is right and why others are wrong.
+- Never claim the correct answer is missing or "closest to".
+- Ensure the physics/math/logic is 100% accurate.
 `;
 
 export async function POST(req) {
