@@ -153,6 +153,10 @@
     background: #fff;
     border-bottom: 1px solid #e2e8f0;
     flex-shrink: 0;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 :global(body.dark-mode) .scenarioHeader {
@@ -202,6 +206,12 @@
 
 :global(body.dark-mode) .scenarioText strong {
     color: #60a5fa;
+}
+
+@media (max-width: 1024px) {
+    .scenarioHeader {
+        padding: 2rem;
+    }
 }
 
 @media (max-width: 768px) {
