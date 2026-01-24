@@ -84,6 +84,35 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
     const handleSubmitAnswer = async (type, questionId = null) => {
         if (!input.trim() && type !== 'sat') return;
 
+        // SAT: Local Evaluation (since we have the answer key + explanation)
+        if (type === 'sat' && questionId) {
+            const questions = sessionData.sat.questions || [];
+            const question = questions.find(q => q.id === questionId);
+            const userAnswer = sessionData.sat.answers[questionId];
+
+            if (!question || !userAnswer) return;
+
+            setSessionData(prev => {
+                const next = {
+                    ...prev,
+                    sat: {
+                        ...prev.sat,
+                        feedback: {
+                            ...prev.sat.feedback,
+                            [questionId]: {
+                                isCorrect: userAnswer === question.correctKey,
+                                explanation: question.explanation,
+                                relatedTopic: question.relatedTopic
+                            }
+                        }
+                    }
+                };
+                saveSession(next);
+                return next;
+            });
+            return;
+        }
+
         setIsLoading(true);
         try {
             const payload = {
@@ -113,9 +142,6 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                             feedback: { ...prev.core.feedback, [prev.core.currentStep]: data.feedback }
                         }
                     };
-                } else if (type === 'sat') {
-                    // SAT logic handled in selection usually, but if submit explanation
-                    next = { ...prev }; // Placeholder
                 } else {
                     // Custom
                     next = {
