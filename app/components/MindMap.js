@@ -31,7 +31,7 @@ export default function MindMap({ data, onNodeClick, currentNodeId, baseColor = 
 
     const isGrayscale = baseColor === 'white' || baseColor === 'black';
 
-    // Auto-layout logic (BFS Tree) with improved spacing
+    // Auto-layout logic (BFS Tree)
     const basePositions = useMemo(() => {
         const positions = {};
         if (typeof window === 'undefined' || nodes.length === 0) return positions;
@@ -42,6 +42,37 @@ export default function MindMap({ data, onNodeClick, currentNodeId, baseColor = 
         const centerY = height / 2;
 
         const root = nodes.find(n => n.level === 0) || nodes[0];
+
+        // Pre-calculate subtree weights (Leaf Counting Method)
+        // This ensures branches with many descendants get more angular space
+        const adj = {};
+        edges.forEach(e => {
+            if (!adj[e.source]) adj[e.source] = [];
+            adj[e.source].push(e.target);
+        });
+
+        const weights = {};
+        const getSubtreeWeight = (id, path = new Set()) => {
+            if (path.has(id)) return 1; // Cycle detection
+            if (weights[id]) return weights[id];
+
+            path.add(id);
+            const children = adj[id] || [];
+
+            if (children.length === 0) {
+                weights[id] = 1;
+            } else {
+                // Sum of children weights
+                weights[id] = children.reduce((sum, c) => sum + getSubtreeWeight(c, path), 0);
+            }
+
+            path.delete(id);
+            return weights[id];
+        };
+
+        if (root) {
+            getSubtreeWeight(root.id);
+        }
         positions[root.id] = { x: centerX, y: centerY, angle: 0, wedge: 2 * Math.PI };
 
         const queue = [root.id];
@@ -57,63 +88,49 @@ export default function MindMap({ data, onNodeClick, currentNodeId, baseColor = 
                 .filter(id => !visited.has(id));
 
             if (children.length > 0) {
-                // Add angular padding between siblings for better separation
-                const angularPadding = Math.min(0.15, 0.4 / children.length); // Extra angle gap
-                const effectiveWedge = parentPos.wedge * (1 - angularPadding);
-                const wedgePerChild = effectiveWedge / Math.max(children.length, 1);
-                const startAngle = parentPos.angle - effectiveWedge / 2;
+                // Calculate subtree weights to allocate space proportional to branch size
+                const totalWeight = children.reduce((acc, id) => acc + (weights[id] || 1), 0);
+                const startAngle = parentPos.angle - parentPos.wedge / 2;
 
                 // Dynamic radius calculation to prevent overlap
+                // Base radius increases with number of children and level
                 const parentNode = nodes.find(n => n.id === parentId);
                 const parentLevel = parentNode ? parentNode.level : 0;
 
                 // Calculate minimum spacing needed based on node sizes
                 const nodeSize = Math.max(30, 80 - (parentLevel + 1) * 15);
-                // Increased minimum spacing multiplier for better separation
-                const minSpacing = nodeSize * 2.8;
+                const minSpacing = nodeSize * 2.4; // Increased spacing (approx 1 dot gap + buffer)
 
                 // Calculate required radius based on arc length needed for all children
-                const totalArcNeeded = children.length * minSpacing;
-                const radiusFromSpacing = totalArcNeeded / effectiveWedge;
+                // Arc length = radius * angle, so radius = arc_length / angle
+                const totalArcNeeded = totalWeight * minSpacing;
+                const radiusFromSpacing = totalArcNeeded / parentPos.wedge;
 
-                // Base radius increases with depth and number of children
-                const childCountBonus = Math.min(children.length * 15, 80);
-                const baseRadius = 180 + (parentLevel * 50) + childCountBonus;
+                // Base radius increases with depth to spread out the tree
+                const baseRadius = 160 + (parentLevel * 40);
 
-                // Use the larger of the two with increased cap
+                // Use the larger of the two, but cap maximum radius to prevent excessive sprawl
                 const calculatedRadius = Math.max(baseRadius, radiusFromSpacing);
-                const maxRadius = 500 + (parentLevel * 30); // Dynamic cap based on level
-                const avgRadius = Math.min(calculatedRadius, maxRadius);
+                const radius = Math.min(calculatedRadius, 450); // Increased cap to allow breathing room
 
-                children.forEach((childId, index) => {
-                    const angle = startAngle + (index + 0.5) * wedgePerChild;
+                let currentAngle = startAngle;
 
-                    // Radial variation: stagger nodes at different distances
-                    // Alternate between closer and further, with more variation for more children
-                    let radiusVariation = 0;
-                    if (children.length >= 3) {
-                        // Create a wave pattern: some nodes closer, some further
-                        const variationAmount = Math.min(40, 15 + children.length * 5);
-                        if (children.length <= 4) {
-                            // For 3-4 children: alternate close/far
-                            radiusVariation = (index % 2 === 0) ? -variationAmount * 0.5 : variationAmount * 0.5;
-                        } else {
-                            // For 5+ children: create 3 bands (close, middle, far)
-                            const band = index % 3;
-                            if (band === 0) radiusVariation = -variationAmount;
-                            else if (band === 1) radiusVariation = 0;
-                            else radiusVariation = variationAmount;
-                        }
-                    }
+                children.forEach((childId) => {
+                    const childWeight = weights[childId] || 1;
+                    const wedgeShare = childWeight / totalWeight;
+                    const childWedge = parentPos.wedge * wedgeShare;
 
-                    const nodeRadius = avgRadius + radiusVariation;
+                    const angle = currentAngle + childWedge / 2;
 
                     positions[childId] = {
-                        x: parentPos.x + nodeRadius * Math.cos(angle),
-                        y: parentPos.y + nodeRadius * Math.sin(angle),
+                        x: parentPos.x + radius * Math.cos(angle),
+                        y: parentPos.y + radius * Math.sin(angle),
                         angle: angle,
-                        wedge: wedgePerChild
+                        wedge: childWedge
                     };
+
+                    currentAngle += childWedge;
+
                     visited.add(childId);
                     queue.push(childId);
                 });
