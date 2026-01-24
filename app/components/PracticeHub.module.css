@@ -418,6 +418,7 @@
     border-radius: 12px;
     color: #064e3b;
     line-height: 1.6;
+    white-space: pre-wrap;
 }
 
 :global(body.dark-mode) .feedbackContent {

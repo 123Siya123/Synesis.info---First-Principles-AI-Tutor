@@ -19,16 +19,27 @@ export async function POST(req) {
     try {
         const { type, topic, context, input, questionId, currentData } = await req.json();
 
+        // Select System Prompt based on type
+        let systemPrompt = SYSTEM_PRINCIPLES; // Default
+
+        if (type === 'core') {
+            systemPrompt = `You are a world-class expert and senior practitioner in the field related to: ${topic}.
+Your goal is to provide a rigorous, professional code/design review of the user's answer.
+Your feedback must be:
+1. **Critical & Analytical**: Do not just say "Good job". Analyze their thought process. Identify gaps, naive assumptions, or missing edge cases.
+2. **Professional Standards**: Explain how this is done in the real world by experts. (e.g., "In a production environment, we would never ignore factor X...").
+3. **Technical Precision**: Use precise terminology and explanations.
+4. **The "Ideal" Approach**: Briefly describe how a top 1% expert would have solved this.
+
+Output JSON: { "feedback": { "isCorrect": boolean, "text": "YOUR_DETAILED_ANALYSIS_HERE", "principles": "The underlying first principles...", "learnMoreQuery": "topic to search" } }
+Keep the "text" field formatted with clear paragraphs or markdown emphasizing key points.`;
+        }
+
         // Construct prompt
         let userPrompt = `Topic: ${topic}\nContext: ${context}\n`;
 
         if (type === 'core') {
-            const exercises = currentData.exercises; // Client sends current session data
-            // In a real secure app, we'd fetch this from DB. Here we trust client state for speed/prototype.
-            // We need to know WHICH exercise. currentData isn't enough if multiple steps.
-            // But the client sends "input".
-            // We assume the input corresponds to the *current* step logic if state is managed on client, 
-            // but `PracticeHub` sends `currentData` which includes `currentStep`.
+            const exercises = currentData.exercises;
             const currentStep = currentData.currentStep || 0;
             const exercise = exercises[currentStep];
             userPrompt += `
@@ -36,19 +47,14 @@ Task: ${exercise.task}
 Scenario: ${exercise.scenario}
 User Answer: "${input}"
 
-Evaluate the answer. specific 'isCorrect' (true/false), 'text' (feedback), 'principles' (first principles explanation), 'learnMoreQuery' (short topic string).`;
+Provide a deep, expert-level critique of this answer.`;
         } else if (type === 'custom') {
             userPrompt += `User Request/Question: "${input}"
 Provide a helpful, educational response or generating the requested task. 
 If the user asks for questions, generate them in text format but formatted nicely.
 Reply in the "reply" JSON field.`;
         } else if (type === 'sat') {
-            // SAT evaluation usually local if we have the answer key, or we can ask AI to explain specific user reasoning if they provided it.
-            // But if just checking option:
             userPrompt += `Question ID ${questionId}. User selected an option. Explain the concept from first principles.`;
-            // This might be redundant if we have pre-generated explanations.
-            // Let's skip SAT deep eval here unless user asks for it.
-            // For now, assume this endpoint is for Core/Custom mainly.
         }
 
         const response = await fetch(GROQ_API_URL, {
@@ -60,7 +66,7 @@ Reply in the "reply" JSON field.`;
             body: JSON.stringify({
                 model: 'llama-3.3-70b-versatile',
                 messages: [
-                    { role: 'system', content: SYSTEM_PRINCIPLES },
+                    { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
                 ],
                 response_format: { type: "json_object" },
