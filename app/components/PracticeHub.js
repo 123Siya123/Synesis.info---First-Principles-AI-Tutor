@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from './PracticeHub.module.css';
 import { BookOpen, PenTool, MessageSquare, Mic, Send, RefreshCw, X, Check, AlertTriangle, ChevronRight, GraduationCap } from 'lucide-react';
+import DrawingCanvas from './DrawingCanvas';
 
 export default function PracticeHub({ user, studyId, nodeId, topic, context, onClose, onLearnMore }) {
     const [activeTab, setActiveTab] = useState('core'); // core, sat, custom
@@ -11,7 +12,21 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
         custom: { messages: [] }
     });
     const [input, setInput] = useState('');
+
+    // Helper to handle drawing save
+    const handleDrawingSave = (dataUrl) => {
+        // In a real app, upload this to blob storage and get a URL.
+        // For now, we'll append a marker or the data URL if small enough (but it's huge).
+        // Let's just say "[Drawing Attached]" and maybe preview it?
+        // Actually, let's just create a markdown image syntax with data URL (Not recommended for large images but okay for prototype)
+        // Or better, just alert user it's attached.
+
+        const imageMarkdown = `\n\n![My Drawing](${dataUrl})`;
+        setInput(prev => prev + imageMarkdown);
+        setShowDrawingCanvas(false);
+    };
     const [isListening, setIsListening] = useState(false);
+    const [showDrawingCanvas, setShowDrawingCanvas] = useState(false);
     const recognitionRef = useRef(null);
 
     // Load session on mount
@@ -235,7 +250,7 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                                 <button onClick={toggleVoice} className={styles.toolBtn} title="Voice Input">
                                     <Mic size={18} color={isListening ? '#ef4444' : 'currentColor'} />
                                 </button>
-                                <button className={styles.toolBtn} title="Drawing (Coming Soon)" disabled>
+                                <button onClick={() => setShowDrawingCanvas(true)} className={styles.toolBtn} title="Open Drawing Canvas">
                                     <PenTool size={18} />
                                 </button>
                             </div>
@@ -283,7 +298,8 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                             </div>
                         </div>
                     </div>
-                )}
+                )
+                }
             </>
         );
     };
@@ -303,6 +319,23 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
 
         return (
             <div className={styles.satList}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+                    <button
+                        onClick={() => {
+                            if (confirm('Are you sure you want to regenerate questions? This will clear current progress.')) {
+                                setSessionData(prev => ({
+                                    ...prev,
+                                    sat: { questions: [], answers: {}, score: null, feedback: {} }
+                                }));
+                                handleGenerate('sat');
+                            }
+                        }}
+                        className={styles.secondaryBtn}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
+                    >
+                        <RefreshCw size={16} /> Regenerate Questions
+                    </button>
+                </div>
                 {questions.map((q, idx) => {
                     const userAnswer = answers[q.id];
                     const qFeedback = feedback[q.id];
@@ -429,6 +462,12 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                 {activeTab === 'sat' && renderSAT()}
                 {activeTab === 'custom' && renderCustom()}
             </div>
+            {showDrawingCanvas && (
+                <DrawingCanvas
+                    onClose={() => setShowDrawingCanvas(false)}
+                    onSave={handleDrawingSave}
+                />
+            )}
         </div>
     );
 }
