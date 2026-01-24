@@ -149,31 +149,69 @@
 }
 
 .scenarioHeader {
-    padding: 2.5rem 2rem;
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: white;
+    padding: 2.5rem 3rem;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
     flex-shrink: 0;
 }
 
 :global(body.dark-mode) .scenarioHeader {
-    background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+    background: #1e293b;
+    border-color: #334155;
 }
 
 .scenarioTitle {
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
+:global(body.dark-mode) .scenarioTitle {
+    color: #94a3b8;
+}
+
 .scenarioText {
-    font-size: 1.0625rem;
+    font-size: 1.25rem;
     line-height: 1.6;
-    margin: 0;
-    opacity: 0.95;
+    color: #1e293b;
     max-width: 1000px;
+}
+
+.scenarioText p {
+    margin: 0 0 1rem 0;
+}
+
+.scenarioText p:last-child {
+    margin-bottom: 0;
+}
+
+.scenarioText strong {
+    color: #3b82f6;
+    font-weight: 600;
+}
+
+:global(body.dark-mode) .scenarioText {
+    color: #f1f5f9;
+}
+
+:global(body.dark-mode) .scenarioText strong {
+    color: #60a5fa;
+}
+
+@media (max-width: 768px) {
+    .scenarioHeader {
+        padding: 2rem 1.5rem;
+    }
+
+    .scenarioText {
+        font-size: 1.0625rem;
+    }
 }
 
 .sectionTitle {
