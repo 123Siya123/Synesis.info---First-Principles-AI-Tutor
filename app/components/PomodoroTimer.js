@@ -93,6 +93,13 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
         }, 1000);
     };
 
+    const skipBreak = () => {
+        setPhase('focus');
+        setTimeLeft(settings.focusDuration * 60);
+        // Start focus immediately
+        startFocusSequence();
+    };
+
     const toggleTimer = () => {
         if (!isActive) {
             startFocusSequence();
@@ -107,7 +114,11 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
         const audio = audioRef.current;
         if (!audio) return;
 
-        if (isPlaying && phase === 'focus' && isActive) {
+        // Allow playing if user manually set isPlaying, regardless of phase, as long as timer is active
+        // But we want to respect the user's manual control primarily.
+        // If isActive is false, we probably shouldn't play? Or maybe user wants music while looking at stats?
+        // Let's stick to isActive for now to keep it tied to the session.
+        if (isPlaying && isActive) {
             // Load the new track first, then play
             setIsLoading(true);
             setHasError(false);
@@ -115,13 +126,22 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
         } else {
             audio.pause();
         }
-    }, [isPlaying, currentTrackIndex, phase, isActive]);
+    }, [isPlaying, currentTrackIndex, isActive]); // Removed phase dependency
+
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+        };
+    }, []);
 
     // Handle audio events
     const handleCanPlay = () => {
         setIsLoading(false);
         setHasError(false);
-        if (isPlaying && phase === 'focus' && isActive) {
+        if (isPlaying && isActive) {
             const playPromise = audioRef.current?.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
@@ -181,7 +201,23 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
                             </div>
                         )}
                         {!countdownSeconds && overlayText.includes('Break') && (
-                            <p>Relax, you've earned it!</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                                <p>Relax, you've earned it!</p>
+                                <button
+                                    onClick={skipBreak}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        background: 'rgba(255, 255, 255, 0.2)',
+                                        border: '1px solid rgba(255, 255, 255, 0.4)',
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        cursor: 'pointer',
+                                        fontSize: '0.9rem'
+                                    }}
+                                >
+                                    Skip Break
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -190,7 +226,22 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
             {/* Top Bar Countdown during Break */}
             {phase === 'break' && isActive && !showOverlay && (
                 <div className={styles.topBarCountdown}>
-                    ☕ Break: {formatTime(timeLeft)}
+                    <span>☕ Break: {formatTime(timeLeft)}</span>
+                    <button
+                        onClick={skipBreak}
+                        style={{
+                            marginLeft: '10px',
+                            background: 'transparent',
+                            border: '1px solid rgba(255,255,255,0.5)',
+                            color: 'white',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontSize: '0.7rem',
+                            padding: '2px 6px'
+                        }}
+                    >
+                        Skip
+                    </button>
                 </div>
             )}
 

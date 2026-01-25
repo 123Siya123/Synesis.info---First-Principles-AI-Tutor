@@ -31,5 +31,5 @@ export const lofiTracks = [
     }
 ];
 
-// Using a simple notification sound
-export const SIGNAL_SOUND = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+// Using a simple notification sound (Glass Ping)
+export const SIGNAL_SOUND = "https://codeskulptor-demos.commondatastorage.googleapis.com/assets/sound/glass_ping.mp3";

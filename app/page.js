@@ -26,7 +26,7 @@ const ARTICLE_GENERATION_PROMPT = `when i ask you something ie. "what is useMemo
 IMPORTANT FORMATTING RULES:
 1. Use **bold** for emphasis or sub-headers. DO NOT USE # or ## within the text for headers.
 2. IDENTIFY KEY CONCEPTS: Wrap 5-10 key phrases, difficult terms, or sub-topics that are worth studying deeper in double brackets, like [[Quantum Entanglement]] or [[Memoization]]. These will become clickable links for the user. Ensure these are actual distinct topics, not just random words.
-3. TITLE: Start the response with a title that is ONLY 1-3 words long and is descriptive of the topic, wrapped in **. NEVER USE # FOR THE TITLE.
+3. TITLE: Start the response with a title that is ONLY 2-5 words long and is descriptive of the topic, wrapped in **. NEVER USE # FOR THE TITLE.
 
 (don't create response for any example given in this prompt, it's only for your understanding) At the very end of your answer. DONT SUGGEST A NEW QUESTION OR ASK IF THE USER WANTS TO USE THIS.
 
@@ -576,7 +576,7 @@ export default function Home() {
     };
 
     // Generate article
-    const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT) => {
+    const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT, forceNew = false) => {
         // Sync current state to Mind Map before navigating away
         // Sync current state to Mind Map before navigating away
         let currentMindMap = { ...mindMapData };
@@ -604,24 +604,30 @@ export default function Home() {
         }
 
         // Check if Topic Already Exists in Mind Map (Avoid Re-generation)
-        const normalizedTopic = topic.trim().toLowerCase();
-        const existingNode = currentMindMap.nodes.find(n => n.label.toLowerCase() === normalizedTopic);
+        // METHOD 1 (Click Blue Word): forceNew=false (default). Checks existing.
+        // METHOD 2 (Selection): forceNew calculated. if >2 words, skips check.
+        // METHOD 3 (Question): forceNew=true. Skips check.
 
-        if (existingNode && isSubArticle) {
-            const parentId = currentMindMap.currentNodeId;
-            let edges = [...currentMindMap.edges];
-            if (parentId && existingNode.id !== parentId) {
-                const edgeExists = edges.some(e =>
-                    (e.source === parentId && e.target === existingNode.id) ||
-                    (e.source === existingNode.id && e.target === parentId)
-                );
-                if (!edgeExists) {
-                    edges.push({ source: parentId, target: existingNode.id });
-                    setMindMapData(prev => ({ ...prev, edges }));
+        if (!forceNew && isSubArticle) {
+            const normalizedTopic = topic.trim().toLowerCase();
+            const existingNode = currentMindMap.nodes.find(n => n.label.toLowerCase() === normalizedTopic);
+
+            if (existingNode) {
+                const parentId = currentMindMap.currentNodeId;
+                let edges = [...currentMindMap.edges];
+                if (parentId && existingNode.id !== parentId) {
+                    const edgeExists = edges.some(e =>
+                        (e.source === parentId && e.target === existingNode.id) ||
+                        (e.source === existingNode.id && e.target === parentId)
+                    );
+                    if (!edgeExists) {
+                        edges.push({ source: parentId, target: existingNode.id });
+                        setMindMapData(prev => ({ ...prev, edges }));
+                    }
                 }
+                handleNodeClick(existingNode);
+                return existingNode.article;
             }
-            handleNodeClick(existingNode);
-            return existingNode.article;
         }
 
         setIsLoading(true);
@@ -778,38 +784,27 @@ export default function Home() {
             // Dynamic growth for Mind Map - ONLY IF it's a sub-article (exploration)
             if (isPlanMode && isSubArticle && currentMindMap.currentNodeId !== null) {
                 const parentId = currentMindMap.currentNodeId;
-                const existingNode = currentMindMap.nodes.find(n => n.label.toLowerCase() === extractedTitle.toLowerCase());
+                const newNodeId = `node-${Date.now()}`;
 
-                if (existingNode) {
-                    // Check if edge already exists
-                    const edgeExists = currentMindMap.edges.some(e => (e.source === parentId && e.target === existingNode.id) || (e.source === existingNode.id && e.target === parentId));
-                    if (!edgeExists && existingNode.id !== parentId) {
-                        setMindMapData(prev => ({
-                            ...prev,
-                            edges: [...prev.edges, { source: parentId, target: existingNode.id }]
-                        }));
-                    }
-                } else {
-                    const newNodeId = `node-${Date.now()}`;
-                    const parentNode = currentMindMap.nodes.find(n => n.id === parentId);
-                    const newLevel = parentNode ? parentNode.level + 1 : 1;
+                // Determine new level (safe check)
+                const parentNode = currentMindMap.nodes.find(n => n.id === parentId);
+                // If parent not found in local snapshot, try to find in currentMindMap or just default to Level 1
+                const newLevel = parentNode ? parentNode.level + 1 : 1;
 
-                    setMindMapData(prev => ({
-                        // Use locally updated nodes (with synced notes) as base
-                        ...currentMindMap,
-                        nodes: [...currentMindMap.nodes, {
-                            id: newNodeId,
-                            label: extractedTitle,
-                            level: newLevel,
-                            description: `Exploration of ${extractedTitle}`,
-                            article: articleContent,
-                            articleTitle: extractedTitle,
-                            notes: ''
-                        }],
-                        edges: [...currentMindMap.edges, { source: parentId, target: newNodeId }],
-                        currentNodeId: newNodeId // Automatically switch to the new discovered node
-                    }));
-                }
+                setMindMapData(prev => ({
+                    ...prev,
+                    nodes: [...prev.nodes, {
+                        id: newNodeId,
+                        label: extractedTitle,
+                        level: newLevel,
+                        description: `Exploration of ${extractedTitle}`,
+                        article: articleContent,
+                        articleTitle: extractedTitle,
+                        notes: ''
+                    }],
+                    edges: [...prev.edges, { source: parentId, target: newNodeId }],
+                    currentNodeId: newNodeId // Automatically switch to the new discovered node
+                }));
             }
 
             setIsLoading(false);
@@ -1037,7 +1032,7 @@ export default function Home() {
         e.preventDefault();
         if (!questionInput.trim()) return;
         setSourceTextForSubArticle(questionInput);
-        await generateArticle(questionInput, true, CHAT_QUESTION_PROMPT);
+        await generateArticle(questionInput, true, CHAT_QUESTION_PROMPT, true);
         setQuestionInput('');
     };
 
@@ -1186,7 +1181,12 @@ export default function Home() {
         const textToLearn = query || selectedText;
         setShowLearnMore(false);
         setSourceTextForSubArticle(textToLearn);
-        await generateArticle(textToLearn, true);
+
+        // METHOD 2: Force new if > 2 words
+        const wordCount = textToLearn.trim().split(/\s+/).length;
+        const forceNew = wordCount > 2;
+
+        await generateArticle(textToLearn, true, undefined, forceNew);
         if (!query) window.getSelection().removeAllRanges();
     };
 
