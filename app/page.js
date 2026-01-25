@@ -26,7 +26,7 @@ const ARTICLE_GENERATION_PROMPT = `when i ask you something ie. "what is useMemo
 IMPORTANT FORMATTING RULES:
 1. Use **bold** for emphasis or sub-headers. DO NOT USE # or ## within the text for headers.
 2. IDENTIFY KEY CONCEPTS: Wrap 5-10 key phrases, difficult terms, or sub-topics that are worth studying deeper in double brackets, like [[Quantum Entanglement]] or [[Memoization]]. These will become clickable links for the user. Ensure these are actual distinct topics, not just random words.
-3. TITLE: Start the response with a title that is ONLY 2-5 words long and is descriptive of the topic, wrapped in **. NEVER USE # FOR THE TITLE.
+3. TITLE: Start the response with a title that is STRICTLY 2-6 words long. IT MUST DESCRIBE THE SPECIFIC QUESTION OR NUANCE. DO NOT USE SINGLE WORD TITLES. Example: "**How Scientists Study Amorphous Solids**" instead of "**Solids**". Wrapped in **. NEVER USE # FOR THE TITLE.
 
 (don't create response for any example given in this prompt, it's only for your understanding) At the very end of your answer. DONT SUGGEST A NEW QUESTION OR ASK IF THE USER WANTS TO USE THIS.
 
