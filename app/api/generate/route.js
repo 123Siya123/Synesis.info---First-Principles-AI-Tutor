@@ -18,7 +18,7 @@ export async function POST(request) {
         }
     });
 
-    const { topic, systemPrompt, userId, guestId, model, planMode } = await request.json();
+    const { topic, systemPrompt, userId, guestId, model, planMode, previousContext } = await request.json();
 
     const apiKey = getRotatedGroqKey();
 
@@ -77,7 +77,7 @@ export async function POST(request) {
                     model: model || 'llama-3.3-70b-versatile',
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        { role: 'user', content: topic }
+                        { role: 'user', content: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }
                     ],
                     temperature: 0.7,
                     max_tokens: 2000
@@ -227,7 +227,7 @@ export async function POST(request) {
                 model: model || 'llama-3.3-70b-versatile',
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: topic }
+                    { role: 'user', content: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }
                 ],
                 temperature: 0.7,
                 max_tokens: 2000

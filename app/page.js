@@ -138,6 +138,7 @@ export default function Home() {
     // Subscription & Limits
     const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free', 'premium', 'pro'
     const [monthlyArticleCount, setMonthlyArticleCount] = useState(0);
+    const [currentArticleSummary, setCurrentArticleSummary] = useState(''); // Stores summary of current article for context
     const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
     // Auth & Sidebar State
@@ -174,6 +175,41 @@ export default function Home() {
 
         return () => subscription.unsubscribe();
     }, []);
+
+    // Automatic Summarization
+    useEffect(() => {
+        const generateSummary = async () => {
+            // Only summarize substantial articles in Study mode
+            if (!currentArticle || currentArticle.length < 200 || phase !== 'study') return;
+
+            // Don't re-summarize if we just did (simple check, could be more robust)
+            // But currentArticle changes, so we should summarize.
+
+            try {
+                // Check if it's just a short answer (heuristic)
+                if (currentArticle.startsWith('**Answer:**')) return;
+
+                const response = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: currentArticle })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.summary) {
+                        setCurrentArticleSummary(data.summary);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to generate summary:", err);
+            }
+        };
+
+        // Debounce slightly to avoid rapid updates
+        const timer = setTimeout(generateSummary, 1000);
+        return () => clearTimeout(timer);
+    }, [currentArticle, phase]);
 
     const fetchStudies = async (userId) => {
         const { data } = await supabase
@@ -759,7 +795,8 @@ export default function Home() {
                         userId: user ? user.id : null,
                         guestId: guestId,
                         planMode: isPlanMode,
-                        model: 'llama-3.3-70b-versatile'
+                        model: 'llama-3.3-70b-versatile',
+                        previousContext: (isSubArticle && !fileContent && currentArticleSummary) ? currentArticleSummary : null
                     }),
                 });
 
@@ -872,7 +909,7 @@ export default function Home() {
             setCurrentArticle('Failed to generate article. View logs or try again.');
             setIsLoading(false);
         }
-    }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent, notesText, phase, user, subscriptionTier, monthlyArticleCount]);
+    }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent, notesText, phase, user, subscriptionTier, monthlyArticleCount, currentArticleSummary]);
 
     const handleTopicSubmit = async (e) => {
         e.preventDefault();
