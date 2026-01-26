@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getRotatedGroqKey } from '../../lib/getApiKey';
+import { robustFetch } from '../../lib/apiUtils';
 
 export async function POST(request) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -72,8 +73,8 @@ export async function POST(request) {
             }, { status: 403 });
         }
 
-        // 2. Generate Plan
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        // 2. Generate Plan with retry and timeout
+        const response = await robustFetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
@@ -85,7 +86,7 @@ export async function POST(request) {
                 temperature: 0.7,
                 response_format: { type: 'json_object' }
             })
-        });
+        }, { maxRetries: 3, timeoutMs: 30000 });
 
         if (!response.ok) {
             const err = await response.json();

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getRotatedGroqKey } from '../../lib/getApiKey';
+import { robustFetch } from '../../lib/apiUtils';
 
 // ... imports
 
@@ -65,8 +66,8 @@ export async function POST(request) {
 
         // Proceed to Generate for Guest...
         try {
-            // Call Groq (Same logic as below)
-            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            // Call Groq with retry and timeout
+            const response = await robustFetch('https://api.groq.com/openai/v1/chat/completions', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
@@ -81,7 +82,7 @@ export async function POST(request) {
                     temperature: 0.7,
                     max_tokens: 2000
                 })
-            });
+            }, { maxRetries: 3, timeoutMs: 30000 });
 
             if (!response.ok) {
                 const errData = await response.json();
@@ -215,8 +216,8 @@ export async function POST(request) {
             }, { status: 403 });
         }
 
-        // 5. Call External API (Groq)
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        // 5. Call External API (Groq) with retry and timeout
+        const response = await robustFetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
@@ -231,7 +232,7 @@ export async function POST(request) {
                 temperature: 0.7,
                 max_tokens: 2000
             })
-        });
+        }, { maxRetries: 3, timeoutMs: 30000 });
 
         if (!response.ok) {
             const errData = await response.json();

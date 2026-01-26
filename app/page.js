@@ -7,6 +7,7 @@ import PracticeHub from './components/PracticeHub';
 import * as pdfjs from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { supabase } from './lib/supabaseClient';
+import { safeStorage, isOnline as checkIsOnline } from './lib/apiUtils';
 import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
@@ -146,6 +147,10 @@ export default function Home() {
     const [studies, setStudies] = useState([]);
     const saveTimeoutRef = useRef(null);
 
+    // Network & Save Status
+    const [isOnline, setIsOnline] = useState(true);
+    const [hasPendingSave, setHasPendingSave] = useState(false);
+
     // Auth Listener & Data Fetching
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -253,6 +258,35 @@ export default function Home() {
         return () => window.removeEventListener('focus', onFocus);
     }, [user]);
 
+    // Online/Offline detection for resilient saving
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            // Check if there's a pending save to retry
+            const pendingSave = safeStorage.get('pendingSave');
+            if (pendingSave && user) {
+                console.log('[Network] Back online, retrying pending save...');
+                setHasPendingSave(true);
+            }
+        };
+
+        const handleOffline = () => {
+            setIsOnline(false);
+            console.log('[Network] Connection lost - saves will be queued locally');
+        };
+
+        // Set initial state
+        setIsOnline(checkIsOnline());
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [user]);
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
         setIsSidebarOpen(false);
@@ -269,17 +303,33 @@ export default function Home() {
                 : s
         ));
 
+        // If offline, queue the save for later
+        if (!checkIsOnline()) {
+            console.log('[Save] Offline - queuing save for later');
+            safeStorage.set('pendingSave', { studyId, data: dataToSave, timestamp: Date.now() });
+            setHasPendingSave(true);
+            return;
+        }
+
         try {
-            await supabase
+            const { error } = await supabase
                 .from('studies')
                 .update({
                     session_data: dataToSave,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', studyId);
+
+            if (error) throw error;
+
+            // Clear any pending save on success
+            safeStorage.remove('pendingSave');
+            setHasPendingSave(false);
         } catch (err) {
             console.error("Error saving study:", err);
-            // Optionally revert local state here if strict consistency needed, but risk is low
+            // Queue for retry if save failed (network issue)
+            safeStorage.set('pendingSave', { studyId, data: dataToSave, timestamp: Date.now() });
+            setHasPendingSave(true);
         }
     };
 

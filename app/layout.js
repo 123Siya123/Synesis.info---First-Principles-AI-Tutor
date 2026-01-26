@@ -1,14 +1,20 @@
-import './globals.css'
+'use client';
 
-export const metadata = {
-    title: 'Learning App - Deep Understanding Through First Principles',
-    description: 'A minimalist learning application focused on deep first-principles understanding',
-}
+import './globals.css'
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function RootLayout({ children }) {
     return (
         <html lang="en">
-            <body>{children}</body>
+            <head>
+                <title>Learning App - Deep Understanding Through First Principles</title>
+                <meta name="description" content="A minimalist learning application focused on deep first-principles understanding" />
+            </head>
+            <body>
+                <ErrorBoundary>
+                    {children}
+                </ErrorBoundary>
+            </body>
         </html>
     )
 }

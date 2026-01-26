@@ -1,5 +1,6 @@
 
 import { NextResponse } from 'next/server';
+import { robustFetch } from '../../../lib/apiUtils';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -45,22 +46,22 @@ export async function POST(req) {
             return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
 
-        const response = await fetch(GROQ_API_URL, {
+        const response = await robustFetch(GROQ_API_URL, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${GROQ_API_KEY}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile', // Or similar high-perf model
+                model: 'llama-3.3-70b-versatile',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
                 ],
-                response_format: { type: "json_object" }, // Enforce JSON
+                response_format: { type: "json_object" },
                 temperature: 0.7
             })
-        });
+        }, { maxRetries: 3, timeoutMs: 30000 });
 
         if (!response.ok) {
             const err = await response.text();
