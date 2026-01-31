@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import styles from './PomodoroTimer.module.css';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Loader2 } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music, Loader2, User } from 'lucide-react';
 import { lofiTracks, SIGNAL_SOUND } from '../lib/lofiTracks';
 
 export default function PomodoroTimer({ settings, isVisible, onSettingsClick, isActive, setIsActive }) {
@@ -278,7 +278,7 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
                         </button>
                     </div>
                     <button className={styles.settingsLink} onClick={onSettingsClick}>
-                        Timer Settings
+                        <User size={16} /> Profile & settings
                     </button>
                 </div>
             )}
