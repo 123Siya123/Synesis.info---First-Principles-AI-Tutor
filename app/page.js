@@ -1931,7 +1931,11 @@ You can ask about the exact same sub topics to test if the user understood what 
                 return (
                     <div className={styles.ingrainPhase}>
                         <div className={styles.ingrainCard}>
-                            <h2>Step 2: Teach It Simply</h2>
+                            <h2>
+                                {teachingStep === 'explaining' ? 'Step 2: Teach It Simply' :
+                                    teachingStep === 'review' ? 'Step 3: Reflect on gaps & questions' :
+                                        'Step 4: Test Yourself'}
+                            </h2>
                             <p className={styles.topicLabel}>Explain <strong>{currentArticleTitle || currentTopic}</strong> as if teaching a curious student.</p>
 
                             {/* STEP 1: Explaining */}

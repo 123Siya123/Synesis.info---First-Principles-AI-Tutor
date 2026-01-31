@@ -23,15 +23,13 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
     const audioRef = useRef(null);
     const timerRef = useRef(null);
 
-    // Sync with settings
+    // Sync with settings - Only update if settings change explicitly
     useEffect(() => {
         if (!isActive) {
+            // Only reset time if settings change while inactive
             setTimeLeft(phase === 'focus' ? settings.focusDuration * 60 : settings.breakDuration * 60);
-        } else if (phase === 'focus' && timeLeft === settings.focusDuration * 60) {
-            // If just started externally
-            startFocusSequence();
         }
-    }, [settings, phase, isActive]);
+    }, [settings, settings.focusDuration, settings.breakDuration]);
 
     // Timer Logic
     useEffect(() => {
@@ -102,7 +100,13 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
 
     const toggleTimer = () => {
         if (!isActive) {
-            startFocusSequence();
+            // Only start sequence (overlay) if we are at the very beginning
+            const isAtStart = (phase === 'focus' && timeLeft === settings.focusDuration * 60) ||
+                (phase === 'break' && timeLeft === settings.breakDuration * 60);
+
+            if (isAtStart) {
+                startFocusSequence();
+            }
             setIsActive(true);
         } else {
             setIsActive(false);
@@ -114,19 +118,29 @@ export default function PomodoroTimer({ settings, isVisible, onSettingsClick, is
         const audio = audioRef.current;
         if (!audio) return;
 
-        // Allow playing if user manually set isPlaying, regardless of phase, as long as timer is active
-        // But we want to respect the user's manual control primarily.
-        // If isActive is false, we probably shouldn't play? Or maybe user wants music while looking at stats?
-        // Let's stick to isActive for now to keep it tied to the session.
         if (isPlaying && isActive) {
-            // Load the new track first, then play
-            setIsLoading(true);
+            // Play without reloading to avoid restarting the track
             setHasError(false);
-            audio.load();
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Playback prevented:", error);
+                    setHasError(true);
+                });
+            }
         } else {
             audio.pause();
         }
-    }, [isPlaying, currentTrackIndex, isActive]); // Removed phase dependency
+    }, [isPlaying, isActive]);
+
+    // Handle track changes separately to trigger load
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (audio && isPlaying && isActive) {
+            setIsLoading(true);
+            audio.load();
+        }
+    }, [currentTrackIndex]);
 
     // Cleanup audio on unmount
     useEffect(() => {
