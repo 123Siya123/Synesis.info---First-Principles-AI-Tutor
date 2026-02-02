@@ -1665,133 +1665,156 @@ Generate ONE clear, student-like question based on the above explanation:` }
     const renderPhase = () => {
         switch (phase) {
             case 'topic-selection':
-                return (
-                    <div className={styles.topicSelectionWrapper}>
-                        <div className={styles.topicCard}>
-                            <h1>What do you want to truly understand?</h1>
+                // Rotating facts data
+                const learningFacts = [
+                    {
+                        headline: "Teaching others is the #1 way to remember what you learn",
+                        detail: "The Learning Pyramid found students retain up to 90% of what they learn through teaching, compared to just 10% from reading."
+                    },
+                    {
+                        headline: "AI tutoring doubled learning gains — in less time",
+                        detail: "A 2023 Harvard RCT found students using AI tutors achieved more than 2x the learning gains while spending less total time."
+                    },
+                    {
+                        headline: "Feynman Technique students scored significantly higher",
+                        detail: "A study across Grades 4, 7, and 11 found statistically significant higher scores compared to standard instruction."
+                    },
+                    {
+                        headline: "You forget 70% of what you learn within 24 hours",
+                        detail: "Unless you actively engage with it. Ebbinghaus's research shows most information disappears without active reinforcement."
+                    },
+                    {
+                        headline: "First Principles learning = 9x more likely to feel mastery",
+                        detail: "A survey of 140 students found learners were 9x more likely to report mastering objectives when First Principles were applied."
+                    },
+                    {
+                        headline: "17% jump in proficiency from the Feynman Technique",
+                        detail: "English learners went from 65% to 82% after adopting this method, with increased confidence and engagement."
+                    },
+                    {
+                        headline: "AI tutoring improves problem-solving by up to 11%",
+                        detail: "300 high school students showed significant improvements in problem-solving and critical thinking in just 8 weeks."
+                    },
+                    {
+                        headline: "Active learners retain 93.5% vs 79% for passive learners",
+                        detail: "Hands-on engagement with material leads to dramatically better retention after one month."
+                    },
+                    {
+                        headline: "Top universities recommend the Feynman Technique",
+                        detail: "Oxford, Ohio State, Bucknell, and Illinois have all published guides endorsing it as one of the most effective methods."
+                    },
+                    {
+                        headline: "AI in education drives 20-23% boost in engagement",
+                        detail: "Multi-university studies found AI-powered learning is a major driver of student motivation and participation."
+                    }
+                ];
 
-                            <form onSubmit={handleTopicSubmit}>
-                                <div className={styles.inputGroup}>
+                return (
+                    <div className={styles.landingPage}>
+                        <div className={styles.landingHero}>
+                            {/* Main Title Section */}
+                            <div className={styles.heroContent}>
+                                <h1 className={styles.heroTitle}>
+                                    Study less. <span className={styles.heroHighlight}>Understand more.</span>
+                                </h1>
+                                <p className={styles.heroSubtitle}>
+                                    The method that actually works.
+                                </p>
+                                <p className={styles.heroTagline}>
+                                    Built on the science of how your brain actually learns — not how textbooks tell you to.
+                                </p>
+                            </div>
+
+                            {/* Input Card */}
+                            <div className={styles.landingInputCard}>
+                                <form onSubmit={handleTopicSubmit}>
                                     <input
                                         type="text"
                                         value={currentTopic}
                                         onChange={(e) => setCurrentTopic(e.target.value)}
-                                        placeholder="e.g., Quantum Physics, React Hooks, Machine Learning..."
+                                        placeholder="What do you want to truly understand?"
+                                        className={styles.landingInput}
                                         autoFocus
                                     />
-                                </div>
 
-                                {/* Plan Mode Toggle - Near the button */}
-                                <div className={styles.modeSelector}>
-                                    <button
-                                        type="button"
-                                        className={`${styles.modeButton} ${!isPlanMode ? styles.activeModeBtn : ''}`}
-                                        onClick={() => setIsPlanMode(false)}
-                                    >
-                                        📖 Quick Study
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`${styles.modeButton} ${isPlanMode ? styles.activeModeBtn : ''}`}
-                                        onClick={() => setIsPlanMode(true)}
-                                    >
-                                        🗺️ Study Plan
-                                    </button>
-                                </div>
-
-                                {showGuidance && (
-                                    <p className={styles.modeHint}>
-                                        {isPlanMode
-                                            ? '📚 Study Plan: Great for complex subjects (e.g. Electrical Engineering) or textbooks.'
-                                            : '⚡ Quick Study: Perfect for focused concepts (e.g. Circuits) or specific questions.'}
-                                    </p>
-                                )}
-
-                                {isPlanMode && (
-                                    <div className={styles.fileUpload}>
-                                        <label htmlFor="file-upload" className={`${styles.fileLabel} ${isFileLoading ? styles.loading : ''} ${fileError ? styles.error : ''}`}>
-                                            {isFileLoading ? (
-                                                <><div className="spinner-small"></div> Reading file...</>
-                                            ) : fileError ? (
-                                                `❌ ${fileError}`
-                                            ) : fileContent ? (
-                                                '✅ File Ready'
-                                            ) : (
-                                                '📁 Optional: Upload Book/Notes (PDF, Word, Text)'
-                                            )}
-                                        </label>
-                                        <input id="file-upload" type="file" onChange={handleFileChange} accept=".pdf,.txt,.docx" style={{ display: 'none' }} disabled={isFileLoading} />
-                                    </div>
-                                )}
-
-                                {planError && <p className={styles.planErrorMessage}>{planError}</p>}
-
-                                <button type="submit" className="btn-primary btn-large" disabled={isFileLoading || !currentTopic.trim()}>
-                                    {isLoading ? 'Generating...' : 'Start Learning →'}
-                                </button>
-                            </form>
-
-                            {/* Feynman Quote with Image - Under button */}
-                            {showGuidance && (
-                                <div className={styles.heroQuoteWithImage}>
-                                    <img src="/images/quotes/feynman.jpg" alt="Richard Feynman" className={styles.heroQuoteImage} onError={(e) => e.target.src = 'https://via.placeholder.com/60'} />
-                                    <div className={styles.heroQuoteContent}>
-                                        <p className={styles.heroQuoteText}>&quot;I learned very early the difference between knowing the name of something and knowing something.&quot;</p>
-                                        <p className={styles.heroQuoteAuthor}>&mdash; Richard Feynman</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Detailed How It Works Section */}
-                        {showGuidance && (
-                            <div className={styles.howItWorks}>
-                                <h2>🧠 The Science-Backed Learning Method</h2>
-
-                                <div className={styles.detailedSteps}>
-
-                                    {/* Step 1 */}
-                                    <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>1</span> Input a Topic</h3>
-                                        <p>Input a topic you want to study. If it&apos;s complex (like &quot;Electrical Engineering&quot;), use <strong>Plan Mode</strong>. If it is less complex or a specific concept (like &quot;Circuit&quot;), use <strong>Normal Mode</strong>.</p>
+                                    <div className={styles.landingModeRow}>
+                                        <button
+                                            type="button"
+                                            className={`${styles.landingModeBtn} ${!isPlanMode ? styles.landingModeBtnActive : ''}`}
+                                            onClick={() => setIsPlanMode(false)}
+                                        >
+                                            ⚡ Quick Study
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`${styles.landingModeBtn} ${isPlanMode ? styles.landingModeBtnActive : ''}`}
+                                            onClick={() => setIsPlanMode(true)}
+                                        >
+                                            🗺️ Deep Dive
+                                        </button>
                                     </div>
 
-                                    {/* Step 2 */}
-                                    <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>2</span> Recursive Questioning Strategy</h3>
-                                        <p>Study the topic by asking recursive questions. Read the article until you don&apos;t understand something or encounter an unfamiliar word or concept.</p>
-                                        <ul>
-                                            <li>Select/click or ask about the word/concept to generate a sub-article.</li>
-                                            <li>If you encounter something in the sub-article you don&apos;t fully understand, click/ask about it again.</li>
-                                            <li><strong>Do that all the way down the knowledge tree until you fully understand.</strong></li>
-                                            <li>When you understand a sub-article, go back to the parent article and continue.</li>
-                                        </ul>
-                                        <div className={styles.motivationalNote}>
-                                            <p><strong>DONT BE DISCOURAGED WHEN YOU GO DEEP.</strong> This is what actual learning entails! It&apos;s the process to deeply understand a topic, separating those who actually understand from those who just know the name of something.</p>
+                                    {isPlanMode && (
+                                        <div className={styles.landingFileUpload}>
+                                            <label htmlFor="file-upload" className={`${styles.landingFileLabel} ${isFileLoading ? styles.loading : ''} ${fileError ? styles.error : ''}`}>
+                                                {isFileLoading ? (
+                                                    <><div className="spinner-small"></div> Reading...</>
+                                                ) : fileError ? (
+                                                    `❌ ${fileError}`
+                                                ) : fileContent ? (
+                                                    '✅ File Ready'
+                                                ) : (
+                                                    '📁 Upload Book/Notes (optional)'
+                                                )}
+                                            </label>
+                                            <input id="file-upload" type="file" onChange={handleFileChange} accept=".pdf,.txt,.docx" style={{ display: 'none' }} disabled={isFileLoading} />
                                         </div>
+                                    )}
+
+                                    {planError && <p className={styles.landingError}>{planError}</p>}
+
+                                    <button type="submit" className={styles.landingCTA} disabled={isFileLoading || !currentTopic.trim()}>
+                                        {isLoading ? 'Generating...' : 'Start Learning →'}
+                                    </button>
+                                </form>
+
+                                {/* Rotating Facts Carousel */}
+                                <div className={styles.factsCarousel}>
+                                    <div className={styles.factsTrack}>
+                                        {/* Render facts twice for seamless infinite loop */}
+                                        {[...learningFacts, ...learningFacts].map((fact, index) => (
+                                            <div key={index} className={styles.factCard}>
+                                                <p className={styles.factHeadline}>"{fact.headline}"</p>
+                                                <p className={styles.factDetail}>{fact.detail}</p>
+                                            </div>
+                                        ))}
                                     </div>
-
-                                    {/* Step 3 */}
-                                    <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>3</span> Test Understanding (Feynman Method)</h3>
-                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Test understanding by teaching - Feynman technique</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
-
-                                        <h4>It works as follows:</h4>
-                                        <div className={styles.feynmanSteps}>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>1</span> <p><strong>Write everything you know:</strong> Don&apos;t worry about grammar or gaps. Just dump your brain.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>2</span> <p><strong>Teach an AI Student:</strong> Explain it simply and logically. Make mental notes of where you struggle.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>3</span> <p><strong>Identify Gaps:</strong> Once finished teaching, write all gaps, questions, and unsure areas down. These are added to your notes.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>4</span> <p><strong>Test Yourself:</strong> Click &quot;AI Questions&quot; to quiz your knowledge. Unsure answers go to your Notes.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>5</span> <p><strong>Fill the Gaps:</strong> Continue studying to fill these gaps. <strong>THIS IS WHERE YOU GAIN TRUTH UNDERSTANDING.</strong></p></div>
-                                        </div>
-                                    </div>
-
                                 </div>
                             </div>
-                        )}
 
-                        {/* Legal Footer */}
-                        <div className={styles.legalFooter}>
+                            {/* Features Row */}
+                            <div className={styles.featuresRow}>
+                                <div className={styles.featureChip}>
+                                    <span className={styles.featureIcon}>🧠</span>
+                                    <span>First Principles Learning</span>
+                                </div>
+                                <div className={styles.featureChip}>
+                                    <span className={styles.featureIcon}>🎓</span>
+                                    <span>Feynman Technique</span>
+                                </div>
+                                <div className={styles.featureChip}>
+                                    <span className={styles.featureIcon}>🎯</span>
+                                    <span>Practice Hub</span>
+                                </div>
+                                <div className={styles.featureChip}>
+                                    <span className={styles.featureIcon}>🗺️</span>
+                                    <span>Knowledge Maps</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className={styles.landingFooter}>
                             <a href="/blog" className={styles.blogLink} title="Synesis Blog">
                                 <PenTool size={14} style={{ marginRight: '4px' }} /> Blog
                             </a>
@@ -1802,7 +1825,6 @@ Generate ONE clear, student-like question based on the above explanation:` }
                             <span className={styles.separator}>•</span>
                             <a href="/contact" target="_blank" rel="noopener noreferrer">Contact</a>
                         </div>
-
                     </div>
                 );
             case 'study-plan':
