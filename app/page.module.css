@@ -1762,23 +1762,22 @@ body.dark-mode .historyQA {
 }
 
 .regenerateContainer {
-    margin-top: 2rem;
-    padding-top: 1rem;
-    border-top: 1px dashed var(--border-subtle);
+    margin-top: 0.5rem;
     text-align: center;
+    padding-bottom: 2rem;
+    /* Add some space at bottom of page so it's not stuck to edge */
 }
 
 .regenerateLink {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-tertiary);
-    cursor: default;
+    cursor: pointer;
     transition: color 0.2s;
+    text-decoration: underline;
+    opacity: 0.7;
 }
 
 .regenerateLink:hover {
-    color: var(--text-secondary);
-}
-
-.regenerateLink span:hover {
     color: var(--link-blue);
+    opacity: 1;
 }

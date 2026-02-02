@@ -663,7 +663,7 @@ export default function Home() {
     };
 
     // Generate article
-    const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT, forceNew = false) => {
+    const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT, forceNew = false, isRegeneration = false) => {
         // Sync current state to Mind Map before navigating away
         // Sync current state to Mind Map before navigating away
         let currentMindMap = { ...mindMapData };
@@ -695,7 +695,7 @@ export default function Home() {
         // METHOD 2 (Selection): forceNew calculated. if >2 words, skips check.
         // METHOD 3 (Question): forceNew=true. Skips check.
 
-        if (!forceNew && isSubArticle) {
+        if (!forceNew && isSubArticle && !isRegeneration) {
             const normalizedTopic = topic.trim().toLowerCase();
             const existingNode = currentMindMap.nodes.find(n => n.label.toLowerCase() === normalizedTopic);
 
@@ -722,7 +722,7 @@ export default function Home() {
 
         try {
             // 1. Check Cache
-            if (user && !fileContent && !forceNew) { // Only cache non-file-context general articles
+            if (user && !fileContent && !forceNew && !isRegeneration) { // Only cache non-file-context general articles
                 const { data: cached } = await supabase
                     .from('generated_articles')
                     .select('content')
@@ -851,12 +851,20 @@ export default function Home() {
                 }
             }
 
-            if (isSubArticle && currentArticle) {
-                setArticleHistory(prev => [...prev, { title: currentArticleTitle, content: currentArticle, sourceTextForSubArticle, nodeId: currentMindMap.currentNodeId, notesText }]);
+            if (isSubArticle && currentArticle && !isRegeneration) {
+                setArticleHistory(prev => [...prev, {
+                    title: currentArticleTitle,
+                    content: currentArticle,
+                    sourceTextForSubArticle,
+                    nodeId: currentMindMap.currentNodeId,
+                    notesText,
+                    prompt: currentPrompt || currentArticleTitle // Save prompt
+                }]);
             }
 
             setCurrentArticle(articleContent);
             setCurrentArticleTitle(extractedTitle);
+            const savedPrompt = topic; // capture current topic as prompt to save in node
 
             // Clear notes for new topic as we act as if we switched
             // Clear notes ONLY if we are starting a completely new branch (Level 1) from Root
@@ -871,8 +879,8 @@ export default function Home() {
                 }
             }
 
-            // Dynamic growth for Mind Map - ONLY IF it's a sub-article (exploration)
-            if (isPlanMode && isSubArticle && currentMindMap.currentNodeId !== null) {
+            // Dynamic growth for Mind Map - ONLY IF it's a sub-article (exploration) AND NOT regeneration
+            if (isPlanMode && isSubArticle && currentMindMap.currentNodeId !== null && !isRegeneration) {
                 const parentId = currentMindMap.currentNodeId;
                 const newNodeId = `node-${Date.now()}`;
 
@@ -890,10 +898,24 @@ export default function Home() {
                         description: `Exploration of ${extractedTitle}`,
                         article: articleContent,
                         articleTitle: extractedTitle,
-                        notes: ''
+                        notes: '',
+                        prompt: savedPrompt // Save prompt in node
                     }],
                     edges: [...prev.edges, { source: parentId, target: newNodeId }],
                     currentNodeId: newNodeId // Automatically switch to the new discovered node
+                }));
+            }
+
+            // REGENERATION LOGIC: Update existing node
+            if (isPlanMode && isRegeneration && currentMindMap.currentNodeId !== null) {
+                setMindMapData(prev => ({
+                    ...prev,
+                    nodes: prev.nodes.map(n => n.id === prev.currentNodeId ? {
+                        ...n,
+                        article: articleContent,
+                        articleTitle: extractedTitle,
+                        prompt: savedPrompt
+                    } : n)
                 }));
             }
 
@@ -1109,6 +1131,7 @@ export default function Home() {
             if (previous.nodeId && isPlanMode) {
                 setMindMapData(prev => ({ ...prev, currentNodeId: previous.nodeId }));
             }
+            setCurrentPrompt(previous.prompt || previous.title); // Restore prompt
             setArticleHistory(prev => prev.slice(0, -1));
 
             if (returnToPhase !== null && (articleHistory.length - 1) === returnToPhase) {
@@ -1216,6 +1239,7 @@ export default function Home() {
             setCurrentArticle(node.article);
             setCurrentArticleTitle(node.articleTitle || node.label);
             setNotesText(notesToLoad);
+            setCurrentPrompt(node.prompt || node.label); // Restore prompt from node
             setPhase('study');
         } else {
             setNotesText(notesToLoad);
@@ -1278,6 +1302,79 @@ export default function Home() {
 
         await generateArticle(textToLearn, true, undefined, forceNew);
         if (!query) window.getSelection().removeAllRanges();
+    };
+    const handleDeleteArticle = () => {
+        if (!mindMapData.currentNodeId) return;
+
+        // Check for sub-articles
+        const hasChildren = mindMapData.edges.some(e => e.source === mindMapData.currentNodeId);
+
+        if (hasChildren) return; // Should not happen as button is hidden, but safety check
+
+        if (window.confirm("We will delete that article permanently and the nod in your mindmap.")) {
+            setMindMapData(prev => {
+                const parentEdge = prev.edges.find(e => e.target === prev.currentNodeId);
+                const parentId = parentEdge ? parentEdge.source : null;
+
+                // Remove node and edges connected to it
+                const newNodes = prev.nodes.filter(n => n.id !== prev.currentNodeId);
+                const newEdges = prev.edges.filter(e => e.source !== prev.currentNodeId && e.target !== prev.currentNodeId);
+
+                // If parent exists, set it as current, otherwise null or root?
+                // If deleting root? Only reset if plan mode reset.
+                // Switching to parent requires handling node click essentially.
+                // We'll let useEffect or manual set handle it.
+
+                return {
+                    ...prev,
+                    nodes: newNodes,
+                    edges: newEdges,
+                    currentNodeId: parentId // Switch back to parent
+                };
+            });
+
+            // ALSO need to handle UI state transition back to parent article
+            // If we have history, go back?
+            if (articleHistory.length > 0) {
+                handleBackToMain();
+            } else {
+                // No history, maybe we deleted the root of a branch or the only article?
+                // If we switched currentNodeId to parentId above, we need to load that parent's article.
+                // We can try to rely on `mindMapData` change effect if we had one, but we don't.
+                // So we must manually load parent.
+
+                // Actually, handleBackToMain does logic based on history.
+                // If we deleted a node that was just created, we might be in history.
+
+                // Implementation Strategy:
+                // 1. Find parent ID before deletion.
+                // 2. Delete from MindMap.
+                // 3. If parent ID exists, call handleNodeClick(parentNode).
+                // 4. If no parent (Root deleted?), clear everything?
+
+                // Since setMindMapData is async/functional, we do this:
+                const parentEdge = mindMapData.edges.find(e => e.target === mindMapData.currentNodeId);
+                const parentId = parentEdge ? parentEdge.source : null;
+
+                if (parentId) {
+                    const parentNode = mindMapData.nodes.find(n => n.id === parentId);
+                    if (parentNode) {
+                        // Switch to parent
+                        // We need to delay this slighly or just call it.
+                        // But we just updated mindmap state.
+                        // Better to just call handleBackToMain() if history matches.
+                        if (articleHistory.length > 0) {
+                            handleBackToMain();
+                        } else {
+                            handleNodeClick(parentNode);
+                        }
+                    }
+                } else {
+                    // Deleted Root or isolated node
+                    handleNewTopic(); // Reset
+                }
+            }
+        }
     };
 
     // Memoized article rendering to prevent selection loss
@@ -1810,24 +1907,37 @@ Generate ONE clear, student-like question based on the above explanation:` }
                                     </div>
                                 )}
                                 {isLoading ? <div className={styles.loadingContainer}><div className="spinner"></div><p>Generating article...</p></div> : (
-                                    <article
-                                        className={styles.article}
-                                        onMouseUp={handleTextSelection}
-                                        onMouseDown={handleArticleMouseDown}
-                                    >
-                                        {renderedArticleContent}
+                                    <>
+                                        <article
+                                            className={styles.article}
+                                            onMouseUp={handleTextSelection}
+                                            onMouseDown={handleArticleMouseDown}
+                                        >
+                                            {renderedArticleContent}
+                                        </article>
                                         {currentArticle && (
                                             <div className={styles.regenerateContainer}>
                                                 <span
                                                     className={styles.regenerateLink}
-                                                    onClick={() => generateArticle(currentPrompt || currentArticleTitle, sourceTextForSubArticle ? true : false, undefined, true)}
-                                                    title="Regenerate this article if there was an error or you want a different specific explanation."
+                                                    onClick={() => generateArticle(currentPrompt || currentArticleTitle, sourceTextForSubArticle ? true : false, undefined, true, true)}
+                                                    title="Regenerate this article"
                                                 >
-                                                    Content not loading or incorrect? <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Regenerate Response</span>
+                                                    Regenerate
                                                 </span>
+                                                {/* Check if current node has children. If NOT, show delete. */}
+                                                {(isPlanMode && mindMapData.currentNodeId && !mindMapData.edges.some(e => e.source === mindMapData.currentNodeId)) && (
+                                                    <span
+                                                        className={styles.regenerateLink}
+                                                        onClick={handleDeleteArticle}
+                                                        style={{ marginLeft: '8px', color: '#ef4444' }}
+                                                        title="Delete this article and node"
+                                                    >
+                                                        | delete
+                                                    </span>
+                                                )}
                                             </div>
                                         )}
-                                    </article>
+                                    </>
                                 )}
                                 {showLearnMore && !notesOpen && (
                                     <button
