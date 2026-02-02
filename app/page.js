@@ -12,7 +12,7 @@ import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
-import { Menu, User as UserIcon, PenTool, History, Timer, Play, Pause, BrainCircuit } from 'lucide-react';
+import { Menu, User as UserIcon, PenTool, History, Timer, Play, Pause } from 'lucide-react';
 import PomodoroTimer from './components/PomodoroTimer';
 
 
@@ -20,49 +20,6 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pd
 
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-
-const LEARNING_FACTS = [
-    {
-        title: "Teaching others is the #1 way to remember what you learn — and Synesis builds that into every session.",
-        content: "The National Training Laboratories' Learning Pyramid found that students retain up to 90% of what they learn through teaching others, compared to just 10% from reading. Synesis's Feynman Technique step directly activates this."
-    },
-    {
-        title: "A Harvard RCT found AI tutoring doubled learning gains — in less time than a classroom.",
-        content: "A 2023 randomized controlled trial at Harvard (194 undergrad students, Physics) found that students using a pedagogically-designed AI tutor achieved more than twice the learning gains of students in active classroom lessons, while spending less total time studying."
-    },
-    {
-        title: "Students using the Feynman Technique scored significantly higher than control groups — across all grade levels.",
-        content: "A true experimental study (Reyes et al., 2021) across Grades 4, 7, and 11 found that students taught using the Feynman Technique produced statistically significant higher posttest scores and greater learning gains than students in control groups using standard instruction."
-    },
-    {
-        title: "You forget 70% of what you learn within 24 hours — unless you actively engage with it.",
-        content: "Ebbinghaus's Forgetting Curve research, replicated across dozens of studies, shows that without active reinforcement, most new information disappears within a day. Synesis's recursive deep-dive method forces active engagement at every step."
-    },
-    {
-        title: "First Principles learning makes students 9x more likely to feel they've truly mastered the material.",
-        content: "A survey of 140 students across 89 higher education institutions found that learners were 9 times more likely to report mastering their course objectives when First Principles of Instruction were applied — exactly the method Synesis is built on."
-    },
-    {
-        title: "A 17% jump in proficiency scores — just from switching to the Feynman Technique.",
-        content: "A quasi-experimental study on English language learners found scores climbed from an average of 65% to 82% after students adopted the Feynman Technique, with participants also reporting increased confidence and engagement."
-    },
-    {
-        title: "AI tutoring systems improve problem-solving skills by up to 11% in just 8 weeks.",
-        content: "A 2024 study of 300 high school students using an AI-based intelligent tutoring system showed significant improvements in problem-solving (65.4 → 72.8), critical thinking (68.9 → 74.3), and logical reasoning after eight weeks of use."
-    },
-    {
-        title: "Active learners retain 93.5% of what they study — passive learners retain only 79%.",
-        content: "Research on active vs. passive learning found that learners who engage hands-on with material retained 93.5% of previously learned information after one month, compared to 79% for passive learners. Synesis keeps you in active mode the entire time."
-    },
-    {
-        title: "Universities worldwide now recommend the Feynman Technique — from Oxford to Ohio State.",
-        content: "Institutions including the University of York, Ohio State University (Dennis Learning Center), Bucknell University, and the University of Illinois have all published official study guides endorsing the Feynman Technique as one of the most effective methods for deep learning."
-    },
-    {
-        title: "AI in education drives a 20–23% boost in student engagement across universities.",
-        content: "A multi-university study tracking student engagement before and after AI tool integration found a 20–23% improvement in engagement scores, pointing to AI-powered learning as a major driver of student motivation and participation."
-    }
-];
 
 // Exact prompt as specified
 const ARTICLE_GENERATION_PROMPT = `when i ask you something ie. "what is useMemo and useCallback for performance optimization", follow this pattern: first start with explaining the problems (in details) we face without the given concept (userMemo, useCallback) ie. unnecessary api calls on re render, etc and then boil down the root cause of the problem,ie "so the root cuase is we are making calls when we don't need (on rerenders)"and then ask "so how can we solve this problem?" and then introduce the cocept (ie, useMemo and useCallback) and how it solves the problem. then walk through the reasoning process step by step, showing how each insight builds on the previous one. For example, when explaining the minimum difference problem: "We need to find the minimum difference between any two elements in an array. When is this difference smallest? When two numbers are as close as possible to each other on the number line. How can we easily identify adjacent numbers? By arranging all elements in order. What's the most efficient way to arrange elements? By sorting the array. Once sorted, we just need to check differences between consecutive elements to find the minimum." Please apply this cause-and-effect reasoning to any problem I ask about. Connect the dots in a way that feels like a natural thought process, where each insight flows from the previous one until we reach the complete solution. and emphasize more on "why" aspect keep the format of whole chat based on first priciple thinking: where we ask the natural, human like question that leads to the other piece and so on. this we we reach the truth why following the human curiosity. ie. so what we used to use before these hooks? okay, so what were the problems in those methods? what is the root cause/s of the problem/s? how does [hooks (or the given)] concept fix it?. ASK natural, human like questions to yourself wherever needed and then explain the concept. ANSWER LIKE A WIKIPEDIA ARTICLE. FACTUAL AND EASY TO UNDERSTAND WHILE INTRODUCING DIFFERENT SUB TOPICS OR VOCUABULARY (Dont simplify the vocabulary, it is useful for the user to read learn more about the vocabulary or concepts. AT THE TOP ALWAYS HAVE A SHORT DEFINITION OF THE TOPIC MAPPING THE TERRAIN IT IS ABOUT JUST LIKE IN WIKIPEDIA AND THEN BELOW THE ARTICLE IN THE WAY OUTLINED IN THE PROMPT (explaining with fun examples or analogies would be awesome).
@@ -108,6 +65,67 @@ const getBranchRootNode = (startNodeId, nodes, edges) => {
         currentNode = nodes.find(n => n.id === currentId);
     }
     return currentNode;
+};
+
+const SCIENTIFIC_PROOFS = [
+    {
+        title: "Teaching others is the #1 way to remember what you learn — and Synesis builds that into every session.",
+        text: "The National Training Laboratories' Learning Pyramid found that students retain up to 90% of what they learn through teaching others, compared to just 10% from reading. Synesis's Feynman Technique step directly activates this."
+    },
+    {
+        title: "A Harvard RCT found AI tutoring doubled learning gains — in less time than a classroom.",
+        text: "A 2023 randomized controlled trial at Harvard (194 undergrad students, Physics) found that students using a pedagogically-designed AI tutor achieved more than twice the learning gains of students in active classroom lessons, while spending less total time studying."
+    },
+    {
+        title: "Students using the Feynman Technique scored significantly higher than control groups — across all grade levels.",
+        text: "A true experimental study (Reyes et al., 2021) across Grades 4, 7, and 11 found that students taught using the Feynman Technique produced statistically significant higher posttest scores and greater learning gains than students in control groups using standard instruction."
+    },
+    {
+        title: "You forget 70% of what you learn within 24 hours — unless you actively engage with it.",
+        text: "Ebbinghaus's Forgetting Curve research, replicated across dozens of studies, shows that without active reinforcement, most new information disappears within a day. Synesis's recursive deep-dive method forces active engagement at every step."
+    },
+    {
+        title: "First Principles learning makes students 9x more likely to feel they've truly mastered the material.",
+        text: "A survey of 140 students across 89 higher education institutions found that learners were 9 times more likely to report mastering their course objectives when First Principles of Instruction were applied — exactly the method Synesis is built on."
+    },
+    {
+        title: "A 17% jump in proficiency scores — just from switching to the Feynman Technique.",
+        text: "A quasi-experimental study on English language learners found scores climbed from an average of 65% to 82% after students adopted the Feynman Technique, with participants also reporting increased confidence and engagement."
+    },
+    {
+        title: "AI tutoring systems improve problem-solving skills by up to 11% in just 8 weeks.",
+        text: "A 2024 study of 300 high school students using an AI-based intelligent tutoring system showed significant improvements in problem-solving (65.4 → 72.8), critical thinking (68.9 → 74.3), and logical reasoning after eight weeks of use."
+    },
+    {
+        title: "Active learners retain 93.5% of what they study — passive learners retain only 79%.",
+        text: "Research on active vs. passive learning found that learners who engage hands-on with material retained 93.5% of previously learned information after one month, compared to 79% for passive learners. Synesis keeps you in active mode the entire time."
+    },
+    {
+        title: "Universities worldwide now recommend the Feynman Technique — from Oxford to Ohio State.",
+        text: "Institutions including the University of York, Ohio State University (Dennis Learning Center), Bucknell University, and the University of Illinois have all published official study guides endorsing the Feynman Technique as one of the most effective methods for deep learning."
+    },
+    {
+        title: "AI in education drives a 20–23% boost in student engagement across universities.",
+        text: "A multi-university study tracking student engagement before and after AI tool integration found a 20–23% improvement in engagement scores, pointing to AI-powered learning as a major driver of student motivation and participation."
+    }
+];
+
+const LandingCarousel = () => {
+    // Duplicate items to ensure seamless scrolling
+    const items = [...SCIENTIFIC_PROOFS, ...SCIENTIFIC_PROOFS];
+
+    return (
+        <div className={styles.carouselSection}>
+            <div className={styles.carouselTrack}>
+                {items.map((item, index) => (
+                    <div key={index} className={styles.carouselCard}>
+                        <h3>{item.title}</h3>
+                        <p>{item.text}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 };
 
 export default function Home() {
@@ -195,17 +213,6 @@ export default function Home() {
     // Network & Save Status
     const [isOnline, setIsOnline] = useState(true);
     const [hasPendingSave, setHasPendingSave] = useState(false);
-
-    // Fact Carousel State
-    const [currentFactIndex, setCurrentFactIndex] = useState(0);
-
-    useEffect(() => {
-        if (phase !== 'topic-selection') return;
-        const interval = setInterval(() => {
-            setCurrentFactIndex(prev => (prev + 1) % LEARNING_FACTS.length);
-        }, 8000); // Rotate every 8 seconds
-        return () => clearInterval(interval);
-    }, [phase]);
 
     // Auth Listener & Data Fetching
     useEffect(() => {
@@ -1721,95 +1728,76 @@ Generate ONE clear, student-like question based on the above explanation:` }
             case 'topic-selection':
                 return (
                     <div className={styles.topicSelectionWrapper}>
-                        <div className={styles.topicCard}>
-                            <h1 className={styles.landingTitle}>Study less. Understand more.<br />The method that actually works.</h1>
+                        <div className={styles.topicCardClean}>
+                            <h1>Study less. Understand more. <br />The method that actually works.</h1>
                             <p className={styles.landingSubtitle}>Built on the science of how your brain actually learns - not how textbooks tell you to.</p>
 
-                            <form onSubmit={handleTopicSubmit}>
-                                <div className={styles.inputGroup}>
-                                    <input
-                                        type="text"
-                                        value={currentTopic}
-                                        onChange={(e) => setCurrentTopic(e.target.value)}
-                                        placeholder="What do you want to learn today?"
-                                        autoFocus
-                                    />
-                                </div>
-
-                                <div className={styles.modeSelector}>
-                                    <button
-                                        type="button"
-                                        className={`${styles.modeButton} ${!isPlanMode ? styles.activeModeBtn : ''}`}
-                                        onClick={() => setIsPlanMode(false)}
-                                    >
-                                        📖 Quick Study
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={`${styles.modeButton} ${isPlanMode ? styles.activeModeBtn : ''}`}
-                                        onClick={() => setIsPlanMode(true)}
-                                    >
-                                        🗺️ Study Plan
-                                    </button>
-                                </div>
-
-                                {isPlanMode && (
-                                    <div className={styles.fileUpload}>
-                                        <label htmlFor="file-upload" className={`${styles.fileLabel} ${isFileLoading ? styles.loading : ''} ${fileError ? styles.error : ''}`}>
-                                            {isFileLoading ? (
-                                                <><div className="spinner-small"></div> Reading file...</>
-                                            ) : fileError ? (
-                                                `❌ ${fileError}`
-                                            ) : fileContent ? (
-                                                '✅ File Ready'
-                                            ) : (
-                                                '📁 Optional: Upload Book/Notes (PDF, Word, Text)'
-                                            )}
-                                        </label>
-                                        <input id="file-upload" type="file" onChange={handleFileChange} accept=".pdf,.txt,.docx" style={{ display: 'none' }} disabled={isFileLoading} />
+                            <div className={styles.topicCard}>
+                                <form onSubmit={handleTopicSubmit}>
+                                    <div className={styles.inputGroup}>
+                                        <input
+                                            type="text"
+                                            value={currentTopic}
+                                            onChange={(e) => setCurrentTopic(e.target.value)}
+                                            placeholder="e.g., Quantum Physics, React Hooks, Machine Learning..."
+                                            autoFocus
+                                        />
                                     </div>
-                                )}
 
-                                {planError && <p className={styles.planErrorMessage}>{planError}</p>}
+                                    <div className={styles.modeSelector}>
+                                        <button
+                                            type="button"
+                                            className={`${styles.modeButton} ${!isPlanMode ? styles.activeModeBtn : ''}`}
+                                            onClick={() => setIsPlanMode(false)}
+                                        >
+                                            📖 Quick Study
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`${styles.modeButton} ${isPlanMode ? styles.activeModeBtn : ''}`}
+                                            onClick={() => setIsPlanMode(true)}
+                                        >
+                                            🗺️ Study Plan
+                                        </button>
+                                    </div>
 
-                                <button type="submit" className="btn-primary btn-large" disabled={isFileLoading || !currentTopic.trim()}>
-                                    {isLoading ? 'Generating...' : 'Start Learning →'}
-                                </button>
-                            </form>
+                                    {isPlanMode && (
+                                        <div className={styles.fileUpload}>
+                                            <label htmlFor="file-upload" className={`${styles.fileLabel} ${isFileLoading ? styles.loading : ''} ${fileError ? styles.error : ''}`}>
+                                                {isFileLoading ? (
+                                                    <><div className="spinner-small"></div> Reading file...</>
+                                                ) : fileError ? (
+                                                    `❌ ${fileError}`
+                                                ) : fileContent ? (
+                                                    '✅ File Ready'
+                                                ) : (
+                                                    '📁 Optional: Upload Book/Notes (PDF, Word, Text)'
+                                                )}
+                                            </label>
+                                            <input id="file-upload" type="file" onChange={handleFileChange} accept=".pdf,.txt,.docx" style={{ display: 'none' }} disabled={isFileLoading} />
+                                        </div>
+                                    )}
 
-                            <div className={styles.practiceHubEntry}>
+                                    {planError && <p className={styles.planErrorMessage}>{planError}</p>}
+
+                                    <button type="submit" className="btn-primary btn-large" disabled={isFileLoading || !currentTopic.trim()}>
+                                        {isLoading ? 'Generating...' : 'Start Learning →'}
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div className={styles.practiceHubSection}>
                                 <button
-                                    className="btn-secondary"
                                     onClick={() => setPhase('practice-hub')}
-                                    style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                                    className={styles.practiceHubBtn}
+                                    title="Practice your skills"
                                 >
-                                    <BrainCircuit size={18} /> Practice Hub
+                                    Practice Hub →
                                 </button>
                             </div>
                         </div>
 
-                        {/* Rotating Facts Carousel */}
-                        <div className={styles.factCarousel}>
-                            {LEARNING_FACTS.map((fact, index) => (
-                                <div
-                                    key={index}
-                                    className={`${styles.factItem} ${index === currentFactIndex ? styles.activeFact : ''} ${index === (currentFactIndex - 1 + LEARNING_FACTS.length) % LEARNING_FACTS.length ? styles.exitFact : ''}`}
-                                >
-                                    <div className={styles.factTitle}>{fact.title}</div>
-                                    <div className={styles.factContent}>"{fact.content}"</div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className={styles.carouselIndicators}>
-                            {LEARNING_FACTS.map((_, index) => (
-                                <div
-                                    key={index}
-                                    className={`${styles.indicator} ${index === currentFactIndex ? styles.active : ''}`}
-                                    onClick={() => setCurrentFactIndex(index)}
-                                />
-                            ))}
-                        </div>
+                        <LandingCarousel />
 
                         {/* Legal Footer */}
                         <div className={styles.legalFooter}>

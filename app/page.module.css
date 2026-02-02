@@ -13,124 +13,22 @@
     justify-content: center;
     min-height: calc(100vh - 80px);
     /* Adjust for header height */
-    padding: 2rem 1rem;
-    overflow-x: hidden;
+    padding: 2rem;
 }
 
 .topicCard {
     background-color: var(--paper-white);
-    padding: 3rem 2rem;
-    border-radius: 24px;
-    box-shadow: 0 10px 40px var(--shadow-soft);
-    max-width: 900px;
+    padding: 3rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px var(--shadow-soft);
+    max-width: 600px;
     width: 100%;
     text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
 }
 
-.landingTitle {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, var(--text-primary) 0%, var(--link-blue) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-}
-
-.landingSubtitle {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    margin-bottom: 2.5rem;
-    max-width: 600px;
-    line-height: 1.5;
-    font-weight: 500;
-}
-
-.factCarousel {
-    margin-top: 3rem;
-    width: 100%;
-    max-width: 800px;
-    position: relative;
-    height: 140px;
-    /* Fixed height to prevent layout jumps */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.factItem {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    opacity: 0;
-    transform: translateX(50px);
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    pointer-events: none;
-}
-
-.factItem.activeFact {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-}
-
-.factItem.exitFact {
-    opacity: 0;
-    transform: translateX(-50px);
-}
-
-.factTitle {
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--text-primary);
-    margin-bottom: 0.2rem;
-}
-
-.factContent {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    line-height: 1.5;
-    max-width: 700px;
-}
-
-.carouselIndicators {
-    display: flex;
-    gap: 8px;
-    margin-top: 1rem;
-    justify-content: center;
-}
-
-.indicator {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: var(--border-subtle);
-    transition: all 0.3s ease;
-}
-
-.indicator.active {
-    background-color: var(--link-blue);
-    width: 18px;
-    border-radius: 4px;
-}
-
-.practiceHubEntry {
-    margin-top: 1.5rem;
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
+.topicCard h1 {
+    margin-bottom: 2rem;
+    font-size: 2rem;
 }
 
 .topicCard form {
@@ -1882,4 +1780,136 @@ body.dark-mode .historyQA {
 .regenerateLink:hover {
     color: var(--link-blue);
     opacity: 1;
+}
+
+/* New Landing Page Styles */
+.landingSubtitle {
+    color: var(--text-secondary);
+    font-size: 1.25rem;
+    margin-bottom: 2.5rem;
+    font-weight: 400;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+}
+
+.practiceHubSection {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.practiceHubBtn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.practiceHubBtn:hover {
+    border-color: var(--link-blue);
+    color: var(--link-blue);
+    transform: translateY(-1px);
+}
+
+.carouselSection {
+    margin-top: 4rem;
+    width: 100%;
+    margin-bottom: 2rem;
+    overflow: hidden;
+    position: relative;
+    /* Mask/fade on sides for elegant look */
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.carouselTrack {
+    display: flex;
+    gap: 2rem;
+    width: max-content;
+    animation: scroll 80s linear infinite;
+    padding-left: 2rem;
+    /* Initial buffer */
+}
+
+/* Pause on hover if user wants to read */
+.carouselTrack:hover {
+    animation-play-state: paused;
+}
+
+.carouselCard {
+    background: var(--paper-white);
+    padding: 1.75rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    width: 380px;
+    flex-shrink: 0;
+    border: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    text-align: left;
+    transition: transform 0.2s;
+}
+
+.carouselCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.carouselCard h3 {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.carouselCard p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Adjustments to make topic card transparent/cleaner for new layout if needed */
+.topicCardClean {
+    background-color: transparent;
+    padding: 1rem;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: 800px;
+    /* Wider for the title */
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.topicCardClean h1 {
+    font-size: 2.5rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
