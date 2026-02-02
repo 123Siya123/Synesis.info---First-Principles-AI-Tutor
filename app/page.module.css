@@ -13,22 +13,124 @@
     justify-content: center;
     min-height: calc(100vh - 80px);
     /* Adjust for header height */
-    padding: 2rem;
+    padding: 2rem 1rem;
+    overflow-x: hidden;
 }
 
 .topicCard {
     background-color: var(--paper-white);
-    padding: 3rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px var(--shadow-soft);
-    max-width: 600px;
+    padding: 3rem 2rem;
+    border-radius: 24px;
+    box-shadow: 0 10px 40px var(--shadow-soft);
+    max-width: 900px;
     width: 100%;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
 }
 
-.topicCard h1 {
-    margin-bottom: 2rem;
-    font-size: 2rem;
+.landingTitle {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--link-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.landingSubtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    max-width: 600px;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+.factCarousel {
+    margin-top: 3rem;
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+    height: 140px;
+    /* Fixed height to prevent layout jumps */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.factItem {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    pointer-events: none;
+}
+
+.factItem.activeFact {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.factItem.exitFact {
+    opacity: 0;
+    transform: translateX(-50px);
+}
+
+.factTitle {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+}
+
+.factContent {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    max-width: 700px;
+}
+
+.carouselIndicators {
+    display: flex;
+    gap: 8px;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--border-subtle);
+    transition: all 0.3s ease;
+}
+
+.indicator.active {
+    background-color: var(--link-blue);
+    width: 18px;
+    border-radius: 4px;
+}
+
+.practiceHubEntry {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 .topicCard form {
@@ -1602,467 +1704,6 @@ body.dark-mode .darkModeToggle:hover {
     to {
         transform: translateX(0);
     }
-}
-
-/* ============================================
-   NEW LANDING PAGE STYLES
-   ============================================ */
-
-.landingPage {
-    min-height: calc(100vh - 80px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 1.5rem;
-    background: linear-gradient(180deg, var(--paper-off-white) 0%, var(--paper-white) 100%);
-    overflow: hidden;
-}
-
-.landingHero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
-    max-width: 700px;
-    width: 100%;
-    text-align: center;
-}
-
-.heroContent {
-    animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.heroTitle {
-    font-size: clamp(2rem, 5vw, 3.2rem);
-    font-weight: 800;
-    line-height: 1.1;
-    margin-bottom: 0.75rem;
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
-}
-
-.heroHighlight {
-    background: linear-gradient(135deg, var(--link-blue) 0%, #60a5fa 50%, var(--link-blue) 100%);
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-
-    0%,
-    100% {
-        background-position: 0% 50%;
-    }
-
-    50% {
-        background-position: 100% 50%;
-    }
-}
-
-.heroSubtitle {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 0.5rem 0;
-    opacity: 0.9;
-}
-
-.heroTagline {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    margin: 0;
-    max-width: 500px;
-    line-height: 1.5;
-}
-
-/* Landing Input Card */
-.landingInputCard {
-    width: 100%;
-    max-width: 560px;
-    background: var(--paper-white);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.05),
-        0 10px 40px -5px rgba(37, 99, 235, 0.12),
-        0 0 0 1px var(--border-subtle);
-    animation: fadeInUp 0.6s ease-out 0.1s both;
-}
-
-.landingInput {
-    width: 100%;
-    padding: 1rem 1.25rem;
-    font-size: 1.1rem;
-    border: 2px solid var(--border-subtle);
-    border-radius: 12px;
-    background: var(--paper-off-white);
-    color: var(--text-primary);
-    transition: all 0.2s ease;
-    margin-bottom: 1rem;
-}
-
-.landingInput:focus {
-    outline: none;
-    border-color: var(--link-blue);
-    background: var(--paper-white);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-}
-
-.landingInput::placeholder {
-    color: var(--text-muted);
-}
-
-.landingModeRow {
-    display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.landingModeBtn {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    border: 2px solid var(--border-subtle);
-    background: var(--paper-white);
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.landingModeBtn:hover {
-    border-color: var(--link-blue);
-    color: var(--link-blue);
-}
-
-.landingModeBtnActive {
-    border-color: var(--link-blue);
-    background: rgba(37, 99, 235, 0.08);
-    color: var(--link-blue);
-    font-weight: 600;
-}
-
-.landingFileUpload {
-    margin-bottom: 1rem;
-}
-
-.landingFileLabel {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border: 2px dashed var(--border-subtle);
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-}
-
-.landingFileLabel:hover {
-    border-color: var(--link-blue);
-    color: var(--link-blue);
-    background: rgba(37, 99, 235, 0.02);
-}
-
-.landingFileLabel.loading {
-    border-color: var(--link-blue);
-    background: rgba(37, 99, 235, 0.05);
-    cursor: wait;
-}
-
-.landingFileLabel.error {
-    border-color: #ef4444;
-    color: #ef4444;
-}
-
-.landingError {
-    color: #ef4444;
-    font-size: 0.9rem;
-    margin: 0 0 1rem 0;
-    text-align: center;
-}
-
-.landingCTA {
-    width: 100%;
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    background: linear-gradient(135deg, var(--link-blue) 0%, #1d4ed8 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
-}
-
-.landingCTA:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-}
-
-.landingCTA:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.landingCTA:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-/* Facts Carousel */
-.factsCarousel {
-    width: 100%;
-    overflow: hidden;
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-subtle);
-    position: relative;
-}
-
-.factsCarousel::before,
-.factsCarousel::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 40px;
-    z-index: 2;
-    pointer-events: none;
-}
-
-.factsCarousel::before {
-    left: 0;
-    background: linear-gradient(to right, var(--paper-white), transparent);
-}
-
-.factsCarousel::after {
-    right: 0;
-    background: linear-gradient(to left, var(--paper-white), transparent);
-}
-
-.factsTrack {
-    display: flex;
-    gap: 1.5rem;
-    animation: scrollFacts 60s linear infinite;
-    width: max-content;
-}
-
-.factsTrack:hover {
-    animation-play-state: paused;
-}
-
-@keyframes scrollFacts {
-    0% {
-        transform: translateX(0);
-    }
-
-    100% {
-        transform: translateX(-50%);
-    }
-}
-
-.factCard {
-    flex-shrink: 0;
-    width: 320px;
-    padding: 1rem 1.25rem;
-    background: var(--paper-off-white);
-    border-radius: 12px;
-    border: 1px solid var(--border-subtle);
-    transition: all 0.3s ease;
-}
-
-.factCard:hover {
-    background: var(--paper-white);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-}
-
-.factHeadline {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--link-blue);
-    margin: 0 0 0.5rem 0;
-    line-height: 1.4;
-    font-style: italic;
-}
-
-.factDetail {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin: 0;
-    line-height: 1.5;
-}
-
-/* Features Row */
-.featuresRow {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75rem;
-    animation: fadeInUp 0.6s ease-out 0.2s both;
-}
-
-.featureChip {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1rem;
-    background: var(--paper-white);
-    border: 1px solid var(--border-subtle);
-    border-radius: 100px;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.featureChip:hover {
-    border-color: var(--link-blue);
-    color: var(--link-blue);
-    background: rgba(37, 99, 235, 0.02);
-    transform: translateY(-1px);
-}
-
-.featureIcon {
-    font-size: 1rem;
-}
-
-/* Landing Footer */
-.landingFooter {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    padding: 1.5rem;
-    margin-top: auto;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    animation: fadeInUp 0.6s ease-out 0.3s both;
-}
-
-.landingFooter a {
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.landingFooter a:hover {
-    color: var(--link-blue);
-}
-
-.landingFooter .blogLink {
-    display: flex;
-    align-items: center;
-    color: var(--link-blue);
-    font-weight: 500;
-}
-
-.separator {
-    color: var(--border-subtle);
-}
-
-/* Responsive adjustments for landing page */
-@media (max-width: 768px) {
-    .landingPage {
-        padding: 1rem;
-    }
-
-    .landingHero {
-        gap: 1.5rem;
-    }
-
-    .heroTitle {
-        font-size: 1.8rem;
-    }
-
-    .heroSubtitle {
-        font-size: 1.1rem;
-    }
-
-    .heroTagline {
-        font-size: 0.9rem;
-    }
-
-    .landingInputCard {
-        padding: 1.5rem;
-        border-radius: 16px;
-    }
-
-    .landingModeRow {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .featuresRow {
-        gap: 0.5rem;
-    }
-
-    .featureChip {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.8rem;
-    }
-
-    .factCard {
-        width: 280px;
-        padding: 0.85rem 1rem;
-    }
-
-    .factHeadline {
-        font-size: 0.9rem;
-    }
-
-    .factDetail {
-        font-size: 0.8rem;
-    }
-
-    .landingFooter {
-        flex-wrap: wrap;
-        gap: 0.75rem;
-    }
-}
-
-/* Dark mode adjustments */
-body.dark-mode .landingPage {
-    background: linear-gradient(180deg, var(--paper-off-white) 0%, var(--paper-white) 100%);
-}
-
-body.dark-mode .landingInputCard {
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.2),
-        0 10px 40px -5px rgba(37, 99, 235, 0.08),
-        0 0 0 1px var(--border-subtle);
-}
-
-body.dark-mode .factsCarousel::before {
-    background: linear-gradient(to right, var(--paper-white), transparent);
-}
-
-body.dark-mode .factsCarousel::after {
-    background: linear-gradient(to left, var(--paper-white), transparent);
-}
-
-body.dark-mode .factCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .historyHeader {
