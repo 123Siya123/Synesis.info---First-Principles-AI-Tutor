@@ -12,7 +12,7 @@ import Sidebar from './components/Sidebar';
 import AuthModal from './components/AuthModal';
 import AccountView from './components/AccountView';
 import SubscriptionModal from './components/SubscriptionModal';
-import { Menu, User as UserIcon, PenTool, History, Timer, Play, Pause } from 'lucide-react';
+import { Menu, User as UserIcon, PenTool, History, Timer, Play, Pause, BrainCircuit } from 'lucide-react';
 import PomodoroTimer from './components/PomodoroTimer';
 
 
