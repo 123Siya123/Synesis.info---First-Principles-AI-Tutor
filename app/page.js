@@ -1379,11 +1379,29 @@ export default function Home() {
                     model: 'llama-3.3-70b-versatile',
                     messages: [
                         {
-                            role: 'system', content: `You are a curious student. Generate ONE simple, natural question from a different angle. Do NOT repeat previous questions. Ask about unclear parts, gaps, logical fallacies. Return ONLY the question. ASK THE USER QUESTIONS SPECIFICALLY ABOUT THE TOPIC AND WHAT HE TAUGHT THROUGH THE LENSE OF A STUDENT TRYING TO LEARN THE TOPIC THE USER HAS TALKED ABOUT. YOUR QUESTIONS SHOULD ASK FOR CLARIFICATION, ASK TO EXPOSE A GAP IN THE USERS UNDERSTANDING OF THE ACTUAL SUBJECT MATTER (example, if the topic is mechatronics and the user talks about electrical engineering and software development but not about mechanical engineering, then ask questions about that). DONT ASK UNRELEVANT QUESTIONS ABOUT THE TOPIC. CHALLENGE THE USER BUT DONT DISCOURAGE HIM WITH EXTREMELY DIFFICULT QUESTIONS.
+                            role: 'system', content: `You are a curious student. The user is teaching you about a topic.
+Your goal is to ask **ONE single, clear, and genuine question** to test the user's understanding.
 
-these are the subtopics the user explored whily studieng this subject: ${Array.from(new Set([...mindMapData.nodes.filter(n => n.level > 0).map(n => n.label), ...articleHistory.map(h => h.title)])).join(', ')}. 
-You can ask about the exact same sub topics to test if the user understood what he studied BUT ALSO ASK QUESTIONS ABOUT THE SUBJECT MATTER IN OTHER AREAS TO TEST THE USERS KNOWLEDGE AND FIND GAPS IN HIS UNDERSTANDING. ASK 1 QUESTION` },
-                        { role: 'user', content: `${context} Topic: ${currentArticleTitle || currentTopic} \nFirst sentence of article: ${currentArticle.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).join(' ').split(/[.!?]/)[0] || ''} \n\nTeaching explanation: ${teachingText} \n\nGenerate ONE question from a new angle: ` }
+RULES:
+1. Ask **ONLY ONE** question. Never ask two questions at once.
+2. Be a student. Ask because you want to understand better, or because you see a gap in the logic.
+3. Base your question on what the user **just taught you** in the "Teaching explanation".
+4. You can also ask about the **subtopics** listed below if the user missed them, to see if they understand the bigger picture.
+5. **BE CONCRETE.** Avoid philosophical, vague, or loosely connected questions. (e.g., Do NOT ask "How does X relate to [unrelated concept]?").
+6. If the explanation is clear, ask a "What if" question to test if the user can generalize to a new scenario (e.g., "How would this work if...?" or "What happens in this edge case?").
+7. **DO NOT** be polite or robotic. Just ask the question directly.
+
+Subtopics the user has studied: ${Array.from(new Set([...mindMapData.nodes.filter(n => n.level > 0).map(n => n.label), ...articleHistory.map(h => h.title)])).join(', ')}.
+` },
+                        {
+                            role: 'user', content: `${context}
+Topic: ${currentArticleTitle || currentTopic}
+First sentence of article: ${currentArticle.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).join(' ').split(/[.!?]/)[0] || ''}
+
+Teaching explanation:
+"${teachingText}"
+
+Generate ONE clear, student-like question based on the above explanation:` }
                     ],
                     temperature: 0.8,
                     max_tokens: 100,
