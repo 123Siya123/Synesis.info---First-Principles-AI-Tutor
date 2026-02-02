@@ -1760,3 +1760,25 @@ body.dark-mode .historyText {
 body.dark-mode .historyQA {
     background-color: #0f172a;
 }
+
+.regenerateContainer {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px dashed var(--border-subtle);
+    text-align: center;
+}
+
+.regenerateLink {
+    font-size: 0.85rem;
+    color: var(--text-tertiary);
+    cursor: default;
+    transition: color 0.2s;
+}
+
+.regenerateLink:hover {
+    color: var(--text-secondary);
+}
+
+.regenerateLink span:hover {
+    color: var(--link-blue);
+}

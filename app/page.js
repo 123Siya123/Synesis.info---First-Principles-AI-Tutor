@@ -98,6 +98,7 @@ export default function Home() {
     const [notesWidth, setNotesWidth] = useState(400); // Default width
     const [floatingQA, setFloatingQA] = useState([]);
     const [questionInput, setQuestionInput] = useState('');
+    const [currentPrompt, setCurrentPrompt] = useState('');
     const [studyTime, setStudyTime] = useState(0);
 
     // Ingrain phase state
@@ -717,9 +718,11 @@ export default function Home() {
         }
 
         setIsLoading(true);
+        if (topic) setCurrentPrompt(topic);
+
         try {
             // 1. Check Cache
-            if (user && !fileContent) { // Only cache non-file-context general articles
+            if (user && !fileContent && !forceNew) { // Only cache non-file-context general articles
                 const { data: cached } = await supabase
                     .from('generated_articles')
                     .select('content')
@@ -1813,6 +1816,17 @@ Generate ONE clear, student-like question based on the above explanation:` }
                                         onMouseDown={handleArticleMouseDown}
                                     >
                                         {renderedArticleContent}
+                                        {currentArticle && (
+                                            <div className={styles.regenerateContainer}>
+                                                <span
+                                                    className={styles.regenerateLink}
+                                                    onClick={() => generateArticle(currentPrompt || currentArticleTitle, sourceTextForSubArticle ? true : false, undefined, true)}
+                                                    title="Regenerate this article if there was an error or you want a different specific explanation."
+                                                >
+                                                    Content not loading or incorrect? <span style={{ textDecoration: 'underline', cursor: 'pointer' }}>Regenerate Response</span>
+                                                </span>
+                                            </div>
+                                        )}
                                     </article>
                                 )}
                                 {showLearnMore && !notesOpen && (
