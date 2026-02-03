@@ -7,7 +7,7 @@ export default function RootLayout({ children }) {
     return (
         <html lang="en">
             <head>
-                <title>Learning App - Deep Understanding Through First Principles</title>
+                <title>Study less. Understand more. The method that actually works.</title>
                 <meta name="description" content="A minimalist learning application focused on deep first-principles understanding" />
             </head>
             <body>

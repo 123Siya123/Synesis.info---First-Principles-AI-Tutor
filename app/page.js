@@ -1746,46 +1746,23 @@ Generate ONE clear, student-like question based on the above explanation:` }
                         {/* Detailed How It Works Section */}
                         {showGuidance && (
                             <div className={styles.howItWorks}>
-                                <h2>🧠 The Science-Backed Learning Method</h2>
+                                <h2>🧠 The Method That Actually Works</h2>
 
                                 <div className={styles.detailedSteps}>
-
-                                    {/* Step 1 */}
                                     <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>1</span> Input a Topic</h3>
-                                        <p>Input a topic you want to study. If it&apos;s complex (like &quot;Electrical Engineering&quot;), use <strong>Plan Mode</strong>. If it is less complex or a specific concept (like &quot;Circuit&quot;), use <strong>Normal Mode</strong>.</p>
+                                        <h3><span className={styles.stepNumberBadge}>1</span> Pick a Topic</h3>
+                                        <p>Enter what you want to learn. Use <strong>Study Plan</strong> for complex subjects or <strong>Quick Study</strong> for specific concepts.</p>
                                     </div>
 
-                                    {/* Step 2 */}
                                     <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>2</span> Recursive Questioning Strategy</h3>
-                                        <p>Study the topic by asking recursive questions. Read the article until you don&apos;t understand something or encounter an unfamiliar word or concept.</p>
-                                        <ul>
-                                            <li>Select/click or ask about the word/concept to generate a sub-article.</li>
-                                            <li>If you encounter something in the sub-article you don&apos;t fully understand, click/ask about it again.</li>
-                                            <li><strong>Do that all the way down the knowledge tree until you fully understand.</strong></li>
-                                            <li>When you understand a sub-article, go back to the parent article and continue.</li>
-                                        </ul>
-                                        <div className={styles.motivationalNote}>
-                                            <p><strong>DONT BE DISCOURAGED WHEN YOU GO DEEP.</strong> This is what actual learning entails! It&apos;s the process to deeply understand a topic, separating those who actually understand from those who just know the name of something.</p>
-                                        </div>
+                                        <h3><span className={styles.stepNumberBadge}>2</span> Drill Down</h3>
+                                        <p>Read the article. Click any concept you don&apos;t understand to create a sub-article. Repeat until you hit the root cause, then work your way back up.</p>
                                     </div>
 
-                                    {/* Step 3 */}
                                     <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>3</span> Test Understanding (Feynman Method)</h3>
-                                        <p>When you feel like you have a good understanding of all the parts of the topic, click <strong>Test understanding by teaching - Feynman technique</strong>. This uses the Feynman Method to help you find gaps in your knowledge by teaching it.</p>
-
-                                        <h4>It works as follows:</h4>
-                                        <div className={styles.feynmanSteps}>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>1</span> <p><strong>Write everything you know:</strong> Don&apos;t worry about grammar or gaps. Just dump your brain.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>2</span> <p><strong>Teach an AI Student:</strong> Explain it simply and logically. Make mental notes of where you struggle.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>3</span> <p><strong>Identify Gaps:</strong> Once finished teaching, write all gaps, questions, and unsure areas down. These are added to your notes.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>4</span> <p><strong>Test Yourself:</strong> Click &quot;AI Questions&quot; to quiz your knowledge. Unsure answers go to your Notes.</p></div>
-                                            <div className={styles.feynmanStep}><span className={styles.feynmanStepNum}>5</span> <p><strong>Fill the Gaps:</strong> Continue studying to fill these gaps. <strong>THIS IS WHERE YOU GAIN TRUTH UNDERSTANDING.</strong></p></div>
-                                        </div>
+                                        <h3><span className={styles.stepNumberBadge}>3</span> Test Understanding</h3>
+                                        <p>Use the <strong>Feynman Technique</strong> to teach the concept to an AI student. Identify your gaps, fill them, and achieve true mastery.</p>
                                     </div>
-
                                 </div>
                             </div>
                         )}
