@@ -1748,20 +1748,57 @@ Generate ONE clear, student-like question based on the above explanation:` }
                             <div className={styles.howItWorks}>
                                 <h2>🧠 The Method That Actually Works</h2>
 
-                                <div className={styles.detailedSteps}>
-                                    <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>1</span> Pick a Topic</h3>
-                                        <p>Enter what you want to learn. Use <strong>Study Plan</strong> for complex subjects or <strong>Quick Study</strong> for specific concepts.</p>
-                                    </div>
+                                <div className={styles.simplifiedStepsList}>
+                                    <ul>
+                                        <li><strong>1. Pick a Topic:</strong> Use <em>Study Plan</em> for complex subjects or <em>Quick Study</em> for specific concepts.</li>
+                                        <li><strong>2. Drill Down:</strong> Read the article, click concepts to go deeper until you hit the root cause, then work back up.</li>
+                                        <li><strong>3. Test Understanding:</strong> Use the <em>Feynman Technique</em> to teach an AI student, identify gaps, and achieve mastery.</li>
+                                    </ul>
+                                </div>
 
-                                    <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>2</span> Drill Down</h3>
-                                        <p>Read the article. Click any concept you don&apos;t understand to create a sub-article. Repeat until you hit the root cause, then work your way back up.</p>
-                                    </div>
-
-                                    <div className={styles.detailedStep}>
-                                        <h3><span className={styles.stepNumberBadge}>3</span> Test Understanding</h3>
-                                        <p>Use the <strong>Feynman Technique</strong> to teach the concept to an AI student. Identify your gaps, fill them, and achieve true mastery.</p>
+                                <div className={styles.factsSection}>
+                                    <h3>Why This Works (Based on Science)</h3>
+                                    <div className={styles.factsGrid}>
+                                        <div className={styles.factCard}>
+                                            <h4>Teaching is #1 for Retention</h4>
+                                            <p>The National Training Laboratories&apos; Learning Pyramid found that students retain up to 90% of what they learn through teaching others, compared to just 10% from reading.</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>AI Tutoring Doubles Gains</h4>
+                                            <p>A Harvard RCT (2023) found that students using AI tutors achieved more than twice the learning gains of active classroom lessons, in less time.</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>Feynman Technique Wins</h4>
+                                            <p>A study (Reyes et al., 2021) found that students using the Feynman Technique across grades 4-11 had significantly higher test scores than control groups.</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>Beat the Forgetting Curve</h4>
+                                            <p>You forget 70% of what you learn within 24 hours without active reinforcement. Synesis&apos;s recursive deep-dive forces the active engagement needed to stick.</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>9x Higher Mastery</h4>
+                                            <p>Students were 9 times more likely to report mastering course objectives when First Principles of Instruction were applied (Survey of 140 students).</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>17% Score Jump</h4>
+                                            <p>English language learners improved scores from 65% to 82% after adopting the Feynman Technique, reporting higher confidence.</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>Problem-Solving Boost</h4>
+                                            <p>AI intelligent tutoring systems improved problem-solving skills by ~11% (65.4 &rarr; 72.8) in just 8 weeks (2024 study of 300 students).</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>Active vs Passive: 93% vs 79%</h4>
+                                            <p>Active learners retain 93.5% after one month, while passive learners retain only 79%. Synesis keeps you active the entire time.</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>University Recommended</h4>
+                                            <p>Oxford, Ohio State, York, and others officially endorse the Feynman Technique for deep learning and mastery.</p>
+                                        </div>
+                                        <div className={styles.factCard}>
+                                            <h4>Higher Engagement</h4>
+                                            <p>AI tool integration drove a 20&ndash;23% boost in student engagement in multi-university studies.</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
