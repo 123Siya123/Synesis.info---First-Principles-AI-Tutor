@@ -82,14 +82,6 @@ GROQ_API_KEY=gsk_...
 GROQ_API_KEY_2=gsk_...
 ```
 
-### 3. Stripe (Payments - Optional for Dev)
-*   Create a verified account at [stripe.com](https://stripe.com).
-*   Get your keys from **Developers > API keys**.
-```bash
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-```
 
 ---
 
@@ -147,16 +139,6 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 
 ---
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1.  Fork the project
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
-
----
 
 *Built with ❤️ for lifelong learners.*
+
