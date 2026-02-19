@@ -1,181 +1,162 @@
-# Learning App - Deep First-Principles Understanding
+# 🧠 First-Principles Learning App
 
-A minimalist, intuitive web learning application focused on deep first-principles understanding through a simplified 4-step repeating cycle. The entire app feels like reading a real encyclopedia and writing on real paper — clean, distraction-free, paper-like aesthetic.
+> **"Understand, don't just memorize."**
 
-## 🎯 Core Philosophy
+A next-generation learning platform designed to help you master any subject through **First-Principles Thinking**. Unlike standard wikis or chat bots, this app guides you through a cognitive cycle proven to build deep, lasting understanding.
 
-Everything is **1 click away**, natural, and guided. The app uses a repeating cycle:
-
-1. **Choose topic** → Study phase
-2. **When ready** → Ingrain & Validate phase (essay + teach to student)
-3. **Identify gaps** → back to Study to fill them
-4. **Repeat**
-
-## ✨ Features
-
-### Study Phase
-- **AI-Generated Articles**: 400-500 word encyclopedia-style articles using first-principles reasoning
-- **Interactive Sub-Concepts**: Blue clickable terms that generate new articles
-- **Text Selection**: Select any passage to dive deeper
-- **Notes Panel**: Collapsible side panel for questions and free-form notes
-- **Question Input**: Ask questions at any time to generate new articles
-
-### Ingrain & Validate Phase
-- **Essay Writing**: Write everything you know without worrying about form
-- **Teach to a Student**: Explain the topic in simple terms using voice or text
-- **AI-Generated Student Questions**: Realistic questions a student would ask
-- **Gap Identification**: Identify what you need to understand more deeply
-
-### Technical Features
-- **Session Persistence**: Your progress is saved automatically
-- **Voice Recognition**: Web Speech API for teaching phase (with typing fallback)
-- **Loading Indicators**: Clear feedback during AI generation
-- **Responsive Design**: Works on desktop and mobile
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js (v18 or higher)
-- npm
-
-### Installation
-
-1. Navigate to the project directory:
-```bash
-cd "Learning App"
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-4. Open your browser and navigate to:
-```
-http://localhost:3000
-```
-
-## 🎨 Design Principles
-
-- **Paper-like aesthetic**: White/off-white backgrounds, simple typography, subtle shadows
-- **Distraction-free**: Clean interface with minimal UI elements
-- **Natural flow**: Intuitive navigation that guides the learning process
-- **Readable typography**: Georgia serif font for article content, sans-serif for UI
-
-## 🔧 Technology Stack
-
-- **Framework**: Next.js 14 (React)
-- **Styling**: Vanilla CSS with CSS Modules
-- **AI**: Groq API (llama-3.3-70b-versatile model)
-- **Speech**: Web Speech API
-- **Storage**: localStorage for session persistence
-
-## 📖 How to Use
-
-### 1. Start Learning
-- Enter a topic you want to learn about
-- Click "Start Learning" to generate your first article
-
-### 2. Study Phase
-- Read the encyclopedia-style article
-- Click on blue sub-concepts to explore deeper
-- Select any text to generate an article about it
-- Ask questions using the input at the bottom
-- Take notes in the collapsible Notes panel
-
-### 3. Ingrain & Validate
-- When ready, click "Ingrain & Validate Knowledge"
-- Write an essay about everything you've learned
-- Teach the topic to a student in simple terms (voice or text)
-- Answer the student's questions
-- Identify gaps to study further
-
-### 4. Repeat
-- Return to Study phase to fill gaps
-- Continue the cycle until you have deep understanding
-
-## 🎯 Article Generation
-
-All articles follow a strict first-principles approach:
-1. Explain the problem without the concept
-2. Identify the root cause
-3. Ask "How can we solve this?"
-4. Introduce the concept as the solution
-5. Walk through reasoning step by step
-
-Articles are:
-- Factual and easy to understand
-- 400-500 words (encyclopedia-style)
-- Include sub-concepts and vocabulary naturally
-- Use analogies and examples where helpful
-
-## 🔐 API Configuration
-
-
-
-
-## 📱 Browser Compatibility
-
-- **Chrome/Edge**: Full support (including voice recognition)
-- **Firefox**: Full support (including voice recognition)
-- **Safari**: Full support (including voice recognition)
-- **Mobile**: Responsive design works on all devices
-
-## 🛠️ Project Structure
-
-```
-Learning App/
-├── app/
-│   ├── globals.css          # Global styles and design system
-│   ├── layout.js            # Root layout component
-│   ├── page.js              # Main application logic
-│   └── page.module.css      # Component-specific styles
-├── package.json             # Dependencies and scripts
-├── next.config.js           # Next.js configuration
-└── README.md               # This file
-```
-
-## 🎓 Learning Tips
-
-1. **Don't rush**: Spend time with each article before moving on
-2. **Use notes**: Write down questions as they come up
-3. **Follow curiosity**: Click on sub-concepts that interest you
-4. **Be honest**: In the essay phase, write everything even if incomplete
-5. **Simplify**: Teaching to a student reveals true understanding
-6. **Identify gaps**: Use student questions to find what you need to study
-
-## 🔄 Session Management
-
-- Sessions are automatically saved to localStorage
-- Starting a new topic clears the previous session
-- Your notes, questions, and current article are preserved
-- Close and reopen the browser to continue where you left off
-
-## 🚧 Future Enhancements
-
-Potential improvements:
-- User accounts and cloud storage
-- Learning history and progress tracking
-- Spaced repetition reminders
-- Export notes and essays
-- Multiple learning paths
-- Collaborative learning features
-
-## 📄 License
-
-This project is for educational purposes.
-
-## 🙏 Acknowledgments
-
-- Built with Next.js and React
-- AI powered by Groq (llama-3.3-70b-versatile)
-- Inspired by first-principles thinking and deep learning methodologies
+![Project Status](https://img.shields.io/badge/status-active-success.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ---
 
-**Happy Learning! 📚**
+## 🌟 Core Philosophy: The Learning Cycle
+
+Most learning tools focus on *content delivery*. This app focuses on *cognitive integration*. It forces you to engage with the material in four distinct phases:
+
+1.  **🔍 Study (First Principles)**: 
+    *   AI generates "encyclopedia-style" articles that explain *why* things work, starting from the root problem.
+    *   Concepts are broken down into cause-and-effect chains.
+    *   **Interactive Mind Map**: Visualizes your knowledge growth as a network of connected nodes.
+
+2.  **✍️ Ingrain (Feynman Technique)**:
+    *   **Essay Mode**: Write everything you know without looking at notes.
+    *   **Teaching Mode**: Explanation is the highest form of understanding. "Teach" a simulated AI student who asks clarifications.
+    *   **Voice Support**: Speak your explanations naturally.
+
+3.  **🧪 Validate (Practice Hub)**:
+    *   **Core Exercises**: Solve scenarios that require applying the concept, not just reciting it.
+    *   **SAT/Exam Prep**: Generate standardized test questions on the fly.
+    *   **Custom Practice**: Ask for specific challenges (e.g., "Give me a PhD-level problem").
+
+4.  **🔄 Iterate**:
+    *   Identify gaps in your explanation.
+    *   Return to the **Study** phase to fill those specific gaps.
+
+---
+
+## 🚀 Features
+
+*   **AI-Powered Content**: built on `llama-3.3-70b` (via Groq) for high-speed, high-quality reasoning.
+*   **Visual Knowledge Graph**: A dynamic mind map that grows as you explore sub-topics.
+*   **Voice Interaction**: Full speech-to-text integration for the "Teaching" phase.
+*   **PDF/Document Analysis**: Upload a textbook or paper, and the AI will teach you *specific chapters* from it.
+*   **Pomodoro Timer**: Built-in focus timer with customized intervals.
+*   **Guest & User Modes**: Try it instantly as a guest, or sign up to save progress.
+
+---
+
+## 🛠️ Tech Stack
+
+*   **Frontend**: Next.js 14 (React)
+    *   *Styling*: CSS Modules (Clean, paper-like aesthetic)
+    *   *State*: React Hooks + Context
+    *   *Visualization*: Custom Canvas / SVG for Mind Maps
+*   **Backend**: Next.js API Routes (Serverless)
+*   **Database**: Supabase (PostgreSQL)
+    *   *Auth*: Supabase Auth
+    *   *Storage*: Supabase Database for profiles, studies, and logs.
+*   **AI Engine**: Groq API (running Llama 3 models)
+*   **Payments**: Stripe integration for subscriptions (Free/Premium).
+
+---
+
+## 🔑 Configuration & API Keys
+
+To run this project, you need to configure several external services. Create a `.env.local` file in the root directory with the following keys:
+
+### 1. Supabase (Database & Auth)
+*   Create a project at [supabase.com](https://supabase.com).
+*   Go to **Project Settings > API**.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # Critical for admin tasks like limit resets
+```
+
+### 2. Groq (AI Intelligence)
+*   Get a free/paid API key from [console.groq.com](https://console.groq.com).
+*   The app supports key rotation. You can add multiple keys to avoid rate limits.
+```bash
+GROQ_API_KEY=gsk_...
+# Optional additional keys
+GROQ_API_KEY_2=gsk_...
+```
+
+### 3. Stripe (Payments - Optional for Dev)
+*   Create a verified account at [stripe.com](https://stripe.com).
+*   Get your keys from **Developers > API keys**.
+```bash
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+```
+
+---
+
+## ⚡ Quick Start Guide
+
+### Prerequisites
+*   Node.js 18+ installed.
+*   npm or yarn.
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/yourusername/learning-app.git
+    cd learning-app
+    ```
+
+2.  **Install dependencies**
+    ```bash
+    npm install
+    ```
+    *(Note: This installs Next.js, Supabase client, Stripe, Pdf.js, etc.)*
+
+3.  **Setup Database**
+    You will need to run the SQL scripts in the `root` folder to set up your Supabase tables (`profiles`, `studies`, `guest_tracking`).
+    *   Go to your Supabase **SQL Editor**.
+    *   Copy/Paste the contents of `db_full_setup.sql` (located in the root folder) and run them.
+
+4.  **Run Locally**
+    ```bash
+    npm run dev
+    ```
+    Open `http://localhost:3000`.
+
+---
+
+## 📖 How to Use
+
+1.  **Enter a Topic**: Start with something broad (e.g., "Quantum Physics") or specific ("How does a bicycle stay upright?").
+2.  **Read & Click**: The AI writes a first-principles article.
+    *   *Blue Text*: Click to open a sub-article (adds a node to the Mind Map).
+    *   *Select Text*: Highlight any confusing phrase to get an instant explanation.
+3.  **Switch Phases**: Use the sidebar to move to "Ingrain" or "Practice".
+4.  **Upload Files**: Toggle the "Plan Mode" or File Upload to study from a specific PDF.
+
+---
+
+## 📂 Project Structure
+
+*   **/app**: Main Next.js application code.
+    *   **/api**: Serverless functions (AI generation, database operations).
+    *   **/components**: Reusable UI (MindMap, PracticeHub, PomodoroTimer).
+    *   `page.js`: The main controller and state machine.
+*   **/lib**: Utility functions (Supabase client, API helpers).
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1.  Fork the project
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
+
+---
+
+*Built with ❤️ for lifelong learners.*

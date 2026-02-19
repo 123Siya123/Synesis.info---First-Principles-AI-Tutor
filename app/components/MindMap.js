@@ -3,6 +3,15 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import styles from './MindMap.module.css';
 
+/**
+ * MindMap Component
+ * 
+ * Renders the interactive knowledge graph.
+ * Features:
+ * - Custom Tree Layout Algorithm: Uses a "Leaf Counting" method to allocate angular space proportional to the size of subtrees.
+ * - Pan & Zoom: Interactive canvas manipulation.
+ * - Dynamic Styling: Nodes are colored and sized based on their depth (level) and selected color theme.
+ */
 export default function MindMap({ data, onNodeClick, currentNodeId, baseColor = 'blue', isInverse = false }) {
     const { nodes, edges } = data;
 

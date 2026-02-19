@@ -1,5 +1,22 @@
 'use client';
 
+/**
+ * Main Application Page
+ * 
+ * This file contains the core logic for the Learning App.
+ * It manages the 4-step learning cycle:
+ * 1. Topic Selection: User enters a topic.
+ * 2. Study Phase: AI generates deep, first-principles articles.
+ * 3. Ingrain & Validate: User writes essays and "teaches" a student to solidify knowledge.
+ * 4. Practice/Review: Users can generate practice problems (via PracticeHub) or review gaps.
+ * 
+ * Key Features:
+ * - Interactive Mind Map for visualizing knowledge connections.
+ * - AI integration (Groq/Llama) for generating articles and acting as a student.
+ * - Voice recognition for the "Teaching" phase.
+ * - Session tracking via Supabase and LocalStorage.
+ */
+
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import styles from './page.module.css';
 import MindMap from './components/MindMap';
@@ -68,7 +85,8 @@ const getBranchRootNode = (startNodeId, nodes, edges) => {
 };
 
 export default function Home() {
-    // Phase management
+    // --- PHASE MANAGEMENT STATE ---
+    // Controls which stage of the learning cycle the user is in (topic-selection, study, ingrain, etc.)
     const [phase, setPhase] = useState('topic-selection');
     const [currentTopic, setCurrentTopic] = useState('');
     const [darkMode, setDarkMode] = useState(false);
@@ -662,7 +680,10 @@ export default function Home() {
         return guestId;
     };
 
-    // Generate article
+    // --- ARTICLE GENERATION CORE LOGIC ---
+    // This function handles the API call to generate educational content.
+    // It constructs the prompt based on whether it's a new topic, a sub-article, or a file-based query.
+    // It also handles the "Mind Map" synchronization to ensure nodes represent the article state.
     const generateArticle = useCallback(async (topic, isSubArticle = false, systemPrompt = ARTICLE_GENERATION_PROMPT, forceNew = false, isRegeneration = false) => {
         // Sync current state to Mind Map before navigating away
         // Sync current state to Mind Map before navigating away

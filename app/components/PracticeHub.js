@@ -3,6 +3,15 @@ import styles from './PracticeHub.module.css';
 import { BookOpen, PenTool, MessageSquare, Mic, Send, RefreshCw, X, Check, AlertTriangle, ChevronRight, GraduationCap } from 'lucide-react';
 import DrawingCanvas from './DrawingCanvas';
 
+/**
+ * PracticeHub Component
+ * 
+ * A central hub for reinforcing knowledge through active practice.
+ * Modes:
+ * 1. Core Exercises: Deep reasoning scenarios to apply concepts.
+ * 2. SAT Prep: Standardized test-style questions for the topic.
+ * 3. Custom: Free-form conversation with the AI for specific practice.
+ */
 export default function PracticeHub({ user, studyId, nodeId, topic, context, onClose, onLearnMore }) {
     const [activeTab, setActiveTab] = useState('core'); // core, sat, custom
     const [isLoading, setIsLoading] = useState(false);

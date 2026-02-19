@@ -5,12 +5,16 @@ import { robustFetch } from '../../lib/apiUtils';
 
 // ... imports
 
+// --- SECURE API ROUTE ---
+// This route handles AI content generation while enforcing usage limits and permissions.
+// It supports both authenticated users (with monthly allowances) and guests (limited trial).
+
 export async function POST(request) {
     // Create Supabase client INSIDE the handler to ensure env vars are available at runtime
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    // Create Supabase admin client with Service Role Key (bypasses RLS)
+    // Create Supabase admin client to bypass RLS for administrative checks (limits)
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
             autoRefreshToken: false,
@@ -18,6 +22,7 @@ export async function POST(request) {
         }
     });
 
+    // Extract parameters from the request body
     const { topic, systemPrompt, userId, guestId, model, planMode, previousContext } = await request.json();
 
     const apiKey = getRotatedGroqKey();
@@ -161,6 +166,10 @@ export async function POST(request) {
             console.error('Profile fetch error:', profileError);
             return NextResponse.json({ error: 'Database error fetching profile.', details: profileError }, { status: 500 });
         }
+
+        // --- LIMIT ENFORCEMENT LOGIC ---
+        // We fetch the user's profile to check their current usage against their plan limits.
+        // If the profile doesn't exist (edge case), we create one.
 
         let { subscription_tier, monthly_article_count, last_reset_date, monthly_mind_map_count } = profile;
 
