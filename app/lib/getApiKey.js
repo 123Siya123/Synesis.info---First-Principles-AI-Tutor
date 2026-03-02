@@ -1,4 +1,5 @@
 
+
 // Simple round-robin key rotation for load balancing
 let currentKeyIndex = 0;
 
@@ -25,4 +26,18 @@ export function getRotatedGroqKey() {
     console.log(`Using Groq API Key Index: ${currentKeyIndex} (Total: ${keys.length})`);
 
     return key;
+}
+
+export function getApiKey(provider = 'groq') {
+    if (provider === 'gemini') {
+        const key = process.env.GEMINI_API_KEY;
+        if (!key) {
+            console.error("Missing GEMINI_API_KEY in environment variables.");
+            return null;
+        }
+        return key;
+    }
+
+    // Default to Groq
+    return getRotatedGroqKey();
 }

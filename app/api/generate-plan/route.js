@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getRotatedGroqKey } from '../../lib/getApiKey';
+import { getApiKey } from '../../lib/getApiKey';
 import { robustFetch } from '../../lib/apiUtils';
 
 export async function POST(request) {
@@ -8,10 +8,13 @@ export async function POST(request) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { messages, userId } = await request.json();
-    const apiKey = getRotatedGroqKey();
+    const { messages, userId, model } = await request.json();
 
-    if (!apiKey) return NextResponse.json({ error: 'Server Config Error: Missing API Key' }, { status: 500 });
+    const isGemini = model?.startsWith('gemini-');
+    const provider = isGemini ? 'gemini' : 'groq';
+    const apiKey = getApiKey(provider);
+
+    if (!apiKey) return NextResponse.json({ error: `Server Config Error: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
     if (!userId) {
         return NextResponse.json({
             error: 'Authentication required for Study Plans',
@@ -73,15 +76,21 @@ export async function POST(request) {
             }, { status: 403 });
         }
 
+        const apiUrl = isGemini
+            ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+            : 'https://api.groq.com/openai/v1/chat/completions';
+
+        const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.3-70b-versatile';
+
         // 2. Generate Plan with retry and timeout
-        const response = await robustFetch('https://api.groq.com/openai/v1/chat/completions', {
+        const response = await robustFetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
+                model: model || defaultModel,
                 messages: messages,
                 temperature: 0.7,
                 response_format: { type: 'json_object' }

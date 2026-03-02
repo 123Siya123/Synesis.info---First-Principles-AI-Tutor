@@ -1,8 +1,6 @@
-
 import { NextResponse } from 'next/server';
-
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+import { getApiKey } from '../../../lib/getApiKey';
+import { robustFetch } from '../../../lib/apiUtils';
 
 const SYSTEM_PRINCIPLES = `You are a First Principles tutor. 
 Evaluate the user's answer based on the context.
@@ -12,12 +10,22 @@ Suggest a related simple search query for "Learn More".
 Format output as JSON: { "feedback": { "isCorrect": boolean, "text": "...", "principles": "...", "learnMoreQuery": "..." }, "reply": "..." (for chat) }`;
 
 export async function POST(req) {
-    if (!GROQ_API_KEY) {
-        return NextResponse.json({ error: "Server API Key missing" }, { status: 500 });
-    }
-
     try {
-        const { type, topic, context, input, questionId, currentData } = await req.json();
+        const { type, topic, context, input, questionId, currentData, model } = await req.json();
+
+        const isGemini = model?.startsWith('gemini-');
+        const provider = isGemini ? 'gemini' : 'groq';
+        const apiKey = getApiKey(provider);
+
+        if (!apiKey) {
+            return NextResponse.json({ error: `Server configuration error: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
+        }
+
+        const apiUrl = isGemini
+            ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+            : 'https://api.groq.com/openai/v1/chat/completions';
+
+        const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.3-70b-versatile';
 
         // Select System Prompt based on type
         let systemPrompt = SYSTEM_PRINCIPLES; // Default
@@ -57,14 +65,14 @@ Reply in the "reply" JSON field.`;
             userPrompt += `Question ID ${questionId}. User selected an option. Explain the concept from first principles.`;
         }
 
-        const response = await fetch(GROQ_API_URL, {
+        const response = await robustFetch(apiUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
+                model: model || defaultModel,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
@@ -72,10 +80,11 @@ Reply in the "reply" JSON field.`;
                 response_format: { type: "json_object" },
                 temperature: 0.7
             })
-        });
+        }, { maxRetries: 3, timeoutMs: 30000 });
 
         if (!response.ok) {
-            throw new Error(`Groq API error: ${await response.text()}`);
+            const err = await response.json();
+            throw new Error(err.error?.message || `${provider.toUpperCase()} AI error`);
         }
 
         const data = await response.json();

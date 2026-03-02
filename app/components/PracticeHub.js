@@ -12,7 +12,7 @@ import DrawingCanvas from './DrawingCanvas';
  * 2. SAT Prep: Standardized test-style questions for the topic.
  * 3. Custom: Free-form conversation with the AI for specific practice.
  */
-export default function PracticeHub({ user, studyId, nodeId, topic, context, onClose, onLearnMore }) {
+export default function PracticeHub({ user, studyId, nodeId, topic, context, onClose, onLearnMore, selectedModel }) {
     const [activeTab, setActiveTab] = useState('core'); // core, sat, custom
     const [isLoading, setIsLoading] = useState(false);
     const [sessionData, setSessionData] = useState({
@@ -88,7 +88,8 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                     type,
                     topic,
                     context,
-                    currentData: sessionData[type]
+                    currentData: sessionData[type],
+                    model: selectedModel
                 })
             });
             const data = await res.json();
@@ -145,7 +146,8 @@ export default function PracticeHub({ user, studyId, nodeId, topic, context, onC
                 context,
                 input: input,
                 questionId,
-                currentData: sessionData[type]
+                currentData: sessionData[type],
+                model: selectedModel
             };
 
             const res = await fetch('/api/practice/evaluate', {

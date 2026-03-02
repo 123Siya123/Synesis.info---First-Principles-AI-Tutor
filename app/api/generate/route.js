@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getRotatedGroqKey } from '../../lib/getApiKey';
+import { getApiKey } from '../../lib/getApiKey';
 import { robustFetch } from '../../lib/apiUtils';
 
 // ... imports
@@ -8,6 +8,7 @@ import { robustFetch } from '../../lib/apiUtils';
 // --- SECURE API ROUTE ---
 // This route handles AI content generation while enforcing usage limits and permissions.
 // It supports both authenticated users (with monthly allowances) and guests (limited trial).
+
 
 export async function POST(request) {
     // Create Supabase client INSIDE the handler to ensure env vars are available at runtime
@@ -25,11 +26,19 @@ export async function POST(request) {
     // Extract parameters from the request body
     const { topic, systemPrompt, userId, guestId, model, planMode, previousContext } = await request.json();
 
-    const apiKey = getRotatedGroqKey();
+    const isGemini = model?.startsWith('gemini-');
+    const provider = isGemini ? 'gemini' : 'groq';
+    const apiKey = getApiKey(provider);
 
     if (!apiKey) {
-        return NextResponse.json({ error: 'Server misconfiguration: Missing API Key' }, { status: 500 });
+        return NextResponse.json({ error: `Server misconfiguration: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
     }
+
+    const apiUrl = isGemini
+        ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+        : 'https://api.groq.com/openai/v1/chat/completions';
+
+    const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.3-70b-versatile';
 
     // --- GUEST HANDLING ---
     if (!userId) {
@@ -71,15 +80,15 @@ export async function POST(request) {
 
         // Proceed to Generate for Guest...
         try {
-            // Call Groq with retry and timeout
-            const response = await robustFetch('https://api.groq.com/openai/v1/chat/completions', {
+            // Call AI with retry and timeout
+            const response = await robustFetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: model || 'llama-3.3-70b-versatile',
+                    model: model || defaultModel,
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }
@@ -91,7 +100,7 @@ export async function POST(request) {
 
             if (!response.ok) {
                 const errData = await response.json();
-                throw new Error(`Groq API Error: ${errData.error?.message || response.statusText}`);
+                throw new Error(`${provider.toUpperCase()} API Error: ${errData.error?.message || response.statusText}`);
             }
 
             const data = await response.json();
@@ -124,8 +133,6 @@ export async function POST(request) {
     }
 
     // --- AUTHENTICATED USER HANDLING ---
-    // (Existing logic below...)
-
     try {
         // 2. Fetch User Profile for Limits
         let { data: profile, error: profileError } = await supabase
@@ -134,11 +141,7 @@ export async function POST(request) {
             .eq('id', userId)
             .single();
 
-        // If profile doesn't exist, create it automatically
-        // This handles users who signed up before the trigger was set up
         if (profileError?.code === 'PGRST116' || !profile) {
-            console.log('Profile not found for user, creating one:', userId);
-
             const { data: newProfile, error: createError } = await supabase
                 .from('profiles')
                 .insert({
@@ -152,36 +155,20 @@ export async function POST(request) {
                 .select('*')
                 .single();
 
-            if (createError) {
-                console.error('Failed to create profile:', createError);
-                return NextResponse.json({
-                    error: `Failed to create user profile: ${createError.message || createError.code}`,
-                    details: createError
-                }, { status: 500 });
-            }
-
+            if (createError) throw createError;
             profile = newProfile;
-            console.log('Successfully created profile for user:', userId);
         } else if (profileError) {
-            console.error('Profile fetch error:', profileError);
-            return NextResponse.json({ error: 'Database error fetching profile.', details: profileError }, { status: 500 });
+            throw profileError;
         }
-
-        // --- LIMIT ENFORCEMENT LOGIC ---
-        // We fetch the user's profile to check their current usage against their plan limits.
-        // If the profile doesn't exist (edge case), we create one.
 
         let { subscription_tier, monthly_article_count, last_reset_date, monthly_mind_map_count } = profile;
 
-        // --- A. Monthly Reset Logic (Lazy Evaluation) ---
         const now = new Date();
-        const lastReset = last_reset_date ? new Date(last_reset_date) : new Date(0); // Epoch if null
+        const lastReset = last_reset_date ? new Date(last_reset_date) : new Date(0);
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(now.getMonth() - 1);
 
         if (lastReset < oneMonthAgo) {
-            console.log(`Resetting usage for user ${userId}. Last reset: ${lastReset}`);
-            // Perform the reset in DB
             await supabase
                 .from('profiles')
                 .update({
@@ -190,22 +177,16 @@ export async function POST(request) {
                     last_reset_date: now.toISOString()
                 })
                 .eq('id', userId);
-
-            // Update local variables for this request
             monthly_article_count = 0;
             monthly_mind_map_count = 0;
         }
 
-        // --- B. Define Limits ---
         const LIMITS = { free: 20, premium: 100, pro: 1000 };
-        const MIND_MAP_LIMITS = { free: 5, premium: 100, pro: 1000 }; // Premium/Pro essentially unlimited/matched
+        const MIND_MAP_LIMITS = { free: 5, premium: 100, pro: 1000 };
 
         const currentTotalLimit = LIMITS[subscription_tier] || 20;
         const currentMindMapLimit = MIND_MAP_LIMITS[subscription_tier] || 5;
 
-        // --- C. Enforce Limits ---
-
-        // 1. Global Total Limit
         if (monthly_article_count >= currentTotalLimit) {
             return NextResponse.json({
                 error: 'Monthly global limit reached',
@@ -215,7 +196,6 @@ export async function POST(request) {
             }, { status: 403 });
         }
 
-        // 2. Mind Map Specific Limit (Strict Enforcement)
         if (planMode && monthly_mind_map_count >= currentMindMapLimit) {
             return NextResponse.json({
                 error: `Mind Map specific limit reached (${currentMindMapLimit} per month)`,
@@ -225,15 +205,14 @@ export async function POST(request) {
             }, { status: 403 });
         }
 
-        // 5. Call External API (Groq) with retry and timeout
-        const response = await robustFetch('https://api.groq.com/openai/v1/chat/completions', {
+        const response = await robustFetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: model || 'llama-3.3-70b-versatile',
+                model: model || defaultModel,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }
@@ -245,20 +224,15 @@ export async function POST(request) {
 
         if (!response.ok) {
             const errData = await response.json();
-            throw new Error(`Groq API Error: ${errData.error?.message || response.statusText}`);
+            throw new Error(`${provider.toUpperCase()} API Error: ${errData.error?.message || response.statusText}`);
         }
 
         const data = await response.json();
         const articleContent = data.choices[0]?.message?.content;
 
-        // 6. Increment Usage Counter
-        // We prepare the update object dynamically
         const updates = {
             monthly_article_count: monthly_article_count + 1
         };
-
-        // We DO NOT increment mind map count here anymore. 
-        // Mind map count is for the creation of the map itself (in /api/generate-plan).
 
         const { error: updateError } = await supabase
             .from('profiles')

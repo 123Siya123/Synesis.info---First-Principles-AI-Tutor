@@ -158,6 +158,7 @@ export default function Home() {
     const [subscriptionTier, setSubscriptionTier] = useState('free'); // 'free', 'premium', 'pro'
     const [monthlyArticleCount, setMonthlyArticleCount] = useState(0);
     const [currentArticleSummary, setCurrentArticleSummary] = useState(''); // Stores summary of current article for context
+    const [selectedModel, setSelectedModel] = useState('llama-3.3-70b-versatile');
     const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
 
     // Auth & Sidebar State
@@ -448,7 +449,8 @@ export default function Home() {
                     mindMapData: currentMindMap, // Use the synced mind map
                     mindMapColor,
                     isInverseGradient,
-                    activeNoteTab
+                    activeNoteTab,
+                    selectedModel
                 };
                 await saveCurrentStudy(currentStudyId, sessionData);
             }
@@ -472,6 +474,7 @@ export default function Home() {
                 setMindMapColor(data.mindMapColor || 'blue');
                 setIsInverseGradient(data.isInverseGradient || false);
                 setActiveNoteTab(data.activeNoteTab || null);
+                setSelectedModel(data.selectedModel || 'llama-3.3-70b-versatile');
                 setIsSidebarOpen(false);
                 setIsSidebarOpen(false);
                 // Sync to localStorage
@@ -504,6 +507,7 @@ export default function Home() {
                     setMindMapData(data.mindMapData || { nodes: [], edges: [], currentNodeId: null });
                     setMindMapColor(data.mindMapColor || 'blue');
                     setIsInverseGradient(data.isInverseGradient || false);
+                    setSelectedModel(data.selectedModel || 'llama-3.3-70b-versatile');
                 }
             } catch (e) {
                 console.error('Failed to load session:', e);
@@ -535,10 +539,10 @@ export default function Home() {
                 isPlanMode,
                 mindMapData,
                 mindMapColor,
-                mindMapData,
                 mindMapColor,
                 isInverseGradient,
-                activeNoteTab
+                activeNoteTab,
+                selectedModel
             };
             localStorage.setItem('learningAppSession', JSON.stringify(sessionData));
 
@@ -819,7 +823,7 @@ export default function Home() {
                         userId: user ? user.id : null,
                         guestId: guestId,
                         planMode: isPlanMode,
-                        model: 'llama-3.3-70b-versatile',
+                        model: selectedModel,
                         previousContext: (isSubArticle && !fileContent && currentArticleSummary) ? currentArticleSummary : null
                     }),
                 });
@@ -961,6 +965,11 @@ export default function Home() {
         e.preventDefault();
         if (!currentTopic.trim()) return;
 
+        // Persist model selection
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('selectedModel', selectedModel);
+        }
+
         // Guest Check for Mind Map
         if (isPlanMode && !user) {
             // alert("Sign up required to create Study Plans.");
@@ -1062,7 +1071,8 @@ export default function Home() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: user?.id, // Guests blocked by API
-                    messages: [{ role: 'user', content: prompt }]
+                    messages: [{ role: 'user', content: prompt }],
+                    model: selectedModel
                 }),
             });
 
@@ -1118,7 +1128,8 @@ export default function Home() {
                     isPlanMode,
                     mindMapData: currentMindMap,
                     mindMapColor,
-                    isInverseGradient
+                    isInverseGradient,
+                    selectedModel
                 };
                 await saveCurrentStudy(currentStudyId, sessionData);
             }
@@ -1493,14 +1504,7 @@ export default function Home() {
                 ? `Previous questions and answers: \n${historyToUse.map(q => `Q: ${q.question}\nA: ${q.answer}`).join('\n\n')} \n\n`
                 : '';
 
-            const response = await fetch(GROQ_API_URL, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${GROQ_API_KEY} `, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'llama-3.3-70b-versatile',
-                    messages: [
-                        {
-                            role: 'system', content: `You are a curious student. The user is teaching you about a topic.
+            const systemPrompt = `You are a curious student. The user is teaching you about a topic.
 Your goal is to ask **ONE single, clear, and genuine question** to test the user's understanding.
 
 RULES:
@@ -1513,25 +1517,35 @@ RULES:
 7. **DO NOT** be polite or robotic. Just ask the question directly.
 
 Subtopics the user has studied: ${Array.from(new Set([...mindMapData.nodes.filter(n => n.level > 0).map(n => n.label), ...articleHistory.map(h => h.title)])).join(', ')}.
-` },
-                        {
-                            role: 'user', content: `${context}
+`;
+
+            const topicPromptWithContext = `${context}
 Topic: ${currentArticleTitle || currentTopic}
 First sentence of article: ${currentArticle.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')).join(' ').split(/[.!?]/)[0] || ''}
 
 Teaching explanation:
 "${teachingText}"
 
-Generate ONE clear, student-like question based on the above explanation:` }
-                    ],
-                    temperature: 0.8,
-                    max_tokens: 100,
+Generate ONE clear, student-like question based on the above explanation:`;
+
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    topic: topicPromptWithContext,
+                    systemPrompt: systemPrompt,
+                    userId: user?.id,
+                    model: selectedModel,
+                    planMode: false // Not mind map mode
                 }),
             });
+
+            if (!response.ok) throw new Error('API failed');
+
             const data = await response.json();
-            const question = data.choices[0]?.message?.content.trim() || '';
+            const question = data.content?.trim() || '';
             setCurrentStudentQuestion(question);
-            setCurrentAnswer(''); // Clear answer input
+            setCurrentAnswer('');
             setTeachingStep('answering');
             setIsLoading(false);
         } catch (error) {
@@ -2288,6 +2302,8 @@ Generate ONE clear, student-like question based on the above explanation:` }
                             fetchFeynmanHistory(study.id);
                             setShowHistory(true);
                         }}
+                        selectedModel={selectedModel}
+                        setSelectedModel={setSelectedModel}
                     />
                 );
             case 'practice-hub':
@@ -2321,6 +2337,7 @@ Generate ONE clear, student-like question based on the above explanation:` }
                         context={practiceContext}
                         onClose={() => setPhase('study')}
                         onLearnMore={handleLearnMore}
+                        selectedModel={selectedModel}
                     />
                 );
             default: return null;

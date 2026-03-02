@@ -1,30 +1,38 @@
 import { NextResponse } from 'next/server';
-import { getRotatedGroqKey } from '../../lib/getApiKey';
+import { getApiKey } from '../../lib/getApiKey';
 import { robustFetch } from '../../lib/apiUtils';
 
 export async function POST(request) {
     try {
-        const { content } = await request.json();
+        const { content, model } = await request.json();
 
         if (!content) {
             return NextResponse.json({ error: 'Content is required' }, { status: 400 });
         }
 
-        const apiKey = getRotatedGroqKey();
+        const isGemini = model?.startsWith('gemini-');
+        const provider = isGemini ? 'gemini' : 'groq';
+        const apiKey = getApiKey(provider);
+
         if (!apiKey) {
-            return NextResponse.json({ error: 'Server misconfiguration: Missing API Key' }, { status: 500 });
+            return NextResponse.json({ error: `Server misconfiguration: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
         }
 
+        const apiUrl = isGemini
+            ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+            : 'https://api.groq.com/openai/v1/chat/completions';
+
+        const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.1-8b-instant';
+
         // Use a lighter, faster model for summarization
-        // llama-3.1-8b-instant is a good choice for speed and cost
-        const response = await robustFetch('https://api.groq.com/openai/v1/chat/completions', {
+        const response = await robustFetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.1-8b-instant',
+                model: model || defaultModel,
                 messages: [
                     {
                         role: 'system',

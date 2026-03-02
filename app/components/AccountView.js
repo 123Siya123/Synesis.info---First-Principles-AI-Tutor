@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import styles from './AccountView.module.css';
-import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft, RefreshCw, Timer, History } from 'lucide-react';
+import { User, Trash2, Clock, BookOpen, AlertCircle, ChevronLeft, RefreshCw, Timer, History, Sparkles, Check } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription, onRefreshProfile, onViewHistory }) {
+export default function AccountView({ user, studies, onBack, onDeleteStudy, onLogout, subscriptionTier, monthlyArticleCount, onOpenSubscription, onRefreshProfile, onViewHistory, selectedModel, setSelectedModel }) {
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -348,6 +348,62 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                         >
                             {isSavingPomo ? 'Saving...' : 'Save Timer Settings'}
                         </button>
+                    </div>
+                </div>
+
+                {/* AI Model Settings */}
+                <div className={styles.card}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                        <Sparkles className={styles.iconPurple} />
+                        <h2 className={styles.cardTitle} style={{ margin: 0 }}>AI Intelligence</h2>
+                    </div>
+
+                    <div className={styles.modelSettings}>
+                        <p className={styles.settingDesc}>Select the brain behind your learning experience. Each model has unique strengths.</p>
+
+                        <div className={styles.modelGrid}>
+                            <div
+                                className={`${styles.modelOptionCard} ${selectedModel === 'llama-3.3-70b-versatile' ? styles.activeModel : ''}`}
+                                onClick={() => setSelectedModel('llama-3.3-70b-versatile')}
+                            >
+                                <div className={styles.modelInfo}>
+                                    <div className={styles.modelPrimaryInfo}>
+                                        <h4>Llama 3.3 70B</h4>
+                                        <span className={styles.providerTag}>Groq</span>
+                                    </div>
+                                    <span className={styles.modelTagline}>Ultra-fast reasoning & first principles</span>
+                                </div>
+                                {selectedModel === 'llama-3.3-70b-versatile' && <Check size={18} className={styles.checkIcon} />}
+                            </div>
+
+                            <div
+                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-1.5-flash' ? styles.activeModel : ''}`}
+                                onClick={() => setSelectedModel('gemini-1.5-flash')}
+                            >
+                                <div className={styles.modelInfo}>
+                                    <div className={styles.modelPrimaryInfo}>
+                                        <h4>Gemini 1.5 Flash</h4>
+                                        <span className={styles.providerTag}>Google</span>
+                                    </div>
+                                    <span className={styles.modelTagline}>Speed and high-precision extraction</span>
+                                </div>
+                                {selectedModel === 'gemini-1.5-flash' && <Check size={18} className={styles.checkIcon} />}
+                            </div>
+
+                            <div
+                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-1.5-pro' ? styles.activeModel : ''}`}
+                                onClick={() => setSelectedModel('gemini-1.5-pro')}
+                            >
+                                <div className={styles.modelInfo}>
+                                    <div className={styles.modelPrimaryInfo}>
+                                        <h4>Gemini 1.5 Pro</h4>
+                                        <span className={styles.providerTag}>Google</span>
+                                    </div>
+                                    <span className={styles.modelTagline}>Maximum complexity & deep context</span>
+                                </div>
+                                {selectedModel === 'gemini-1.5-pro' && <Check size={18} className={styles.checkIcon} />}
+                            </div>
+                        </div>
                     </div>
                 </div>
 

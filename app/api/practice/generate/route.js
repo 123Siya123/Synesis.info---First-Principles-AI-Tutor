@@ -1,9 +1,5 @@
-
-import { NextResponse } from 'next/server';
+import { getApiKey } from '../../../lib/getApiKey';
 import { robustFetch } from '../../../lib/apiUtils';
-
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 const SYSTEM_PROMPT_CORE = `You are an expert tutor designing a "Core Exercise Center" for deep learning. 
 Your goal is to create 3-5 progressive exercises that force the user to apply knowledge, not just regurgitate it.
@@ -15,7 +11,7 @@ Rules:
 `;
 
 const SYSTEM_PROMPT_SAT = `You are an expert tutor designing SAT-style questions for a specific topic.
-Generate 10 multiple-choice questions testing critical thinking and application.
+Generate 5 multiple-choice questions testing critical thinking and application.
 Format output as JSON: { "questions": [ { "id": "1", "text": "...", "options": [ {"key": "A", "text": "..."}, ... ], "correctKey": "A", "explanation": "...", "relatedTopic": "..." } ] }
 Rules:
 - ONE option MUST be undeniably correct. Do NOT create "trick" questions where the correct answer is missing.
@@ -26,12 +22,22 @@ Rules:
 `;
 
 export async function POST(req) {
-    if (!GROQ_API_KEY) {
-        return NextResponse.json({ error: "Server API Key missing" }, { status: 500 });
-    }
-
     try {
-        const { type, topic, context } = await req.json();
+        const { type, topic, context, model } = await req.json();
+
+        const isGemini = model?.startsWith('gemini-');
+        const provider = isGemini ? 'gemini' : 'groq';
+        const apiKey = getApiKey(provider);
+
+        if (!apiKey) {
+            return NextResponse.json({ error: `Server configured incorrectly: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
+        }
+
+        const apiUrl = isGemini
+            ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+            : 'https://api.groq.com/openai/v1/chat/completions';
+
+        const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.3-70b-versatile';
 
         let systemPrompt = "";
         let userPrompt = `Topic: ${topic}\nContext from mind map: ${context}\n`;
@@ -46,14 +52,14 @@ export async function POST(req) {
             return NextResponse.json({ error: "Invalid type" }, { status: 400 });
         }
 
-        const response = await robustFetch(GROQ_API_URL, {
+        const response = await robustFetch(apiUrl, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: 'llama-3.3-70b-versatile',
+                model: model || defaultModel,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
@@ -61,11 +67,11 @@ export async function POST(req) {
                 response_format: { type: "json_object" },
                 temperature: 0.7
             })
-        }, { maxRetries: 3, timeoutMs: 30000 });
+        }, { maxRetries: 3, timeoutMs: 35000 });
 
         if (!response.ok) {
-            const err = await response.text();
-            throw new Error(`Groq API error: ${err}`);
+            const err = await response.json();
+            throw new Error(err.error?.message || `${provider.toUpperCase()} AI error`);
         }
 
         const data = await response.json();
