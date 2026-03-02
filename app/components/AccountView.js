@@ -377,31 +377,31 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                             </div>
 
                             <div
-                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-1.5-flash' ? styles.activeModel : ''}`}
-                                onClick={() => setSelectedModel('gemini-1.5-flash')}
+                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-2.5-flash' ? styles.activeModel : ''}`}
+                                onClick={() => setSelectedModel('gemini-2.5-flash')}
                             >
                                 <div className={styles.modelInfo}>
                                     <div className={styles.modelPrimaryInfo}>
-                                        <h4>Gemini 1.5 Flash</h4>
+                                        <h4>Gemini 2.5 Flash</h4>
                                         <span className={styles.providerTag}>Google</span>
                                     </div>
-                                    <span className={styles.modelTagline}>Speed and high-precision extraction</span>
+                                    <span className={styles.modelTagline}>Ultra-fast & next-gen reasoning</span>
                                 </div>
-                                {selectedModel === 'gemini-1.5-flash' && <Check size={18} className={styles.checkIcon} />}
+                                {selectedModel === 'gemini-2.5-flash' && <Check size={18} className={styles.checkIcon} />}
                             </div>
 
                             <div
-                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-1.5-pro' ? styles.activeModel : ''}`}
-                                onClick={() => setSelectedModel('gemini-1.5-pro')}
+                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-2.5-pro' ? styles.activeModel : ''}`}
+                                onClick={() => setSelectedModel('gemini-2.5-pro')}
                             >
                                 <div className={styles.modelInfo}>
                                     <div className={styles.modelPrimaryInfo}>
-                                        <h4>Gemini 1.5 Pro</h4>
+                                        <h4>Gemini 2.5 Pro</h4>
                                         <span className={styles.providerTag}>Google</span>
                                     </div>
-                                    <span className={styles.modelTagline}>Maximum complexity & deep context</span>
+                                    <span className={styles.modelTagline}>Ultimate intelligence & multi-step mastery</span>
                                 </div>
-                                {selectedModel === 'gemini-1.5-pro' && <Check size={18} className={styles.checkIcon} />}
+                                {selectedModel === 'gemini-2.5-pro' && <Check size={18} className={styles.checkIcon} />}
                             </div>
                         </div>
                     </div>

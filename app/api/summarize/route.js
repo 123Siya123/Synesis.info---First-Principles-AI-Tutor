@@ -22,7 +22,7 @@ export async function POST(request) {
             ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
             : 'https://api.groq.com/openai/v1/chat/completions';
 
-        const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.1-8b-instant';
+        const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.1-8b-instant';
 
         // Use a lighter, faster model for summarization
         const response = await robustFetch(apiUrl, {
