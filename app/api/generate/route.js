@@ -38,7 +38,9 @@ export async function POST(request) {
         ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
         : 'https://api.groq.com/openai/v1/chat/completions';
 
-    const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.3-70b-versatile';
+    const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.3-70b-versatile';
+
+    console.log(`[AI Request] Provider: ${provider}, Model: ${model || defaultModel}, URL: ${apiUrl}`);
 
     // --- GUEST HANDLING ---
     if (!userId) {
@@ -100,6 +102,7 @@ export async function POST(request) {
 
             if (!response.ok) {
                 const errData = await response.json();
+                console.error(`[AI Error] ${provider.toUpperCase()} responded with ${response.status}:`, errData);
                 throw new Error(`${provider.toUpperCase()} API Error: ${errData.error?.message || response.statusText}`);
             }
 
