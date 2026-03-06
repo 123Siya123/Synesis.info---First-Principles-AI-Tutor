@@ -391,17 +391,17 @@ export default function AccountView({ user, studies, onBack, onDeleteStudy, onLo
                             </div>
 
                             <div
-                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-3.1-pro' ? styles.activeModel : ''}`}
-                                onClick={() => setSelectedModel('gemini-3.1-pro')}
+                                className={`${styles.modelOptionCard} ${selectedModel === 'gemini-2.5-pro' ? styles.activeModel : ''}`}
+                                onClick={() => setSelectedModel('gemini-2.5-pro')}
                             >
                                 <div className={styles.modelInfo}>
                                     <div className={styles.modelPrimaryInfo}>
-                                        <h4>Gemini 3.1 Pro</h4>
+                                        <h4>Gemini 2.5 Pro</h4>
                                         <span className={styles.providerTag}>Google</span>
                                     </div>
                                     <span className={styles.modelTagline}>Deep reasoning & long context</span>
                                 </div>
-                                {selectedModel === 'gemini-3.1-pro' && <Check size={18} className={styles.checkIcon} />}
+                                {selectedModel === 'gemini-2.5-pro' && <Check size={18} className={styles.checkIcon} />}
                             </div>
                         </div>
                     </div>

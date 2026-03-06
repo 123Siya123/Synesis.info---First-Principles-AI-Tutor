@@ -478,7 +478,7 @@ export default function Home() {
                 // Migrate Gemini models
                 let modelToSet = data.selectedModel || 'llama-3.3-70b-versatile';
                 if (modelToSet === 'gemini-1.5-flash') modelToSet = 'gemini-2.5-flash';
-                if (modelToSet === 'gemini-1.5-pro' || modelToSet === 'gemini-2.5-pro') modelToSet = 'gemini-3.1-pro';
+                if (modelToSet === 'gemini-1.5-pro') modelToSet = 'gemini-2.5-pro';
                 setSelectedModel(modelToSet);
 
                 setIsSidebarOpen(false);
@@ -517,7 +517,7 @@ export default function Home() {
                     // Migrate Gemini models
                     let modelToSet = data.selectedModel || 'llama-3.3-70b-versatile';
                     if (modelToSet === 'gemini-1.5-flash') modelToSet = 'gemini-2.5-flash';
-                    if (modelToSet === 'gemini-1.5-pro' || modelToSet === 'gemini-2.5-pro') modelToSet = 'gemini-3.1-pro';
+                    if (modelToSet === 'gemini-1.5-pro') modelToSet = 'gemini-2.5-pro';
                     setSelectedModel(modelToSet);
                 }
             } catch (e) {
