@@ -128,6 +128,11 @@ export async function POST(request) {
 
         if (!response.ok) {
             const err = await response.json();
+            if (response.status === 429) {
+                throw new Error('The AI model is currently experiencing high demand. Please wait a moment and try again.');
+            } else if (response.status === 404) {
+                throw new Error('The selected AI model is currently unavailable. Please try a different model in Settings.');
+            }
             throw new Error(err.error?.message || 'AI Error');
         }
 

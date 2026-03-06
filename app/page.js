@@ -967,7 +967,8 @@ export default function Home() {
             return articleContent;
         } catch (error) {
             console.error('Error generating article:', error);
-            setCurrentArticle('Failed to generate article. View logs or try again.');
+            const userMessage = error.message || 'An unexpected error occurred.';
+            setCurrentArticle(`⚠️ **Generation Failed**\n\n${userMessage}\n\nPlease try again or switch to a different AI model in Settings.`);
             setIsLoading(false);
         }
     }, [currentArticle, currentArticleTitle, sourceTextForSubArticle, mindMapData, isPlanMode, fileContent, notesText, phase, user, subscriptionTier, monthlyArticleCount, currentArticleSummary]);
@@ -1101,12 +1102,23 @@ export default function Home() {
             }
 
             const data = await response.json();
-            const plan = JSON.parse(data.choices[0]?.message?.content);
+            // Handle both native format (Gemini returns direct JSON) and OpenAI format (Groq)
+            let plan;
+            if (data.choices && data.choices[0]?.message?.content) {
+                plan = JSON.parse(data.choices[0].message.content);
+            } else if (data.nodes && data.edges) {
+                plan = data;
+            } else if (typeof data === 'string') {
+                plan = JSON.parse(data);
+            } else {
+                plan = data;
+            }
             setMindMapData({ ...plan, currentNodeId: "0" });
             setIsLoading(false);
         } catch (error) {
             console.error('Error generating study plan:', error);
-            setPlanError(error.message || 'Failed to generate study plan. Please try again.');
+            const userMessage = error.message || 'An unexpected error occurred.';
+            setPlanError(userMessage);
             setIsLoading(false);
         }
     };

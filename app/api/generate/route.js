@@ -111,7 +111,13 @@ export async function POST(request) {
             if (!response.ok) {
                 const errData = await response.json();
                 console.error(`[AI Error] ${provider.toUpperCase()} responded with ${response.status}:`, errData);
-                throw new Error(`${provider.toUpperCase()} API Error: ${errData.error?.message || response.statusText}`);
+                const rawMsg = errData.error?.message || response.statusText;
+                if (response.status === 429) {
+                    throw new Error(`The AI model is currently experiencing high demand. Please wait a moment and try again.`);
+                } else if (response.status === 404) {
+                    throw new Error(`The selected AI model is currently unavailable. Please try a different model in Settings.`);
+                }
+                throw new Error(rawMsg);
             }
 
             const data = await response.json();
@@ -244,7 +250,14 @@ export async function POST(request) {
 
         if (!response.ok) {
             const errData = await response.json();
-            throw new Error(`${provider.toUpperCase()} API Error: ${errData.error?.message || response.statusText}`);
+            console.error(`[AI Error] ${provider.toUpperCase()} responded with ${response.status}:`, errData);
+            const rawMsg = errData.error?.message || response.statusText;
+            if (response.status === 429) {
+                throw new Error(`The AI model is currently experiencing high demand. Please wait a moment and try again.`);
+            } else if (response.status === 404) {
+                throw new Error(`The selected AI model is currently unavailable. Please try a different model in Settings.`);
+            }
+            throw new Error(rawMsg);
         }
 
         const data = await response.json();
