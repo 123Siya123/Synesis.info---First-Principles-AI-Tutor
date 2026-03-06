@@ -25,7 +25,7 @@ export async function POST(req) {
             ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
             : 'https://api.groq.com/openai/v1/chat/completions';
 
-        const defaultModel = isGemini ? 'gemini-1.5-flash' : 'llama-3.3-70b-versatile';
+        const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.3-70b-versatile';
 
         // Select System Prompt based on type
         let systemPrompt = SYSTEM_PRINCIPLES; // Default
