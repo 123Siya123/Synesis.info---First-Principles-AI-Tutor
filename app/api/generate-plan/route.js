@@ -76,25 +76,54 @@ export async function POST(request) {
             }, { status: 403 });
         }
 
+        const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.3-70b-versatile';
+        const finalModel = model || defaultModel;
+
         const apiUrl = isGemini
-            ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+            ? `https://generativelanguage.googleapis.com/v1beta/models/${finalModel}:generateContent?key=${apiKey}`
             : 'https://api.groq.com/openai/v1/chat/completions';
 
-        const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.3-70b-versatile';
+        // Gemini payload mapping
+        let requestBody;
+        let requestHeaders;
+
+        if (isGemini) {
+            let systemInstruction = undefined;
+            let contents = [];
+            for (const msg of messages) {
+                if (msg.role === 'system') {
+                    systemInstruction = { parts: [{ text: msg.content }] };
+                } else {
+                    contents.push({
+                        role: msg.role === 'assistant' ? 'model' : 'user',
+                        parts: [{ text: msg.content }]
+                    });
+                }
+            }
+            requestHeaders = { 'Content-Type': 'application/json' };
+            requestBody = JSON.stringify({
+                systemInstruction,
+                contents,
+                generationConfig: { temperature: 0.7, responseMimeType: "application/json" }
+            });
+        } else {
+            requestHeaders = {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            };
+            requestBody = JSON.stringify({
+                model: finalModel,
+                messages: messages,
+                temperature: 0.7,
+                response_format: { type: 'json_object' }
+            });
+        }
 
         // 2. Generate Plan with retry and timeout
         const response = await robustFetch(apiUrl, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                model: model || defaultModel,
-                messages: messages,
-                temperature: 0.7,
-                response_format: { type: 'json_object' }
-            })
+            headers: requestHeaders,
+            body: requestBody
         }, { maxRetries: 3, timeoutMs: 30000 });
 
         if (!response.ok) {
@@ -104,12 +133,19 @@ export async function POST(request) {
 
         const data = await response.json();
 
+        // Align output format
+        let finalOutput = data;
+        if (isGemini) {
+            const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+            try { finalOutput = JSON.parse(textContent); } catch (e) { finalOutput = textContent; }
+        }
+
         // 3. Increment Counter
         await supabase.from('profiles').update({
             monthly_mind_map_count: currentCount + 1
         }).eq('id', userId);
 
-        return NextResponse.json(data);
+        return NextResponse.json(finalOutput);
 
     } catch (err) {
         console.error('Plan generation error:', err);

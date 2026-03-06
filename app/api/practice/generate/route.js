@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { getApiKey } from '../../../lib/getApiKey';
 import { robustFetch } from '../../../lib/apiUtils';
 
@@ -33,11 +34,12 @@ export async function POST(req) {
             return NextResponse.json({ error: `Server configured incorrectly: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
         }
 
-        const apiUrl = isGemini
-            ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
-            : 'https://api.groq.com/openai/v1/chat/completions';
-
         const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.3-70b-versatile';
+        const finalModel = model || defaultModel;
+
+        const apiUrl = isGemini
+            ? `https://generativelanguage.googleapis.com/v1beta/models/${finalModel}:generateContent?key=${apiKey}`
+            : 'https://api.groq.com/openai/v1/chat/completions';
 
         console.log(`[Practice Generate] Model: ${model || defaultModel}, Provider: ${provider}`);
 
@@ -56,12 +58,19 @@ export async function POST(req) {
 
         const response = await robustFetch(apiUrl, {
             method: 'POST',
-            headers: {
+            headers: isGemini ? { 'Content-Type': 'application/json' } : {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                model: model || defaultModel,
+            body: JSON.stringify(isGemini ? {
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{
+                    role: "user",
+                    parts: [{ text: userPrompt }]
+                }],
+                generationConfig: { temperature: 0.7, responseMimeType: "application/json" }
+            } : {
+                model: finalModel,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
@@ -77,7 +86,13 @@ export async function POST(req) {
         }
 
         const data = await response.json();
-        const content = data.choices[0].message.content;
+
+        let content = "{}";
+        if (isGemini) {
+            content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+        } else {
+            content = data.choices?.[0]?.message?.content || "{}";
+        }
 
         // Parse JSON
         const result = JSON.parse(content);

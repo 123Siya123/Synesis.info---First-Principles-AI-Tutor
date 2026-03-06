@@ -34,13 +34,14 @@ export async function POST(request) {
         return NextResponse.json({ error: `Server misconfiguration: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
     }
 
+    const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.3-70b-versatile';
+    const finalModel = model || defaultModel;
+
     const apiUrl = isGemini
-        ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
+        ? `https://generativelanguage.googleapis.com/v1beta/models/${finalModel}:generateContent?key=${apiKey}`
         : 'https://api.groq.com/openai/v1/chat/completions';
 
-    const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.3-70b-versatile';
-
-    console.log(`[AI Request] Provider: ${provider}, Model: ${model || defaultModel}, URL: ${apiUrl}`);
+    console.log(`[AI Request] Provider: ${provider}, Model: ${finalModel}, URL: ${apiUrl}`);
 
     // --- GUEST HANDLING ---
     if (!userId) {
@@ -85,12 +86,19 @@ export async function POST(request) {
             // Call AI with retry and timeout
             const response = await robustFetch(apiUrl, {
                 method: 'POST',
-                headers: {
+                headers: isGemini ? { 'Content-Type': 'application/json' } : {
                     'Authorization': `Bearer ${apiKey}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    model: model || defaultModel,
+                body: JSON.stringify(isGemini ? {
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }]
+                    }],
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
+                } : {
+                    model: finalModel,
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }
@@ -107,7 +115,9 @@ export async function POST(request) {
             }
 
             const data = await response.json();
-            const articleContent = data.choices[0]?.message?.content;
+            const articleContent = isGemini
+                ? data.candidates?.[0]?.content?.parts?.[0]?.text
+                : data.choices?.[0]?.message?.content;
 
             // Increment Guest Usage
             const { error: upsertError } = await supabase
@@ -210,12 +220,19 @@ export async function POST(request) {
 
         const response = await robustFetch(apiUrl, {
             method: 'POST',
-            headers: {
+            headers: isGemini ? { 'Content-Type': 'application/json' } : {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                model: model || defaultModel,
+            body: JSON.stringify(isGemini ? {
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                contents: [{
+                    role: "user",
+                    parts: [{ text: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }]
+                }],
+                generationConfig: { temperature: 0.7, maxOutputTokens: 2000 }
+            } : {
+                model: finalModel,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: previousContext ? `Context from previous article:\n${previousContext}\n\nQuestion/Topic: ${topic}` : topic }
@@ -231,7 +248,9 @@ export async function POST(request) {
         }
 
         const data = await response.json();
-        const articleContent = data.choices[0]?.message?.content;
+        const articleContent = isGemini
+            ? data.candidates?.[0]?.content?.parts?.[0]?.text
+            : data.choices?.[0]?.message?.content;
 
         const updates = {
             monthly_article_count: monthly_article_count + 1

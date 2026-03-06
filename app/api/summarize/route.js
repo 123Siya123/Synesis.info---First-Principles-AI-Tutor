@@ -18,21 +18,29 @@ export async function POST(request) {
             return NextResponse.json({ error: `Server misconfiguration: Missing ${provider.toUpperCase()} API Key` }, { status: 500 });
         }
 
-        const apiUrl = isGemini
-            ? `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
-            : 'https://api.groq.com/openai/v1/chat/completions';
-
         const defaultModel = isGemini ? 'gemini-2.5-flash' : 'llama-3.1-8b-instant';
+        const finalModel = model || defaultModel;
+
+        const apiUrl = isGemini
+            ? `https://generativelanguage.googleapis.com/v1beta/models/${finalModel}:generateContent?key=${apiKey}`
+            : 'https://api.groq.com/openai/v1/chat/completions';
 
         // Use a lighter, faster model for summarization
         const response = await robustFetch(apiUrl, {
             method: 'POST',
-            headers: {
+            headers: isGemini ? { 'Content-Type': 'application/json' } : {
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                model: model || defaultModel,
+            body: JSON.stringify(isGemini ? {
+                systemInstruction: { parts: [{ text: 'Summarize the following article concisely in 3-5 sentences. Capture the main concepts, key arguments, and any definitions provided. DO NOT start with "Here is a summary" or similar.' }] },
+                contents: [{
+                    role: "user",
+                    parts: [{ text: content }]
+                }],
+                generationConfig: { temperature: 0.3, maxOutputTokens: 500 }
+            } : {
+                model: finalModel,
                 messages: [
                     {
                         role: 'system',
@@ -51,7 +59,9 @@ export async function POST(request) {
         }
 
         const data = await response.json();
-        const summary = data.choices[0]?.message?.content;
+        const summary = isGemini
+            ? data.candidates?.[0]?.content?.parts?.[0]?.text
+            : data.choices?.[0]?.message?.content;
 
         return NextResponse.json({ summary });
 
