@@ -14,20 +14,20 @@ const supabase = supabaseUrl && supabaseServiceKey
 // Force dynamic to avoid caching
 export const dynamic = 'force-dynamic';
 
-const BLOG_PROMPT_TEMPLATE = `You are writing a high-conversion blog post for Synesis (synesis.info), an AI-powered 
-deep learning platform. Your job: educate readers about why they need deeper learning, 
+const BLOG_PROMPT_TEMPLATE = `You are writing a high-conversion blog post for Synesis (synesis.info), an AI-powered
+deep learning platform. Your job: educate readers about why they need deeper learning,
 then position Synesis as the solution.
 
 MOST IMPORTANT:
 Generate blog post for the topic: [INSERT_TOPIC_TITLE_HERE]
 
-CRITICAL: Write as Siyamthanda Kuhlmann, in my style - direct, confident, authoritative, experienced, and 
-urgently pushing readers toward action. Use "you" constantly. Vary sentence length. 
+CRITICAL: Write as Siyamthanda Kuhlmann, in my style - direct, confident, authoritative, experienced, and
+urgently pushing readers toward action. Use "you" constantly. Vary sentence length.
 Sound like a smart student who gets STEM students' pain points.
 
 ## SYNESIS PLATFORM: THE SHORT VERSION
 
-Synesis is an AI-powered learning platform built on the Feynman Method. Instead of 
+Synesis is an AI-powered learning platform built on the Feynman Method. Instead of
 memorizing, students learn through:
 
 1. INPUT: Enter a topic (Quick Study for specific concepts, Plan Mode for complex ones)
@@ -49,7 +49,7 @@ KEY FEATURES TO MENTION:
 - Progress tracking and gap identification
 - Free 7-day trial available
 
-## TONE & VOICE 
+## TONE & VOICE
 
 ✓ Confident, experienced, slightly urgent
 ✓ Talk to ONE ambitious student/learner who's short on time but serious about results
@@ -75,6 +75,108 @@ KEY FEATURES TO MENTION:
 ✓ No walls of text
 `;
 
+// =============================================================================
+// TOPIC GENERATION PROMPT
+// Used when the queue is empty — fills the queue with 50-100 fresh topics.
+// =============================================================================
+const TOPIC_GENERATION_PROMPT = `You are a senior copywriter & SEO strategist for Synesis (synesis.info), an AI-powered
+learning platform built on the Feynman Method. Your job: brainstorm a fresh batch of
+blog post TITLES that we will turn into articles to rank for AI-SEO and classic SEO,
+attract STEM students and self-learners, and convert them into trial users.
+
+## OUTPUT FORMAT (STRICT)
+Return ONLY valid JSON in this exact shape:
+{
+  "topics": [
+    "Title 1",
+    "Title 2",
+    ...
+  ]
+}
+- Generate between 60 and 80 unique titles.
+- Each title must be a single string, 40-110 characters, no quotes or markdown.
+- No numbering, no leading dashes, no trailing punctuation other than ! or ?.
+
+## WHAT WE SELL (CONTEXT)
+Synesis = AI tutor that uses recursive questioning + the Feynman Method
+(brain dump → teach the AI → spot gaps → quiz → fill gaps). Audience:
+ambitious STEM students, med students, law students, self-learners,
+working professionals upskilling, and curious adults who want deep — not
+surface — understanding.
+
+## THEMES TO COVER (MIX THESE — DON'T DO ONE TYPE OVER AND OVER)
+
+A. AI-SEO / "answer engine" topics (people asking AI assistants):
+   - "Best AI tutors for [subject] in 2026"
+   - "Is the Feynman method better than flashcards?"
+   - "How to learn faster with AI without cheating"
+   - Long-tail comparisons: Synesis vs. ChatGPT, Synesis vs. Anki, etc.
+
+B. Classic SEO long-tail (high intent, low competition):
+   - "How to study organic chemistry from first principles"
+   - "Why your highlights don't help you remember anything"
+   - Subject-specific: physics, biology, calculus, ML, philosophy, history, languages
+
+C. Pain-point hooks (counterintuitive, scroll-stopping):
+   - "Why straight-A students forget everything by July"
+   - "Re-reading is killing your grades — do this instead"
+
+D. Personal-story / narrative titles (these MUST sound human):
+   - "I almost failed thermodynamics. Then I taught it to my dog."
+   - "The 4 a.m. moment I realised flashcards were lying to me"
+   - "What a barista in Cape Town taught me about deep learning"
+   - Use first-person "I", concrete details, time/place anchors. The body of
+     the article (written later) will use the same voice — so the title should
+     promise a story, not a listicle.
+
+E. Identity / archetype hooks:
+   - "For the student who reads everything but understands nothing"
+   - "If you're 'good at school' but bad at thinking, read this"
+
+F. Frameworks & systems:
+   - "The 5-question test that reveals if you actually understand a topic"
+   - "A 30-minute study loop that beats 3 hours of re-reading"
+
+G. Contrarian / mythbusting:
+   - "Memorisation isn't the problem. This is."
+   - "Why ChatGPT is making you a worse student (and the fix)"
+
+## ANTI-AI WRITING GUIDE (CRITICAL — TITLES MUST NOT SOUND AI-WRITTEN)
+
+DO NOT use any of these AI tells:
+✗ "Unlock", "Unleash", "Master", "Supercharge", "Revolutionise", "Game-changer"
+✗ "In today's fast-paced world…", "In the era of AI…"
+✗ "The ultimate guide to…", "Everything you need to know about…"
+✗ "Harness the power of…", "Leverage…"
+✗ "Dive deep", "Delve into", "Embark on"
+✗ Em-dashes used as drama (—) more than once
+✗ Triads of adjectives ("clear, concise, and compelling")
+✗ Vague abstractions like "transformative", "innovative", "cutting-edge"
+✗ Clickbait numbers without specificity ("10 amazing ways…")
+
+DO use:
+✓ Concrete nouns (organic chem, MCAT, calculus 2, Krebs cycle, Bayes' theorem)
+✓ Specific times / places / situations (4 a.m., final exam week, the night before)
+✓ First-person stories with stakes ("I", "my", felt-experience)
+✓ Plain words a 14-year-old understands
+✓ Friction in the title — a contradiction, a question, a confession
+✓ One idea per title (no compound titles glued with "and")
+
+## DIVERSITY RULES
+- Spread across themes A-G; do not cluster.
+- Vary opening words (don't start 5 titles with "How to").
+- Include AT LEAST 8 personal-story style titles (theme D).
+- Include AT LEAST 10 long-tail SEO titles tied to a real subject.
+- Include AT LEAST 5 AI-SEO comparison/answer-engine titles.
+- Avoid duplicates and near-duplicates.
+
+## BANNED PATTERNS (these already exist or are overused)
+Do not start more than 2 titles with "Why".
+Do not start more than 2 titles with "How to".
+No title may contain the word "Unlock" or "Master" or "Ultimate" or "Supercharge".
+
+Now produce the JSON. Return ONLY the JSON object — no preface, no markdown fences.`;
+
 // Helper function to generate a unique slug
 function generateSlug(title) {
     return title
@@ -95,6 +197,102 @@ function getGroqApiKey() {
 
     if (keys.length === 0) throw new Error('No Groq API keys configured');
     return keys[Math.floor(Math.random() * keys.length)];
+}
+
+// =============================================================================
+// REFILL CYCLE
+// When the pending queue is empty, spend this cron tick refilling the queue
+// with 50-100 fresh, human-sounding topics instead of generating a blog post.
+// The next cron tick will then have topics to consume.
+// =============================================================================
+async function refillTopicQueue(log) {
+    log('Queue empty — running refill cycle to generate new topics');
+
+    const groqApiKey = getGroqApiKey();
+
+    const completion = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${groqApiKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+                { role: 'system', content: TOPIC_GENERATION_PROMPT },
+                { role: 'user', content: 'Generate the JSON object now. 60-80 titles, mixed themes, no AI tells.' }
+            ],
+            temperature: 0.9,
+            max_tokens: 4000,
+            response_format: { type: 'json_object' }
+        })
+    });
+
+    if (!completion.ok) {
+        const err = await completion.text();
+        log(`Refill Groq error: ${err}`);
+        return { ok: false, reason: 'groq_error', error: err };
+    }
+
+    const result = await completion.json();
+    const content = result.choices?.[0]?.message?.content;
+    if (!content) return { ok: false, reason: 'empty_response' };
+
+    let parsed;
+    try {
+        parsed = JSON.parse(content);
+    } catch (e) {
+        return { ok: false, reason: 'invalid_json' };
+    }
+
+    const titles = Array.isArray(parsed.topics) ? parsed.topics : [];
+    if (titles.length === 0) return { ok: false, reason: 'no_titles' };
+
+    // Clean & dedupe within the batch
+    const seen = new Set();
+    const cleaned = [];
+    for (const raw of titles) {
+        if (typeof raw !== 'string') continue;
+        const t = raw.trim().replace(/^["'\-\d\.\)\s]+/, '').replace(/["']$/, '').trim();
+        if (t.length < 20 || t.length > 140) continue;
+        const key = t.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        cleaned.push(t);
+    }
+
+    if (cleaned.length === 0) return { ok: false, reason: 'all_filtered' };
+
+    // Drop titles that already exist in blog_topics or blog_posts
+    const { data: existingTopics } = await supabase
+        .from('blog_topics')
+        .select('topic');
+    const { data: existingPosts } = await supabase
+        .from('blog_posts')
+        .select('title');
+
+    const existing = new Set([
+        ...(existingTopics || []).map(r => r.topic.toLowerCase()),
+        ...(existingPosts || []).map(r => r.title.toLowerCase())
+    ]);
+
+    const fresh = cleaned.filter(t => !existing.has(t.toLowerCase()));
+    if (fresh.length === 0) return { ok: false, reason: 'all_duplicates' };
+
+    log(`Refill: inserting ${fresh.length} new topics`);
+
+    const rows = fresh.map(topic => ({ topic, status: 'pending' }));
+    const { data: inserted, error: insertError } = await supabase
+        .from('blog_topics')
+        .insert(rows)
+        .select('id');
+
+    if (insertError) {
+        log(`Refill insert error: ${insertError.message}`);
+        return { ok: false, reason: 'insert_error', error: insertError.message };
+    }
+
+    return { ok: true, inserted: inserted?.length || 0, attempted: fresh.length };
 }
 
 export async function GET(request) {
@@ -123,8 +321,18 @@ export async function GET(request) {
         }
 
         if (!topics || topics.length === 0) {
-            log('No pending topics');
-            return NextResponse.json({ success: true, message: 'No pending topics', generated: false });
+            // Queue is empty — burn this cycle on a refill instead of a blog post.
+            // Next cron tick will pick up the freshly inserted topics.
+            const refill = await refillTopicQueue(log);
+            return NextResponse.json({
+                success: refill.ok,
+                generated: false,
+                refilled: refill.ok,
+                ...refill,
+                message: refill.ok
+                    ? `Queue was empty — refilled with ${refill.inserted} new topics. Next run will publish.`
+                    : `Queue was empty and refill failed: ${refill.reason}`
+            });
         }
 
         const topic = topics[0];
@@ -196,7 +404,7 @@ export async function GET(request) {
                     {
                         role: 'user',
                         content: `Generate a blog post for: "${topic.topic}"
-                        
+
 Return ONLY valid JSON with these keys:
 {
     "title": "${topic.topic}",

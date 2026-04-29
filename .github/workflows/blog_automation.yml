@@ -9,71 +9,84 @@ on:
 jobs:
   generate-blog-posts:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
+    timeout-minutes: 20
+
     steps:
       - name: Generate Blog Post 1
         run: |
           echo "🚀 Triggering blog generation (Post 1 of 3)..."
-          response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
-            --max-time 120 \
-            "https://www.synesis.info/api/cron/blog")
-          
-          echo "Response:"
-          echo "$response"
-          echo ""
-          
-          # Extract HTTP status
-          http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          
-          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
-            echo "✅ Post 1 generated successfully"
-          else
-            echo "⚠️ Post 1 returned status $http_status (may be expected if no pending topics)"
-          fi
-          
-          # Wait between requests to avoid rate limits
+          for attempt in 1 2; do
+            response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
+              --max-time 180 \
+              "https://www.synesis.info/api/cron/blog")
+            echo "Attempt $attempt response:"
+            echo "$response"
+            echo ""
+            http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+            # If the queue was empty the API will have refilled it instead of
+            # publishing. Retry once so we still ship a post this slot.
+            if echo "$response" | grep -q '"refilled":true'; then
+              echo "♻️  Queue refilled with new topics — retrying to publish a post"
+              sleep 10
+              continue
+            fi
+            if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+              echo "✅ Post 1 generated successfully"
+            else
+              echo "⚠️ Post 1 returned status $http_status"
+            fi
+            break
+          done
           sleep 15
 
       - name: Generate Blog Post 2
         run: |
           echo "🚀 Triggering blog generation (Post 2 of 3)..."
-          response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
-            --max-time 120 \
-            "https://www.synesis.info/api/cron/blog")
-          
-          echo "Response:"
-          echo "$response"
-          echo ""
-          
-          http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          
-          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
-            echo "✅ Post 2 generated successfully"
-          else
-            echo "⚠️ Post 2 returned status $http_status"
-          fi
-          
+          for attempt in 1 2; do
+            response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
+              --max-time 180 \
+              "https://www.synesis.info/api/cron/blog")
+            echo "Attempt $attempt response:"
+            echo "$response"
+            echo ""
+            http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+            if echo "$response" | grep -q '"refilled":true'; then
+              echo "♻️  Queue refilled with new topics — retrying to publish a post"
+              sleep 10
+              continue
+            fi
+            if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+              echo "✅ Post 2 generated successfully"
+            else
+              echo "⚠️ Post 2 returned status $http_status"
+            fi
+            break
+          done
           sleep 15
 
       - name: Generate Blog Post 3
         run: |
           echo "🚀 Triggering blog generation (Post 3 of 3)..."
-          response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
-            --max-time 120 \
-            "https://www.synesis.info/api/cron/blog")
-          
-          echo "Response:"
-          echo "$response"
-          echo ""
-          
-          http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
-          
-          if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
-            echo "✅ Post 3 generated successfully"
-          else
-            echo "⚠️ Post 3 returned status $http_status"
-          fi
+          for attempt in 1 2; do
+            response=$(curl -L -s -w "\n---HTTP_STATUS:%{http_code}---" \
+              --max-time 180 \
+              "https://www.synesis.info/api/cron/blog")
+            echo "Attempt $attempt response:"
+            echo "$response"
+            echo ""
+            http_status=$(echo "$response" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+            if echo "$response" | grep -q '"refilled":true'; then
+              echo "♻️  Queue refilled with new topics — retrying to publish a post"
+              sleep 10
+              continue
+            fi
+            if [ "$http_status" -ge 200 ] && [ "$http_status" -lt 300 ]; then
+              echo "✅ Post 3 generated successfully"
+            else
+              echo "⚠️ Post 3 returned status $http_status"
+            fi
+            break
+          done
 
       - name: Summary
         run: |
